@@ -59,15 +59,15 @@ const menu = $derived<MenuItem[]>([
   {
     type: 'item',
     id: 'delete',
-    label: m['delete'](),
+    label: m.delete(),
     icon: 'trash-2',
     danger: true,
     onSelect: () => (confirmingDelete = true),
   },
 ])
 
-const reacted = (emoji: string, userIds: readonly string[]) =>
-  session.user ? userIds.includes(session.user.id) : false
+/** Whether I am one of the people behind this reaction, so it can render as mine. */
+const reacted = (userIds: readonly string[]) => (session.user ? userIds.includes(session.user.id) : false)
 </script>
 
 <article class="thread" class:internal={comment.internal}>
@@ -114,7 +114,7 @@ const reacted = (emoji: string, userIds: readonly string[]) =>
         <p>{m.tracker_comment_delete_body()}</p>
         <div class="row">
           <button type="button" class="danger" onclick={() => ondelete(comment.id)}>
-            {m['delete']()}
+            {m.delete()}
           </button>
           <button type="button" onclick={() => (confirmingDelete = false)}>{m.cancel()}</button>
         </div>
@@ -147,7 +147,7 @@ const reacted = (emoji: string, userIds: readonly string[]) =>
         <button
           type="button"
           class="reaction"
-          class:mine={reacted(reaction.emoji, reaction.userIds)}
+          class:mine={reacted(reaction.userIds)}
           onclick={() => onreact(comment.id, reaction.emoji)}
         >
           {reaction.emoji}

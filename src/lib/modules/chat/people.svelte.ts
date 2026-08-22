@@ -1,7 +1,7 @@
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
-import { session } from '$lib/state/session.svelte'
 import type { MentionCandidate } from '$lib/mentions'
+import { session } from '$lib/state/session.svelte'
 
 /**
  * The people you can mention.

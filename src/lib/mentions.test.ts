@@ -160,9 +160,7 @@ describe('mentionsIn', () => {
     // This is what editing does: document → text → document.
     const asText = 'over to @Dan Brekke and @Maya Rivera'
     const again = textToDoc(asText, mentionsIn(doc))
-    const kinds = (again.content?.[0] as { content?: Array<{ type?: string }> })?.content?.map(
-      (n) => n.type,
-    )
+    const kinds = (again.content?.[0] as { content?: Array<{ type?: string }> })?.content?.map((n) => n.type)
     expect(kinds).toEqual(['text', 'mention', 'text', 'mention'])
   })
 

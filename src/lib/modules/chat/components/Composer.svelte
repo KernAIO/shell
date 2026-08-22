@@ -2,11 +2,10 @@
 import type { ChatStore } from '@kernhq/module-chat/client'
 import { IconButton, toast } from '@kernhq/ui'
 import { page } from '$app/state'
+import EmojiPicker from '$lib/components/EmojiPicker.svelte'
+import MentionMenu from '$lib/components/MentionMenu.svelte'
 import { MediaRecording, type RecorderKind } from '$lib/files/recorder.svelte'
 import { uploadFile } from '$lib/files/upload'
-import { session } from '$lib/state/session.svelte'
-import * as m from '$msg'
-import { typingLabel } from '../labels'
 import {
   literalFor,
   type MentionCandidate,
@@ -15,11 +14,12 @@ import {
   rankCandidates,
   textToDoc,
 } from '$lib/mentions'
+import { session } from '$lib/state/session.svelte'
+import * as m from '$msg'
+import { typingLabel } from '../labels'
 import { workspacePeople } from '../people.svelte'
 import { canChat } from '../permissions'
 import AttachmentTray from './AttachmentTray.svelte'
-import EmojiPicker from '$lib/components/EmojiPicker.svelte'
-import MentionMenu from '$lib/components/MentionMenu.svelte'
 import RecorderBar from './RecorderBar.svelte'
 
 /**

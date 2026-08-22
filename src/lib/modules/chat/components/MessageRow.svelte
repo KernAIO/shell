@@ -2,14 +2,14 @@
 import type { ChatStore, Message } from '@kernhq/module-chat/client'
 import { renderDocToHtml, timeOf } from '@kernhq/module-chat/client'
 import { Avatar, Button, Dialog, DropdownMenu, Icon, IconButton, type MenuItem, toast } from '@kernhq/ui'
-import { getLocale } from '$lib/paraglide/runtime'
-import * as m from '$msg'
+import EmojiPicker from '$lib/components/EmojiPicker.svelte'
 import { QUICK_REACTIONS } from '$lib/emoji'
 import { textToDoc } from '$lib/mentions'
+import { getLocale } from '$lib/paraglide/runtime'
+import * as m from '$msg'
 import { canChat } from '../permissions'
 import { attempt } from '../report'
 import Attachments from './Attachments.svelte'
-import EmojiPicker from '$lib/components/EmojiPicker.svelte'
 
 /**
  * One message.
