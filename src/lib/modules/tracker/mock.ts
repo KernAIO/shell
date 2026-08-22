@@ -24,9 +24,11 @@ import {
   rankBetween,
   rankSequence,
   type StatusInfo,
+  type Timer,
   type Version,
   type View,
   type WorkItemType,
+  type Worklog,
 } from '@kernhq/module-tracker/client'
 
 /**
@@ -816,6 +818,8 @@ export function createMockTrackerApi() {
     views: [] as View[],
     components: [] as Component[],
     versions: [] as Version[],
+    worklogs: [] as Worklog[],
+    timer: null as Timer | null,
     links: [] as Link[],
     approvals: [] as IssueApproval[],
     history: [] as IssueHistoryEntry[],
@@ -1165,6 +1169,84 @@ export function createMockTrackerApi() {
       list: async ({ projectId }: Ws & { projectId?: string }) =>
         clone(cycles.filter((c) => !projectId || c.projectId === projectId)),
     },
+    worklogs: {
+      list: async ({ issueId }: Ws & { issueId: string }) =>
+        clone(state.worklogs.filter((w) => w.issueId === issueId)),
+      create: async ({
+        issueId,
+        durationSec,
+        note,
+      }: Ws & { issueId: string; durationSec: number; note?: string | null }) => {
+        const issue = find(issueId)
+        const worklog: Worklog = {
+          id: uid(2400 + state.worklogs.length),
+          workspaceId: WORKSPACE,
+          projectId: issue.projectId,
+          issueId,
+          userId: ME,
+          startedAt: new Date().toISOString(),
+          durationSec,
+          note: note ?? null,
+          billable: true,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        }
+        state.worklogs.push(worklog)
+        issue.timeSpentSec += durationSec
+        touch(issue)
+        return { worklog: clone(worklog), issue: clone(issue) }
+      },
+      delete: async ({ id }: Ws & { id: string }) => {
+        const gone = state.worklogs.find((w) => w.id === id)
+        state.worklogs = state.worklogs.filter((w) => w.id !== id)
+        if (gone) {
+          const issue = state.issues.find((i) => i.id === gone.issueId)
+          if (issue) issue.timeSpentSec = Math.max(0, issue.timeSpentSec - gone.durationSec)
+        }
+        return { ok: true as const }
+      },
+      timers: {
+        current: async (_input: Ws) => clone(state.timer),
+        start: async ({ issueId }: Ws & { issueId: string }) => {
+          // A timer belongs to a person: starting one replaces whatever they had running.
+          const timer: Timer = {
+            id: uid(2500),
+            workspaceId: WORKSPACE,
+            issueId,
+            userId: ME,
+            startedAt: new Date().toISOString(),
+            note: null,
+          }
+          state.timer = timer
+          return clone(timer)
+        },
+        stop: async ({ discard }: Ws & { discard?: boolean }) => {
+          const timer = state.timer
+          state.timer = null
+          if (!timer || discard) return { worklog: null }
+          const issue = find(timer.issueId)
+          const durationSec = Math.max(60, Math.round((Date.now() - Date.parse(timer.startedAt)) / 1000))
+          const worklog: Worklog = {
+            id: uid(2400 + state.worklogs.length),
+            workspaceId: WORKSPACE,
+            projectId: issue.projectId,
+            issueId: timer.issueId,
+            userId: ME,
+            startedAt: timer.startedAt,
+            durationSec,
+            note: timer.note,
+            billable: true,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
+          state.worklogs.push(worklog)
+          issue.timeSpentSec += durationSec
+          touch(issue)
+          return { worklog: clone(worklog) }
+        },
+      },
+    },
+
     triage: {
       accept: async ({ issueId }: Ws & { issueId: string }) => {
         const issue = find(issueId)

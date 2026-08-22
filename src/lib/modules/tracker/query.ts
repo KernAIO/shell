@@ -18,6 +18,9 @@ export const trackerKeys = {
   milestones: (workspaceId: string, projectId: string | null) =>
     ['tracker', 'milestone', workspaceId, projectId ?? 'all'] as const,
   views: (workspaceId: string) => ['tracker', 'view', workspaceId] as const,
+  worklogs: (workspaceId: string, issueId: string) => ['tracker', 'worklog', workspaceId, issueId] as const,
+  /** the caller's running timer, which is theirs rather than any issue's */
+  timer: (workspaceId: string) => ['tracker', 'timer', workspaceId] as const,
   /** one entry per distinct query: the KQL string and ordering are the scope */
   issues: (workspaceId: string, scope: string) => ['tracker', 'issue', workspaceId, scope] as const,
   issue: (workspaceId: string, issueId: string) => ['tracker', 'issue', workspaceId, issueId] as const,

@@ -408,3 +408,24 @@ test('a project can be given components, versions and labels', async ({ page }) 
   await components.getByRole('button', { name: 'Delete' }).click()
   await expect(components.locator('[data-item="Realtime gateway"]')).toHaveCount(0)
 })
+
+test('time can be logged on an issue, by timer or by hand', async ({ page }) => {
+  // `timeSpentSec` could only ever be zero: the timer and the worklogs had a server and no screen.
+  await page.goto('/northstar/tracker?issue=KRN-6')
+  const panel = page.getByRole('dialog')
+  const time = panel.getByTestId('issue-time')
+  await expect(time).toBeVisible()
+
+  // by hand, in the way people say it rather than in seconds
+  await time.getByRole('button', { name: 'Log time' }).click()
+  await time.getByTestId('time-amount').fill('1h30m')
+  await time.getByTestId('time-log').click()
+  // 1h30m is logged as 1h30m, not rounded up to two hours
+  await expect(time.getByText('1h 30m').first()).toBeVisible()
+
+  // a timer runs until it is stopped, and stopping it keeps the time
+  await time.getByTestId('timer-start').click()
+  await expect(time.getByTestId('timer-stop')).toBeVisible()
+  await time.getByTestId('timer-stop').click()
+  await expect(time.getByTestId('timer-start')).toBeVisible()
+})

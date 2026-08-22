@@ -37,6 +37,7 @@ import CustomField from './CustomField.svelte'
 import DueDate from './DueDate.svelte'
 import IssueApprovals from './IssueApprovals.svelte'
 import IssueConnections from './IssueConnections.svelte'
+import IssueTime from './IssueTime.svelte'
 import PriorityGlyph from './PriorityGlyph.svelte'
 import StatusIcon from './StatusIcon.svelte'
 
@@ -673,6 +674,8 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
         {/if}
       {/each}
     </dl>
+
+    <IssueTime {workspaceId} issueId={issue.id} canLog={canEdit} />
 
     <IssueApprovals
       {workspaceId}
