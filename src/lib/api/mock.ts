@@ -27,6 +27,42 @@ const CORE_PERMISSIONS = [
   'core.export.run',
 ]
 
+const PERMISSION_LABELS: Record<string, string> = {
+  'core.workspace.view': 'View the workspace',
+  'core.workspace.manage': 'Change workspace settings',
+  'core.workspace.delete': 'Archive or delete the workspace',
+  'core.members.view': 'See who is a member',
+  'core.members.invite': 'Invite people',
+  'core.members.manage': 'Change roles and remove members',
+  'core.roles.manage': 'Create and edit roles',
+  'core.modules.manage': 'Turn modules on and off',
+  'core.integrations.manage': 'Configure integrations and secrets',
+  'core.audit.view': 'Read the audit log',
+  'core.files.upload': 'Upload files',
+  'core.webhooks.manage': 'Manage webhooks and API tokens',
+  'core.export.run': 'Export workspace data',
+}
+
+const MODULE_PERMISSIONS = [
+  { key: 'tracker.issue.view', label: 'View work items', module: 'tracker', dangerous: false },
+  { key: 'tracker.issue.create', label: 'Create work items', module: 'tracker', dangerous: false },
+  { key: 'tracker.issue.edit', label: 'Edit work items they reported', module: 'tracker', dangerous: false },
+  { key: 'tracker.issue.edit_any', label: 'Edit any work item', module: 'tracker', dangerous: false },
+  { key: 'tracker.issue.delete_any', label: 'Delete any work item', module: 'tracker', dangerous: true },
+  { key: 'tracker.triage.manage', label: 'Triage incoming reports', module: 'tracker', dangerous: false },
+  {
+    key: 'tracker.version.manage',
+    label: 'Manage versions and releases',
+    module: 'tracker',
+    dangerous: false,
+  },
+  { key: 'tracker.workflow.manage', label: 'Change workflows', module: 'tracker', dangerous: true },
+  { key: 'chat.channel.view', label: 'Browse channels', module: 'chat', dangerous: false },
+  { key: 'chat.channel.create', label: 'Create channels', module: 'chat', dangerous: false },
+  { key: 'chat.message.post', label: 'Post messages', module: 'chat', dangerous: false },
+  { key: 'chat.message.delete_any', label: 'Delete anyone’s message', module: 'chat', dangerous: true },
+]
+
 const user = {
   id: id(1),
   email: 'maya@northstar.dev',
@@ -206,32 +242,105 @@ const moduleManifests = [
     description: 'Accounts, workspaces, members, permissions, notifications, settings, files and search',
     icon: 'settings',
     core: true,
+    dependsOn: [] as string[],
+    permissionCount: 13,
+    eventCount: 12,
+    objectTypeCount: 2,
+    hasSettings: false,
   },
   {
     id: 'chat',
     name: 'Chat',
     version: '0.1.0',
-    description: 'Channels, direct messages, threads, reactions, mentions and search',
-    icon: 'message-square',
+    description:
+      'Channels, direct messages and threads, with reactions, mentions, read state and per-object discussions',
+    icon: 'message-square-text',
     core: false,
+    dependsOn: ['core'],
+    permissionCount: 9,
+    eventCount: 8,
+    objectTypeCount: 2,
+    hasSettings: true,
   },
   {
     id: 'tracker',
     name: 'Issues',
     version: '0.1.0',
-    description: 'Projects, work items, workflows, cycles and views',
-    icon: 'circle-dot',
+    description: 'Projects and work items with custom fields, workflows, cycles, milestones and saved views',
+    icon: 'target',
     core: false,
+    dependsOn: ['core'],
+    permissionCount: 18,
+    eventCount: 11,
+    objectTypeCount: 5,
+    hasSettings: true,
+  },
+  {
+    id: 'docs',
+    name: 'Docs',
+    version: '0.1.0',
+    description: 'Collaborative pages with live editing, version history and publishing',
+    icon: 'file-text',
+    core: false,
+    dependsOn: ['core'],
+    permissionCount: 6,
+    eventCount: 4,
+    objectTypeCount: 2,
+    hasSettings: false,
   },
   {
     id: 'mail',
     name: 'Mail',
     version: '0.1.0',
-    description: 'Outbound email providers, templates and delivery log',
+    description: 'Outbound email providers, templates, delivery log and suppression lists',
     icon: 'mail',
     core: false,
+    dependsOn: ['core'],
+    permissionCount: 2,
+    eventCount: 3,
+    objectTypeCount: 0,
+    hasSettings: true,
+  },
+  {
+    id: 'hr',
+    name: 'People',
+    version: '0.1.0',
+    description: 'Employees, org chart, leave requests with approvals, holidays and onboarding',
+    icon: 'users',
+    core: false,
+    dependsOn: ['core', 'docs'],
+    permissionCount: 11,
+    eventCount: 7,
+    objectTypeCount: 4,
+    hasSettings: true,
   },
 ]
+
+/** Shapes a seed entry like the manifest the real API returns. */
+const manifestOf = (m: (typeof moduleManifests)[number]) => ({
+  id: m.id,
+  name: m.name,
+  version: m.version,
+  description: m.description,
+  icon: m.icon,
+  core: m.core,
+  dependsOn: m.dependsOn,
+  permissions: Array.from({ length: m.permissionCount }, (_, i) => ({
+    key: `${m.id}.permission.${i}`,
+    label: `${m.name} permission ${i + 1}`,
+    scope: 'workspace',
+    defaultRoles: [],
+    dangerous: false,
+  })),
+  events: Array.from({ length: m.eventCount }, (_, i) => `${m.id}.event.${i}`),
+  objectTypes: Array.from({ length: m.objectTypeCount }, (_, i) => ({
+    type: `${m.id}-object-${i}`,
+    label: `${m.name} object ${i + 1}`,
+    channelable: false,
+  })),
+  settingsSchema: m.hasSettings ? { type: 'object', properties: {} } : undefined,
+  defaultHost: 'core',
+})
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v))
 const wsById = (workspaceId: string) => workspaces.find((w) => w.id === workspaceId)
@@ -246,6 +355,36 @@ export function createMockApi() {
     members: clone(members),
     enabled: new Map<string, Set<string>>(),
     invitations: [] as Array<Record<string, unknown>>,
+    roles: [
+      {
+        id: id(400),
+        workspaceId: workspaces[0]!.id,
+        name: 'Release manager',
+        description: 'Runs releases without full admin rights' as string | null,
+        permissions: ['core.members.view', 'core.audit.view', 'tracker.version.manage'],
+        builtin: false,
+        createdAt: iso(20 * 864e5),
+      },
+      {
+        id: id(401),
+        workspaceId: workspaces[0]!.id,
+        name: 'Support',
+        description: 'Triages incoming reports' as string | null,
+        permissions: ['core.members.view', 'tracker.issue.view', 'tracker.triage.manage'],
+        builtin: false,
+        createdAt: iso(9 * 864e5),
+      },
+    ],
+    groups: [
+      {
+        id: id(500),
+        name: 'Platform',
+        handle: 'platform',
+        description: 'Core services team',
+        memberCount: 3,
+      },
+      { id: id(501), name: 'Design', handle: 'design', description: null as string | null, memberCount: 2 },
+    ],
   }
   const enabledFor = (workspaceId: string) => {
     let set = state.enabled.get(workspaceId)
@@ -372,28 +511,54 @@ export function createMockApi() {
       },
 
       roles: {
-        list: async ({ workspaceId }: { workspaceId: string }) => [
-          {
-            id: id(400),
+        list: async ({ workspaceId }: { workspaceId: string }) =>
+          state.roles.map((r) => ({ ...clone(r), workspaceId })),
+        create: async ({
+          workspaceId,
+          name,
+          description,
+        }: {
+          workspaceId: string
+          name: string
+          description?: string | null
+        }) => {
+          const role = {
+            id: id(400 + state.roles.length),
             workspaceId,
-            name: 'Release manager',
-            description: 'Can manage versions and cycles',
-            permissions: ['core.members.view', 'core.audit.view'],
+            name,
+            description: description ?? null,
+            permissions: [] as string[],
             builtin: false,
-            createdAt: iso(20 * 864e5),
-          },
-        ],
-        create: notImplemented('workspaces.roles.create'),
-        update: notImplemented('workspaces.roles.update'),
-        delete: async () => ({ ok: true as const }),
-        permissions: async () =>
-          CORE_PERMISSIONS.map((key) => ({
+            createdAt: new Date().toISOString(),
+          }
+          state.roles.push(role)
+          return clone(role)
+        },
+        update: async ({
+          id: roleId,
+          patch,
+        }: {
+          id: string
+          patch: { permissions?: string[]; name?: string }
+        }) => {
+          const role = state.roles.find((r) => r.id === roleId)
+          if (role) Object.assign(role, patch)
+          return clone(role ?? state.roles[0]!)
+        },
+        delete: async ({ id: roleId }: { id: string }) => {
+          state.roles = state.roles.filter((r) => r.id !== roleId)
+          return { ok: true as const }
+        },
+        permissions: async () => [
+          ...CORE_PERMISSIONS.map((key) => ({
             key,
-            label: key.split('.').slice(1).join(' ').replace(/_/g, ' '),
+            label: PERMISSION_LABELS[key] ?? key.split('.').slice(1).join(' '),
             module: 'core',
             scope: 'workspace',
-            dangerous: key.endsWith('delete') || key.endsWith('manage'),
+            dangerous: key.endsWith('delete') || key === 'core.roles.manage',
           })),
+          ...MODULE_PERMISSIONS.map((p) => ({ ...p, scope: 'workspace' })),
+        ],
         bindings: {
           list: async () => [],
           set: notImplemented('bindings.set'),
@@ -402,18 +567,29 @@ export function createMockApi() {
       },
 
       groups: {
-        list: async ({ workspaceId }: { workspaceId: string }) => [
-          {
-            id: id(500),
-            workspaceId,
-            name: 'Platform',
-            handle: 'platform',
-            description: 'Core services team',
-            memberCount: 3,
-            createdAt: iso(30 * 864e5),
-          },
-        ],
-        create: notImplemented('workspaces.groups.create'),
+        list: async ({ workspaceId }: { workspaceId: string }) =>
+          state.groups.map((g) => ({ ...clone(g), workspaceId, createdAt: iso(30 * 864e5) })),
+        create: async ({
+          workspaceId,
+          name,
+          handle,
+          description,
+        }: {
+          workspaceId: string
+          name: string
+          handle: string
+          description?: string | null
+        }) => {
+          const group = {
+            id: id(500 + state.groups.length),
+            name,
+            handle,
+            description: description ?? null,
+            memberCount: 0,
+          }
+          state.groups.push(group)
+          return { ...clone(group), workspaceId, createdAt: new Date().toISOString() }
+        },
         update: notImplemented('workspaces.groups.update'),
         delete: async () => ({ ok: true as const }),
         setMembers: notImplemented('workspaces.groups.setMembers'),
@@ -424,14 +600,7 @@ export function createMockApi() {
         list: async ({ workspaceId }: { workspaceId: string }) => {
           const on = enabledFor(workspaceId)
           return moduleManifests.map((m) => ({
-            manifest: {
-              ...m,
-              dependsOn: [],
-              permissions: [],
-              events: [],
-              objectTypes: [],
-              defaultHost: 'core',
-            },
+            manifest: manifestOf(m),
             state: {
               moduleId: m.id,
               enabled: m.core || on.has(m.id),

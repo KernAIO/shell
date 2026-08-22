@@ -1,13 +1,17 @@
 <script lang="ts">
-import { Card, Field, Select } from '@kernalo/ui'
+import { Icon, Select } from '@kernalo/ui'
+import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
+import SettingsRow from '$lib/components/settings/SettingsRow.svelte'
+import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
 import { getLocale, locales, setLocale } from '$lib/paraglide/runtime'
 import { type ThemeChoice, theme } from '$lib/state/theme.svelte'
 import * as m from '$msg'
 
-const themeOptions = [
-  { value: 'light', label: m.theme_light() },
-  { value: 'dark', label: m.theme_dark() },
-  { value: 'system', label: m.theme_system() },
+/** Appearance is per-device: it lives in this browser rather than on the account. */
+const THEMES: Array<{ value: ThemeChoice; label: string; icon: string }> = [
+  { value: 'light', label: m.theme_light(), icon: 'sun' },
+  { value: 'dark', label: m.theme_dark(), icon: 'moon' },
+  { value: 'system', label: m.theme_system(), icon: 'monitor' },
 ]
 
 const localeNames: Record<string, string> = {
@@ -21,27 +25,58 @@ const localeOptions = locales.map((code) => ({ value: code, label: localeNames[c
 
 <svelte:head><title>{m.settings_appearance()} · {m.settings_title()}</title></svelte:head>
 
-<Card class="p-5">
-  <h2 class="text-[15px] font-semibold text-[var(--kern-ink-900)]">{m.appearance_title()}</h2>
-  <p class="mt-1 text-[12.5px] text-[var(--kern-ink-500)]">{m.appearance_hint()}</p>
+<SettingsPage title={m.appearance_title()} description={m.appearance_hint()}>
+  <SettingsSection title={m.theme()}>
+    <div class="grid grid-cols-3 gap-2.5 pt-1">
+      {#each THEMES as option (option.value)}
+        <button
+          type="button"
+          onclick={() => theme.set(option.value)}
+          aria-pressed={theme.choice === option.value}
+          class="grid gap-2 rounded-[10px] border p-3 text-start transition-colors {theme.choice ===
+          option.value
+            ? 'border-[var(--kern-accent)] bg-[var(--kern-accent-tint)]'
+            : 'border-[var(--kern-border)] hover:border-[var(--kern-border-hover)]'}"
+        >
+          <!-- a miniature of the shell, so the choice is visible rather than described -->
+          <span
+            class="flex h-14 overflow-hidden rounded-[6px] border border-[var(--kern-border-hairline)] {option.value ===
+            'dark'
+              ? 'bg-[#1c1a17]'
+              : option.value === 'light'
+                ? 'bg-[#f0eee7]'
+                : 'bg-gradient-to-r from-[#f0eee7] from-50% to-[#1c1a17] to-50%'}"
+          >
+            <span
+              class="w-3 border-e {option.value === 'dark'
+                ? 'border-[#2a2721] bg-[#181715]'
+                : 'border-[#e4e0d6] bg-[#e9e6dd]'}"
+            ></span>
+            <span class="flex-1 p-1.5">
+              <span
+                class="block h-1.5 w-8 rounded-[2px] {option.value === 'dark' ? 'bg-[#3a362e]' : 'bg-[#d5cfc2]'}"
+              ></span>
+            </span>
+          </span>
 
-  <div class="mt-5 grid gap-4">
-    <Field label={m.theme()} id="theme">
-      <Select
-        id="theme"
-        value={theme.choice}
-        options={themeOptions}
-        onValueChange={(v) => theme.set(v as ThemeChoice)}
-      />
-    </Field>
+          <span class="flex items-center gap-1.5">
+            <Icon name={option.icon} size={14} class="text-[var(--kern-ink-500)]" />
+            <span class="text-[13px] text-[var(--kern-ink-800)]">{option.label}</span>
+          </span>
+        </button>
+      {/each}
+    </div>
+  </SettingsSection>
 
-    <Field label={m.language()} id="locale">
+  <SettingsSection title={m.language()} description={m.appearance_language_hint()}>
+    <SettingsRow label={m.language()} for="locale" first>
       <Select
         id="locale"
         value={getLocale()}
         options={localeOptions}
+        width="200px"
         onValueChange={(v) => setLocale(v as (typeof locales)[number])}
       />
-    </Field>
-  </div>
-</Card>
+    </SettingsRow>
+  </SettingsSection>
+</SettingsPage>
