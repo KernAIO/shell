@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@import "@kernalo/ui/styles/index.css";
+@import "@kernalo/ui/styles/theme.css";
+
+html,
+body {
+  height: 100%;
+  background: var(--kern-canvas);
+  color: var(--kern-ink-700);
+  font-family: var(--kern-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* fa/ar body text breathes a little more (DESIGN.md §6) */
+:lang(fa),
+:lang(ar) {
+  line-height: 1.65;
+}
+:lang(fa) .kern-section-label,
+:lang(ar) .kern-section-label {
+  letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

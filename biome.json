@@ -1,8 +1,22 @@
 {
   "$schema": "https://biomejs.dev/schemas/2.5.10/schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "includes": ["**", "!**/dist", "!**/build", "!**/.svelte-kit", "!**/node_modules", "!**/coverage", "!**/drizzle/meta"] },
+  "files": {
+    "includes": [
+      "**",
+      "!**/dist",
+      "!**/build",
+      "!**/.svelte-kit",
+      "!**/node_modules",
+      "!**/coverage",
+      "!**/drizzle/meta",
+      "!src/lib/paraglide",
+      "!test-results",
+      "!playwright-report"
+    ]
+  },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 110 },
+  "css": { "parser": { "tailwindDirectives": true } },
   "javascript": { "formatter": { "quoteStyle": "single", "semicolons": "asNeeded", "trailingCommas": "all" } },
   "linter": {
     "enabled": true,
@@ -14,6 +28,14 @@
     }
   },
   "overrides": [
-    { "includes": ["**/*.svelte"], "linter": { "rules": { "style": { "useConst": "off" }, "correctness": { "noUnusedVariables": "off", "noUnusedImports": "off" } } } }
+    {
+      "includes": ["**/*.svelte"],
+      "linter": {
+        "rules": {
+          "style": { "useConst": "off" },
+          "correctness": { "noUnusedVariables": "off", "noUnusedImports": "off" }
+        }
+      }
+    }
   ]
 }

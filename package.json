@@ -1,0 +1,52 @@
+{
+  "name": "@kernalo/app",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kern web app — SvelteKit PWA shell hosting every module's client",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "dev": "vite dev --port 5173",
+    "dev:mock": "PUBLIC_API_MOCK=1 vite dev --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --port 5173",
+    "start": "node build",
+    "lint": "biome check .",
+    "i18n": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide",
+    "typecheck": "pnpm i18n && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "icons": "node scripts/gen-icons.mjs"
+  },
+  "dependencies": {
+    "@better-auth/passkey": "^1.7.1",
+    "@internationalized/date": "^3.12.0",
+    "@kernalo/contracts": "^0.1.0",
+    "@kernalo/kernel": "^0.1.0",
+    "@kernalo/module-template": "^0.1.0",
+    "@kernalo/sdk": "^0.1.0",
+    "@kernalo/ui": "^0.1.0",
+    "@lucide/svelte": "^1.33.0",
+    "@tanstack/svelte-query": "^6.1.0",
+    "better-auth": "^1.7.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.5.0",
+    "@inlang/paraglide-js": "^2.24.0",
+    "@playwright/test": "^1.62.0",
+    "@sveltejs/adapter-node": "^5.5.7",
+    "@sveltejs/kit": "^2.70.0",
+    "@sveltejs/vite-plugin-svelte": "^7.3.0",
+    "@tailwindcss/vite": "^4.3.0",
+    "@types/node": "^24.0.0",
+    "@vite-pwa/sveltekit": "^1.1.0",
+    "svelte": "^5.56.0",
+    "svelte-check": "^4.7.0",
+    "tailwindcss": "^4.3.0",
+    "typescript": "~5.9.3",
+    "vite": "^8.2.0",
+    "vite-plugin-pwa": "^1.3.0",
+    "vitest": "^4.0.0"
+  }
+}

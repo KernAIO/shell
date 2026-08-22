@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+.svelte-kit/
+.env
+.env.*
+!.env.example
+coverage/
+test-results/
+playwright-report/
+src/lib/paraglide/
+project.inlang/cache/
+*.local
+.DS_Store
