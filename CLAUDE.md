@@ -113,6 +113,15 @@ in-memory API with demo data — no backend, no database.
   `messages/*.json` reached a build only if somebody happened to run `typecheck` (which runs
   `i18n`); otherwise the built app called a message function that did not exist — a runtime failure
   with a green build. `build` now runs `i18n` itself.
+- **`scripts/check-icons.mjs` only sees this repository.** A module's server picks icon names too —
+  work item types, built-in views — and those reach `<Icon>` through data rather than through source
+  the check can read. `bug` and `git-branch` were named by the tracker's templates and missing from
+  the registry for exactly that reason.
+- **`Button` renders `type="button"`.** A `<form>`'s submit therefore depends on how its props
+  happen to spread; give the button its own `onclick` rather than relying on that.
+- **A `<T,>` generic does not survive the Svelte formatter.** Biome rewrites it and then disagrees
+  with itself, so `pnpm lint` never settles. Use a `function` declaration, whose generic is
+  unambiguous, or move the helper to a `.ts` file.
 - **The message renderer's classes need styling by the consumer.** `renderDocToHtml` emits
   `.kern-chat-mention`, `.kern-chat-link`, `.kern-chat-code` and `.kern-chat-pre`; without CSS for
   them a mention reads as plain text.
@@ -127,3 +136,18 @@ in-memory API with demo data — no backend, no database.
   touched. Keep new queries in that shape.
 - Every user-facing string goes through Paraglide (`messages/*.json`), and the layout must survive
   `dir="rtl"` — use logical properties, never `left`/`right`.
+- **The module clients ship Svelte source, so they must be in `optimizeDeps.exclude`.**
+  `@kernhq/module-*`'s `./client` export points at `src/client/index.ts`. Vite's pre-bundler hands
+  `store.svelte.ts` to Svelte's *module* compiler, which does not strip TypeScript, and the whole
+  optimise step dies on the first `import type` — leaving a 500 that looks nothing like its cause.
+  A warm `node_modules/.vite` hides it, so it only appears on a cold start or after a forced
+  re-optimisation.
+- **Two Vite servers on one checkout share `node_modules/.vite` and corrupt each other's cache.**
+  One dead server therefore breaks the live one. `lsof -ti:5173` should print exactly one pid; if you
+  need a second server, expect to `rm -rf node_modules/.vite` afterwards.
+- **A shell-derived name and a page-set one will fight unless you record which is which.** The tab
+  strip derives a tab's label from its href, and a page refines it (`Chat` → `eng-core`). Reapplying
+  the derived name on every navigation silently undid the page's — hence `WorkTab.named`. Any label
+  with two sources needs the same flag.
+- Tab-strip shortcuts are ⌥-based (⌥T, ⌥W, ⌥1-9, ⌥[ / ⌥]). ⌘T/⌘W/⌘1 are reserved by the browser and
+  never reach the page. Match on `e.code`, not `e.key`: ⌥T on a Mac keyboard types `†`.
