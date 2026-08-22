@@ -1,6 +1,10 @@
 <script lang="ts">
 import type { ChatStore } from '@kernhq/module-chat/client'
 import { IconButton, toast } from '@kernhq/ui'
+import { page } from '$app/state'
+import { MediaRecording, type RecorderKind } from '$lib/files/recorder.svelte'
+import { uploadFile } from '$lib/files/upload'
+import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 import { typingLabel } from '../labels'
 import {
@@ -13,8 +17,10 @@ import {
 } from '../mentions'
 import { workspacePeople } from '../people.svelte'
 import { canChat } from '../permissions'
+import AttachmentTray from './AttachmentTray.svelte'
 import EmojiPicker from './EmojiPicker.svelte'
 import MentionMenu from './MentionMenu.svelte'
+import RecorderBar from './RecorderBar.svelte'
 
 /**
  * Writing a message.
@@ -49,6 +55,73 @@ let sending = $state(false)
 let el = $state<HTMLTextAreaElement | null>(null)
 let emojiOpen = $state(false)
 let emojiTrigger = $state<HTMLButtonElement | null>(null)
+let fileInput = $state<HTMLInputElement | null>(null)
+
+/** files already uploaded and waiting to go with the next message */
+let attached = $state<Array<{ id: string; name: string; mimeType: string }>>([])
+let uploading = $state(0)
+
+const recorder = new MediaRecording()
+let recordingKind = $state<RecorderKind>('audio')
+let sendingRecording = $state(false)
+const recordingOpen = $derived(recorder.state !== 'idle')
+
+const workspaceId = $derived(session.workspaces.find((w) => w.slug === (page.params.ws ?? ''))?.id ?? '')
+
+/** Largest single upload core accepts by default; the server rejects anything bigger. */
+const MAX_UPLOAD_BYTES = 100 * 1024 * 1024
+
+async function attachBlob(blob: Blob, name: string, mimeType?: string) {
+  if (blob.size > MAX_UPLOAD_BYTES) {
+    toast.error(m.chat_attachment_too_large({ name, limit: 100 }))
+    return null
+  }
+  uploading += 1
+  try {
+    const file = await uploadFile({ workspaceId, file: blob, name, mimeType })
+    attached = [...attached, { id: file.id, name: file.name, mimeType: file.mimeType }]
+    return file
+  } catch (error) {
+    toast.error(error instanceof Error && error.message ? error.message : m.chat_attach_failed({ name }))
+    return null
+  } finally {
+    uploading -= 1
+  }
+}
+
+async function onFilesPicked(event: Event) {
+  const input = event.currentTarget as HTMLInputElement
+  for (const file of Array.from(input.files ?? [])) await attachBlob(file, file.name, file.type)
+  input.value = ''
+}
+
+function startRecording(kind: RecorderKind) {
+  recordingKind = kind
+  void recorder.start(kind)
+}
+
+async function sendRecording() {
+  const result = recorder.result
+  if (!result) return
+  sendingRecording = true
+  try {
+    const file = await attachBlob(result.blob, result.suggestedName, result.mimeType)
+    if (!file) return
+    await store.post(channelId, textToDoc(text.trim(), picked), {
+      threadRootId,
+      attachments: [file.id],
+    })
+    text = ''
+    picked = []
+    attached = attached.filter((a) => a.id !== file.id)
+    drafts.delete(draftKey)
+    recorder.discard()
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : m.chat_failed())
+  } finally {
+    sendingRecording = false
+  }
+}
 
 // the open @ menu, if any
 let mentionStart = $state<number | null>(null)
@@ -155,21 +228,28 @@ function insertAtCaret(fragment: string, opts: { trailingSpace?: boolean } = {})
 
 async function send() {
   const value = text.trim()
-  if (!value || sending || !allowed) return
+  // an attachment on its own is a message; the server allows an empty body when files are present
+  if ((!value && attached.length === 0) || sending || !allowed) return
   sending = true
   const restoreText = text
   const restorePicked = picked
   text = ''
   picked = []
   closeMentionMenu()
+  const restoreAttached = attached
+  attached = []
   try {
-    await store.post(channelId, textToDoc(value, restorePicked), { threadRootId })
+    await store.post(channelId, textToDoc(value, restorePicked), {
+      threadRootId,
+      attachments: restoreAttached.map((a) => a.id),
+    })
     drafts.delete(draftKey)
     queueMicrotask(grow)
   } catch (error) {
-    // never lose what someone wrote
+    // never lose what someone wrote, or what they attached
     text = restoreText
     picked = restorePicked
+    attached = restoreAttached
     toast.error(error instanceof Error ? error.message : m.chat_failed())
   } finally {
     sending = false
@@ -212,6 +292,15 @@ function onkeydown(event: KeyboardEvent) {
 </script>
 
 <div class="composer">
+  {#if recordingOpen}
+    <RecorderBar
+      {recorder}
+      kind={recordingKind}
+      sending={sendingRecording}
+      onsend={sendRecording}
+      oncancel={() => recorder.discard()}
+    />
+  {:else}
   <div class="box" class:disabled={!allowed}>
     {#if mentionOpen}
       <MentionMenu
@@ -251,6 +340,14 @@ function onkeydown(event: KeyboardEvent) {
       {onkeydown}
     ></textarea>
 
+    {#if attached.length || uploading > 0}
+      <AttachmentTray
+        items={attached}
+        {uploading}
+        onremove={(id) => (attached = attached.filter((a) => a.id !== id))}
+      />
+    {/if}
+
     <div class="tools">
       <div class="emoji-anchor">
         <IconButton
@@ -284,7 +381,30 @@ function onkeydown(event: KeyboardEvent) {
         variant="ghost"
         radius={5}
         disabled={!allowed}
-        onclick={() => toast.info(m.chat_attach_soon())}
+        onclick={() => fileInput?.click()}
+        data-testid="attach-button"
+      />
+
+      <IconButton
+        icon="mic"
+        label={m.chat_record_voice()}
+        size={26}
+        variant="ghost"
+        radius={5}
+        disabled={!allowed || !recorder.supported}
+        onclick={() => startRecording('audio')}
+        data-testid="record-voice"
+      />
+
+      <IconButton
+        icon="video"
+        label={m.chat_record_video()}
+        size={26}
+        variant="ghost"
+        radius={5}
+        disabled={!allowed || !recorder.supported}
+        onclick={() => startRecording('video')}
+        data-testid="record-video"
       />
 
       <IconButton
@@ -309,6 +429,9 @@ function onkeydown(event: KeyboardEvent) {
       />
 
       <span class="typing" aria-live="polite">{typing ?? ''}</span>
+      {#if !typing && text.length > 0}
+        <span class="hint">{m.chat_newline_hint()}</span>
+      {/if}
 
       <IconButton
         icon="arrow-up"
@@ -317,12 +440,24 @@ function onkeydown(event: KeyboardEvent) {
         radius={6}
         variant="primary"
         strokeWidth={2}
-        disabled={!allowed || !text.trim() || sending}
+        disabled={!allowed || (!text.trim() && attached.length === 0) || sending}
         onclick={send}
         data-testid="send"
       />
     </div>
   </div>
+
+  <input
+    bind:this={fileInput}
+    type="file"
+    multiple
+    class="hidden-input"
+    aria-hidden="true"
+    tabindex="-1"
+    onchange={onFilesPicked}
+    data-testid="file-input"
+  />
+  {/if}
 </div>
 
 <style>
@@ -359,6 +494,11 @@ function onkeydown(event: KeyboardEvent) {
   .input::placeholder {
     color: var(--kern-ink-350);
   }
+  /* The global :focus-visible rule adds a 3px ring to anything focused. The composer already shows
+     focus on its outer box, so the field inside drew a second rectangle around the text. */
+  .input:focus-visible {
+    box-shadow: none;
+  }
   .tools {
     display: flex;
     align-items: center;
@@ -369,6 +509,18 @@ function onkeydown(event: KeyboardEvent) {
     position: relative;
     display: flex;
   }
+  /* the real control is the paperclip; this only exists to open the file dialog */
+  .hidden-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
   .typing {
     flex: 1;
     min-width: 0;
@@ -377,6 +529,14 @@ function onkeydown(event: KeyboardEvent) {
     color: var(--kern-ink-350);
     overflow: hidden;
     text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* the placeholder teaches this while the box is empty; once you are typing it moves here */
+  .hint {
+    flex: none;
+    margin-inline-end: 6px;
+    font-size: 11.5px;
+    color: var(--kern-ink-280);
     white-space: nowrap;
   }
 </style>

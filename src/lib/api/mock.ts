@@ -7,6 +7,8 @@
  * throws loudly rather than silently returning empty data.
  */
 
+import { mockObjectUrl } from '$lib/files/mock-storage'
+
 const now = Date.now()
 const iso = (msAgo = 0) => new Date(now - msAgo).toISOString()
 const id = (n: number) => `01920000-0000-7000-8000-${String(n).padStart(12, '0')}`
@@ -348,7 +350,30 @@ const notImplemented = (name: string) => () => {
   throw new Error(`[mock] ${name} is not implemented`)
 }
 
+/** Files uploaded during a demo. The bytes live in `$lib/files/mock-storage`; this is the metadata. */
+type MockFile = {
+  id: string
+  workspaceId: string
+  name: string
+  mimeType: string
+  size: number
+  key: string
+  sha256: string | null
+  width: number | null
+  height: number | null
+  durationMs: number | null
+  thumbnailKey: string | null
+  attachedTo: { module: string; type: string; id: string } | null
+  uploadedBy: string
+  status: 'pending' | 'ready' | 'failed' | 'deleted'
+  createdAt: string
+}
+
 export function createMockApi() {
+  const files = new Map<string, MockFile>()
+  let fileCounter = 0
+  const fileId = (n: number) => `01920000-0000-7000-8003-${String(n).padStart(12, '0')}`
+
   const state = {
     notifications: clone(notifications),
     workspaces: clone(workspaces),
@@ -757,12 +782,68 @@ export function createMockApi() {
       vapidPublicKey: async () => ({ publicKey: null }),
     },
 
+    /**
+     * Files, with the bytes held in memory rather than a bucket.
+     *
+     * `createUpload` hands back a `mock-upload://` URL, which is the one thing the uploader knows
+     * about the mock; the bytes go into `$lib/files/mock-storage` and come back out as object URLs.
+     * Everything else — the three-step upload, the `pending` → `ready` transition, the shape of a
+     * `FileObject` — is exactly what the real service does.
+     */
     files: {
-      createUpload: notImplemented('files.createUpload'),
-      complete: notImplemented('files.complete'),
-      get: notImplemented('files.get'),
-      downloadUrl: notImplemented('files.downloadUrl'),
-      delete: async () => ({ ok: true as const }),
+      createUpload: async (input: {
+        workspaceId: string
+        name: string
+        mimeType: string
+        size: number
+        attachedTo?: { module: string; type: string; id: string }
+      }) => {
+        fileCounter += 1
+        const file = {
+          id: fileId(fileCounter),
+          workspaceId: input.workspaceId,
+          name: input.name,
+          mimeType: input.mimeType,
+          size: input.size,
+          key: `mock/${input.workspaceId}/${fileCounter}/${input.name}`,
+          sha256: null,
+          width: null,
+          height: null,
+          durationMs: null,
+          thumbnailKey: null,
+          attachedTo: input.attachedTo ?? null,
+          uploadedBy: user.id,
+          status: 'pending' as const,
+          createdAt: iso(0),
+        }
+        files.set(file.id, file)
+        return {
+          file: clone(file),
+          method: 'put' as const,
+          url: `mock-upload://${file.id}`,
+          headers: {},
+          expiresAt: new Date(now + 900_000).toISOString(),
+        }
+      },
+      complete: async ({ id: fid }: { id: string }) => {
+        const file = files.get(fid)
+        if (!file) throw new Error(`mock: no file ${fid}`)
+        file.status = 'ready'
+        return clone(file)
+      },
+      get: async ({ id: fid }: { id: string }) => {
+        const file = files.get(fid)
+        if (!file) throw new Error(`mock: no file ${fid}`)
+        return clone(file)
+      },
+      downloadUrl: async ({ id: fid }: { id: string }) => ({
+        url: mockObjectUrl(fid) || `mock-upload://${fid}`,
+        expiresAt: new Date(now + 900_000).toISOString(),
+      }),
+      delete: async ({ id: fid }: { id: string }) => {
+        files.delete(fid)
+        return { ok: true as const }
+      },
     },
 
     search: async ({ q }: { q: string }) => ({

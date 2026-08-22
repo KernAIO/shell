@@ -74,6 +74,11 @@ in-memory API with demo data — no backend, no database.
 - Check a component's actual props before using it — several differ from the obvious guess (`Field`
   takes `id` and passes it to its children snippet; `Tabs` items use `value`, not `id`; `Card` is a
   block, so wrap flex layouts in your own element).
+- **Uploads go through `$lib/files/upload.ts` — there is exactly one uploader.** Ask core for a
+  ticket, PUT the bytes straight to storage, then tell core the file is `ready`. Skipping the third
+  step leaves the file `pending` and invisible for ever. In mock mode the ticket URL is
+  `mock-upload://` and the bytes live in memory; that branch is the only thing in the app that knows
+  the mock exists.
 - **Kill stale dev servers before debugging.** A second process on :5173 served old code twice in one
   day and made correct fixes look broken. `lsof -ti:5173` should print exactly one pid.
 - **Using a module API you just added means bumping the dependency in the same change.** The

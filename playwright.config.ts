@@ -18,7 +18,25 @@ export default defineConfig({
     locale: 'en-GB',
     timezoneId: 'UTC',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        // Recording a voice or video message needs a capture device and a granted permission.
+        // Chrome's fake device produces a silent tone and a test pattern, so the recorder can be
+        // exercised for real rather than mocked away.
+        permissions: ['microphone', 'camera'],
+        launchOptions: {
+          args: [
+            '--use-fake-ui-for-media-stream',
+            '--use-fake-device-for-media-stream',
+            '--autoplay-policy=no-user-gesture-required',
+          ],
+        },
+      },
+    },
+  ],
   webServer: {
     command: 'PUBLIC_API_MOCK=1 npm run build && PUBLIC_API_MOCK=1 npm run preview -- --port 4173',
     url: 'http://localhost:4173',

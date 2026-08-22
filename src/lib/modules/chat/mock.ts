@@ -491,15 +491,18 @@ export function createMockChatApi() {
         channelId,
         body,
         threadRootId,
+        attachments,
       }: {
         channelId: string
         body: Json
         threadRootId?: string
+        attachments?: string[]
       }) {
         const text = plainText(body)
         const msg = say(channelId, ME, text, {
           body,
           threadRootId: threadRootId ?? null,
+          attachments: attachments ?? [],
           createdAt: iso(0),
         })
         if (threadRootId) {

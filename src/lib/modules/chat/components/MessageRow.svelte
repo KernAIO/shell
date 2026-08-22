@@ -8,6 +8,7 @@ import { QUICK_REACTIONS } from '../emoji'
 import { textToDoc } from '../mentions'
 import { canChat } from '../permissions'
 import { attempt } from '../report'
+import Attachments from './Attachments.svelte'
 import EmojiPicker from './EmojiPicker.svelte'
 
 /**
@@ -204,6 +205,10 @@ const actions = $derived<MenuItem[]>([
     {:else}
       <!-- the store renders the document to sanitised HTML; it never interpolates raw input -->
       <div class="text">{@html html}</div>
+    {/if}
+
+    {#if message.attachments.length && !editing}
+      <Attachments ids={message.attachments} />
     {/if}
 
     {#if message.reactions.length && !editing}
@@ -526,6 +531,11 @@ const actions = $derived<MenuItem[]>([
     line-height: 1.5;
     color: var(--kern-ink-800);
     outline: none;
+  }
+  /* its own border already shows focus; the global ring would draw a second rectangle */
+  .editor textarea:focus-visible {
+    box-shadow: none;
+    border-color: var(--kern-accent);
   }
   .editor-actions {
     display: flex;

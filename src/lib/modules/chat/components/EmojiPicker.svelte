@@ -141,6 +141,9 @@ $effect(() => {
     color: var(--kern-ink-800);
     outline: none;
   }
+  .search input:focus-visible {
+    box-shadow: none;
+  }
   .scroll {
     max-height: 244px;
     overflow-y: auto;

@@ -359,3 +359,104 @@ test('an empty conversation says so instead of showing nothing', async ({ page }
   await expect(page.getByTestId('empty-conversation')).toBeVisible()
   await expect(page.getByText('No messages yet')).toBeVisible()
 })
+
+/**
+ * Attachments, and the voice and video messages built on top of them.
+ *
+ * The mock keeps uploaded bytes in memory, so these exercise the real three-step upload — ask for a
+ * ticket, send the bytes, mark the file ready — and the real recorder against Chrome's fake capture
+ * device.
+ */
+
+test('a file can be attached and sent, and renders in the message', async ({ page }) => {
+  await openChat(page)
+  await page.getByTestId('conversation-row').filter({ hasText: 'design' }).click()
+
+  const before = await page.getByTestId('message').count()
+  await page.getByTestId('file-input').setInputFiles({
+    name: 'release-notes.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('what changed in this release'),
+  })
+
+  // it uploads immediately, so sending is instant rather than starting a wait
+  await expect(page.getByTestId('pending-attachment')).toContainText('release-notes.txt')
+
+  await page.getByTestId('send').click()
+  await expect(page.getByTestId('message')).toHaveCount(before + 1)
+
+  const card = page.getByTestId('attachment-file').last()
+  await expect(card).toContainText('release-notes.txt')
+  await expect(card).toContainText('28 B')
+})
+
+test('an attachment can be removed before it is sent', async ({ page }) => {
+  await openChat(page)
+  await page.getByTestId('conversation-row').filter({ hasText: 'design' }).click()
+
+  await page.getByTestId('file-input').setInputFiles({
+    name: 'wrong-file.txt',
+    mimeType: 'text/plain',
+    buffer: Buffer.from('not this one'),
+  })
+  const chip = page.getByTestId('pending-attachment')
+  await expect(chip).toBeVisible()
+
+  await chip.getByRole('button', { name: 'Remove attachment' }).click()
+  await expect(chip).toBeHidden()
+  // with nothing attached and nothing typed, there is nothing to send
+  await expect(page.getByTestId('send')).toBeDisabled()
+})
+
+test('a voice message records, previews and sends', async ({ page }) => {
+  await openChat(page)
+  await page.getByTestId('conversation-row').filter({ hasText: 'design' }).click()
+
+  const before = await page.getByTestId('message').count()
+  await page.getByTestId('record-voice').click()
+
+  const bar = page.getByTestId('recorder-bar')
+  await expect(bar).toHaveAttribute('data-state', 'recording')
+  await page.waitForTimeout(1200)
+
+  await page.getByTestId('stop-recording').click()
+  // stopping does not send: you get the recording to listen to first
+  await expect(bar).toHaveAttribute('data-state', 'review')
+  await expect(page.getByTestId('recording-preview')).toBeVisible()
+  await expect(page.getByTestId('message')).toHaveCount(before)
+
+  await page.getByTestId('send-recording').click()
+  await expect(page.getByTestId('message')).toHaveCount(before + 1)
+  await expect(page.getByTestId('attachment-audio').last()).toBeVisible()
+})
+
+test('a recording can be discarded without sending', async ({ page }) => {
+  await openChat(page)
+  await page.getByTestId('conversation-row').filter({ hasText: 'design' }).click()
+
+  const before = await page.getByTestId('message').count()
+  await page.getByTestId('record-voice').click()
+  await expect(page.getByTestId('recorder-bar')).toHaveAttribute('data-state', 'recording')
+
+  await page.getByTestId('discard-recording').click()
+  await expect(page.getByTestId('recorder-bar')).toBeHidden()
+  // the composer is back, and nothing was sent
+  await expect(page.getByTestId('composer')).toBeVisible()
+  await expect(page.getByTestId('message')).toHaveCount(before)
+})
+
+test('a video message records and sends', async ({ page }) => {
+  await openChat(page)
+  await page.getByTestId('conversation-row').filter({ hasText: 'design' }).click()
+
+  const before = await page.getByTestId('message').count()
+  await page.getByTestId('record-video').click()
+  await expect(page.getByTestId('recorder-bar')).toHaveAttribute('data-state', 'recording')
+  await page.waitForTimeout(1200)
+
+  await page.getByTestId('stop-recording').click()
+  await page.getByTestId('send-recording').click()
+
+  await expect(page.getByTestId('message')).toHaveCount(before + 1)
+  await expect(page.getByTestId('attachment-video').last()).toBeVisible()
+})
