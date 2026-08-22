@@ -80,8 +80,11 @@ const otherUser = (c: ChannelView) => {
               {/if}
               <span class="name">{store.channelLabel(c)}</span>
               {#if mentions > 0 && !muted}
-                <span class="badge mention">{mentions}</span>
+                <span class="badge glow">{mentions}</span>
               {:else if unread > 0 && !muted}
+                <span class="badge glow">{unread > 99 ? '99+' : unread}</span>
+              {:else if unread > 0 && muted}
+                <!-- muted still counts, quietly: the point of muting is that it does not shout -->
                 <span class="badge">{unread > 99 ? '99+' : unread}</span>
               {:else if muted}
                 <Icon name="bell-off" size={13} strokeWidth={1.6} class="mute-mark" />
@@ -98,63 +101,85 @@ const otherUser = (c: ChannelView) => {
 </div>
 
 <style>
+  /* DESIGN.md 2.3: nav scroll area `padding: 0 0 14px`, each group `padding: 4px 12px 6px`. */
   .list {
-    padding: 2px 4px 12px;
+    padding-block: 0 14px;
   }
-  .group + .group {
-    margin-top: 14px;
+  .group {
+    padding: 4px 12px 6px;
   }
+
+  /* DESIGN.md 2.3 nav item — these are the sidebar's own geometry, not chat's invention. */
   .row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     width: 100%;
-    padding: 6px 8px;
+    height: 34px;
+    padding-inline: 10px;
     border: 0;
-    border-radius: 7px;
+    border-radius: 9px;
     background: transparent;
-    color: var(--kern-ink-500);
+    color: var(--kern-ink-650);
     font-size: 13.5px;
     text-align: start;
     cursor: pointer;
   }
   .row:hover {
-    background: var(--kern-surface-hover);
-    color: var(--kern-ink-700);
+    background: var(--kern-border);
   }
   .row.active {
-    background: var(--kern-surface-active);
-    color: var(--kern-ink-900);
+    background: var(--kern-ink-900);
+    color: var(--kern-surface);
   }
-  .row.unread {
+  .row.active :global(svg) {
+    color: var(--kern-surface);
+  }
+  .row.active .name {
+    font-weight: 600;
+  }
+  .row.unread:not(.active) {
     color: var(--kern-ink-900);
     font-weight: 500;
   }
   .row.muted {
     opacity: 0.62;
   }
+  .row :global(svg) {
+    flex: none;
+    color: var(--kern-ink-330);
+  }
   .name {
     flex: 1;
     min-width: 0;
+    letter-spacing: -0.005em;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+
+  /* DESIGN.md 2.3 badge: the "count" variant, and "glow" when it is unread or a mention. */
   .badge {
     flex: none;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 5px;
-    border-radius: 9px;
-    background: var(--kern-ink-900);
-    color: var(--kern-ink-inverse);
-    font-size: 11px;
-    font-weight: 600;
-    line-height: 18px;
-    text-align: center;
+    padding: 1px 6px;
+    border-radius: 5px;
+    background: var(--kern-surface-active);
+    color: var(--kern-ink-400);
+    font-family: var(--kern-font-mono);
+    font-size: 10.5px;
+    font-weight: 500;
+    line-height: 1.5;
   }
-  .badge.mention {
-    background: var(--kern-accent);
+  .badge.glow {
+    background: var(--kern-danger);
+    color: var(--kern-surface);
+  }
+  .row.active .badge {
+    background: var(--kern-ink-700);
+    color: var(--kern-surface);
+  }
+  .row.active .badge.glow {
+    background: var(--kern-danger);
   }
   .row :global(.mute-mark) {
     flex: none;

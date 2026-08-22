@@ -225,12 +225,20 @@ const userMenu: MenuItem[] = $derived([
         {/snippet}
 
         {#snippet controls()}
-          <SearchBox
-            placeholder={m.search_placeholder()}
-            readonly
-            onclick={() => (paletteOpen = true)}
-            kbd={['⌘', 'K']}
-          />
+          <!--
+            DESIGN.md 2.3: the control strip belongs to the section you are in — the tracker gets a
+            "New issue" button beside ⌘K, chat gets "Search this space". A module that fills the
+            sidebar therefore fills this row too, and the shell steps aside rather than stacking a
+            second search box above the module's own.
+          -->
+          {#if !sidebarWidgets.length}
+            <SearchBox
+              placeholder={m.search_placeholder()}
+              readonly
+              onclick={() => (paletteOpen = true)}
+              kbd={['⌘', 'K']}
+            />
+          {/if}
         {/snippet}
 
         <SidebarGroup title={m.nav_workspace()}>
