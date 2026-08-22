@@ -76,6 +76,10 @@ in-memory API with demo data — no backend, no database.
   block, so wrap flex layouts in your own element).
 - **Kill stale dev servers before debugging.** A second process on :5173 served old code twice in one
   day and made correct fixes look broken. `lsof -ti:5173` should print exactly one pid.
+- **Using a module API you just added means bumping the dependency in the same change.** The
+  workspace links `@kernhq/module-*` from `repos/`, so a new store method works locally and the app's
+  CI — which installs the published version — fails on it. Publish the module, then raise the range
+  here. This is the "contracts first" rule, and it bites in exactly this order.
 - **An `$effect` that calls something which writes state it also reads re-runs itself.** Chat's page
   effect called `openChannel`, which writes the transcript window; reading that window made the
   effect its own trigger. It was not just wasteful — leaving a channel deleted the window, the effect
