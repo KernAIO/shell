@@ -238,6 +238,44 @@ describe('rich text', () => {
     const text = 'First paragraph.\n\nSecond paragraph.'
     expect(textFromDoc(docFromText(text))).toBe(text)
   })
+
+  it('renders a mention instead of dropping it', () => {
+    // A mention is an inline leaf with no children, so the renderer's default branch produced an
+    // empty string and whoever was mentioned vanished from the comment.
+    const doc = {
+      type: 'doc' as const,
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'over to ' },
+            { type: 'mention', attrs: { kind: 'user', id: 'u-1', label: 'Dan Brekke' } },
+          ],
+        },
+      ],
+    }
+    expect(renderDoc(doc)).toBe(
+      '<p>over to <span class="kern-mention" data-user-id="u-1">@Dan Brekke</span></p>',
+    )
+  })
+
+  it('keeps a mention when a comment is edited', () => {
+    // The edit box is text, so a mention that does not survive `textFromDoc` is deleted by the act
+    // of editing the sentence around it.
+    const doc = {
+      type: 'doc' as const,
+      content: [
+        {
+          type: 'paragraph',
+          content: [
+            { type: 'text', text: 'over to ' },
+            { type: 'mention', attrs: { kind: 'user', id: 'u-1', label: 'Dan Brekke' } },
+          ],
+        },
+      ],
+    }
+    expect(textFromDoc(doc)).toBe('over to @Dan Brekke')
+  })
 })
 
 describe('mock backend', () => {

@@ -1,6 +1,13 @@
 import type { RichDoc } from '@kernhq/module-chat/client'
 import { describe, expect, it } from 'vitest'
-import { literalFor, type MentionCandidate, mentionQueryAt, rankCandidates, textToDoc } from './mentions'
+import {
+  literalFor,
+  type MentionCandidate,
+  mentionQueryAt,
+  mentionsIn,
+  rankCandidates,
+  textToDoc,
+} from './mentions'
 
 const people: MentionCandidate[] = [
   { id: 'u1', name: 'Dan Brekke', username: 'dan' },
@@ -123,5 +130,44 @@ describe('building the document that is sent', () => {
     const doc = textToDoc('hi @dana', overlapping)
     const content = firstLine(doc)
     expect(content[1]).toMatchObject({ attrs: { id: 'u9' } })
+  })
+})
+
+describe('mentionsIn', () => {
+  const doc = {
+    type: 'doc',
+    content: [
+      {
+        type: 'paragraph',
+        content: [
+          { type: 'text', text: 'over to ' },
+          { type: 'mention', attrs: { kind: 'user', id: 'u-1', label: 'Dan Brekke' } },
+          { type: 'text', text: ' and ' },
+          { type: 'mention', attrs: { kind: 'user', id: 'u-2', label: 'Maya Rivera' } },
+        ],
+      },
+    ],
+  }
+
+  it('recovers the mentions a document already carries', () => {
+    expect(mentionsIn(doc)).toEqual([
+      { userId: 'u-1', label: 'Dan Brekke', literal: '@Dan Brekke' },
+      { userId: 'u-2', label: 'Maya Rivera', literal: '@Maya Rivera' },
+    ])
+  })
+
+  it('round-trips an edit without demoting a mention to text', () => {
+    // This is what editing does: document → text → document.
+    const asText = 'over to @Dan Brekke and @Maya Rivera'
+    const again = textToDoc(asText, mentionsIn(doc))
+    const kinds = (again.content?.[0] as { content?: Array<{ type?: string }> })?.content?.map(
+      (n) => n.type,
+    )
+    expect(kinds).toEqual(['text', 'mention', 'text', 'mention'])
+  })
+
+  it('answers for a document with no mentions, and for nothing at all', () => {
+    expect(mentionsIn({ type: 'doc', content: [] })).toEqual([])
+    expect(mentionsIn(null)).toEqual([])
   })
 })

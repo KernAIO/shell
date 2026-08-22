@@ -1,5 +1,6 @@
 import type { UserId, WorkspaceId } from '@kernhq/contracts'
 import {
+  type Attachment,
   type Comment,
   type Cycle,
   type FieldDef,
@@ -754,6 +755,7 @@ export function createMockTrackerApi() {
   const state = {
     issues: buildIssues(),
     comments: [] as Comment[],
+    attachments: [] as Attachment[],
     history: [] as IssueHistoryEntry[],
     counters: new Map<string, number>(),
   }
@@ -1174,19 +1176,29 @@ export function createMockTrackerApi() {
           ),
           nextCursor: null,
         }),
-        create: async ({ issueId, body }: Ws & { issueId: string; body: Comment['body'] }) => {
+        create: async ({
+          issueId,
+          body,
+          parentId,
+          internal,
+        }: Ws & {
+          issueId: string
+          body: Comment['body']
+          parentId?: string | null
+          internal?: boolean
+        }) => {
           const issue = find(issueId)
           const comment: Comment = {
             id: uid(1100 + state.comments.length),
             workspaceId: WORKSPACE,
             issueId,
-            parentId: null,
+            parentId: parentId ?? null,
             authorId: ME,
             body,
             bodyText: plainText(body),
             mentionIds: [],
             reactions: [],
-            internal: false,
+            internal: internal ?? false,
             source: 'app',
             replyCount: 0,
             editedAt: null,
@@ -1196,7 +1208,20 @@ export function createMockTrackerApi() {
           }
           state.comments.push(comment)
           issue.commentCount += 1
+          if (comment.parentId) {
+            const parent = state.comments.find((c) => c.id === comment.parentId)
+            if (parent) parent.replyCount += 1
+          }
           touch(issue)
+          return clone(comment)
+        },
+        update: async ({ commentId, body }: Ws & { commentId: string; body: Comment['body'] }) => {
+          const comment = state.comments.find((c) => c.id === commentId)
+          if (!comment) throw new Error(`[mock] unknown comment ${commentId}`)
+          comment.body = body
+          comment.bodyText = plainText(body)
+          comment.editedAt = new Date().toISOString()
+          comment.updatedAt = comment.editedAt
           return clone(comment)
         },
         react: async ({ commentId, emoji }: Ws & { commentId: string; emoji: string }) => {
@@ -1216,12 +1241,61 @@ export function createMockTrackerApi() {
           return clone(comment)
         },
         delete: async ({ commentId }: Ws & { commentId: string }) => {
+          const comment = state.comments.find((c) => c.id === commentId)
           state.comments = state.comments.filter((c) => c.id !== commentId)
+          // The files that arrived with it go too: nothing else points at them.
+          state.attachments = state.attachments.filter((a) => a.commentId !== commentId)
+          if (comment) {
+            const issue = state.issues.find((i) => i.id === comment.issueId)
+            if (issue) issue.commentCount = Math.max(0, issue.commentCount - 1)
+          }
+          return { ok: true as const }
+        },
+      },
+      attachments: {
+        list: async ({ issueId }: Ws & { issueId: string }) =>
+          clone(state.attachments.filter((a) => a.issueId === issueId)),
+        add: async ({
+          issueId,
+          fileIds,
+          commentId,
+        }: Ws & { issueId: string; fileIds: string[]; commentId?: string | null }) => {
+          const issue = find(issueId)
+          const added: Attachment[] = fileIds.map((fileId, i) => ({
+            id: uid(1400 + state.attachments.length + i),
+            workspaceId: WORKSPACE,
+            issueId,
+            commentId: commentId ?? null,
+            fileId,
+            name: mockFileName(fileId),
+            mimeType: 'application/octet-stream',
+            size: 24_000,
+            uploadedBy: ME,
+            createdAt: new Date().toISOString(),
+          }))
+          state.attachments = [...state.attachments, ...added]
+          issue.attachmentCount = state.attachments.filter((a) => a.issueId === issueId).length
+          touch(issue)
+          return clone(added)
+        },
+        remove: async ({ attachmentId }: Ws & { attachmentId: string }) => {
+          const gone = state.attachments.find((a) => a.id === attachmentId)
+          state.attachments = state.attachments.filter((a) => a.id !== attachmentId)
+          if (gone) {
+            const issue = state.issues.find((i) => i.id === gone.issueId)
+            if (issue)
+              issue.attachmentCount = state.attachments.filter((a) => a.issueId === gone.issueId).length
+          }
           return { ok: true as const }
         },
       },
     },
   }
+}
+
+/** The mock uploader keeps bytes in memory and names them by id; show something readable. */
+function mockFileName(fileId: string): string {
+  return `file-${fileId.slice(0, 8)}`
 }
 
 function plainText(doc: Issue['description'] | Comment['body']): string {

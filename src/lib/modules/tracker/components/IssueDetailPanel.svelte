@@ -1,8 +1,27 @@
 <script lang="ts">
-import type { AvailableTransition, Issue, Priority, ResolvedField } from '@kernhq/module-tracker/client'
+import type {
+  AvailableTransition,
+  Issue,
+  Comment as IssueComment,
+  Priority,
+  ResolvedField,
+  RichDoc,
+} from '@kernhq/module-tracker/client'
 import { PRIORITY_GROUP_ORDER } from '@kernhq/module-tracker/client'
-import { Avatar, Button, DropdownMenu, Icon, type MenuItem, Sheet, Spinner, toast } from '@kernhq/ui'
+import {
+  Avatar,
+  Button,
+  DropdownMenu,
+  Icon,
+  IconButton,
+  type MenuItem,
+  Sheet,
+  Spinner,
+  toast,
+} from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
+import { formatBytes } from '$lib/files/format'
+import { uploadFile } from '$lib/files/upload'
 import { relativeTime } from '$lib/format'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
@@ -12,6 +31,8 @@ import { priorityLabel } from '../labels'
 import { canTracker } from '../permissions'
 import { trackerKeys } from '../query'
 import { docFromText, renderDoc, textFromDoc } from '../richtext'
+import CommentComposer from './CommentComposer.svelte'
+import CommentThread from './CommentThread.svelte'
 import CustomField from './CustomField.svelte'
 import DueDate from './DueDate.svelte'
 import PriorityGlyph from './PriorityGlyph.svelte'
@@ -56,11 +77,33 @@ const FALLBACK_SIDEBAR: ResolvedField[] = [
 
 const api = getTrackerApi()
 const cat = getTrackerCatalogue()
+
+let issueFileInput = $state<HTMLInputElement | null>(null)
+
+/** Uploads first, then attaches: an attachment points at a file that already exists. */
+async function uploadIssueFiles(list: FileList | null) {
+  if (!list?.length) return
+  const ids: string[] = []
+  for (const file of Array.from(list)) {
+    try {
+      const uploaded = await uploadFile({
+        workspaceId,
+        file,
+        name: file.name,
+        mimeType: file.type || undefined,
+        attachedTo: { module: 'tracker', type: 'issue', id: issue?.id as string },
+      })
+      ids.push(uploaded.id)
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : m.tracker_attachment_failed())
+    }
+  }
+  if (ids.length) addIssueFiles.mutate(ids)
+}
 const queryClient = useQueryClient()
 
 let editingDescription = $state(false)
 let descriptionDraft = $state('')
-let commentDraft = $state('')
 
 const issueQuery = createQuery(() => ({
   queryKey: trackerKeys.issue(workspaceId, issueKey ?? ''),
@@ -143,17 +186,79 @@ const transition = createMutation(() => ({
 }))
 
 const comment = createMutation(() => ({
-  mutationFn: (text: string) =>
-    api.issues.comments.create({
+  mutationFn: async (input: { body: RichDoc; fileIds: string[]; internal: boolean; parentId?: string }) => {
+    const created = await api.issues.comments.create({
       workspaceId,
       issueId: issue?.id as string,
-      body: docFromText(text) ?? { type: 'doc', content: [] },
-    }),
+      body: input.body,
+      internal: input.internal,
+      ...(input.parentId ? { parentId: input.parentId } : {}),
+    })
+    // The comment has to exist before a file can point at it, so the upload happens in the
+    // composer and the attachment is claimed here.
+    if (input.fileIds.length)
+      await api.issues.attachments.add({
+        workspaceId,
+        issueId: issue?.id as string,
+        fileIds: input.fileIds,
+        commentId: created.id,
+      })
+    return created
+  },
   onSuccess: () => {
-    commentDraft = ''
-    void queryClient.invalidateQueries({ queryKey: trackerKeys.comments(workspaceId, issue?.id ?? '') })
+    refreshComments()
     invalidate()
   },
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+const attachmentsQuery = createQuery(() => ({
+  queryKey: trackerKeys.attachments(workspaceId, issueId ?? ''),
+  queryFn: () => api.issues.attachments.list({ workspaceId, issueId: issueId as string }),
+  enabled: Boolean(issueId),
+}))
+const attachments = $derived(attachmentsQuery.data ?? [])
+/** Files that arrived with a comment, so each comment can show its own. */
+const attachmentsByComment = $derived.by(() => {
+  const byComment = new Map<string, typeof attachments>()
+  for (const file of attachments) {
+    if (!file.commentId) continue
+    byComment.set(file.commentId, [...(byComment.get(file.commentId) ?? []), file])
+  }
+  return byComment
+})
+const issueAttachments = $derived(attachments.filter((f) => !f.commentId))
+
+const refreshComments = () => {
+  void queryClient.invalidateQueries({ queryKey: trackerKeys.comments(workspaceId, issue?.id ?? '') })
+  void queryClient.invalidateQueries({
+    queryKey: trackerKeys.attachments(workspaceId, issue?.id ?? ''),
+  })
+}
+
+const editComment = createMutation(() => ({
+  mutationFn: (input: { commentId: string; body: RichDoc }) =>
+    api.issues.comments.update({ workspaceId, ...input }),
+  onSuccess: refreshComments,
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+const deleteComment = createMutation(() => ({
+  mutationFn: (commentId: string) => api.issues.comments.delete({ workspaceId, commentId }),
+  onSuccess: refreshComments,
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+const removeAttachment = createMutation(() => ({
+  mutationFn: (attachmentId: string) => api.issues.attachments.remove({ workspaceId, attachmentId }),
+  onSuccess: refreshComments,
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+const addIssueFiles = createMutation(() => ({
+  mutationFn: (fileIds: string[]) =>
+    api.issues.attachments.add({ workspaceId, issueId: issue?.id as string, fileIds }),
+  onSuccess: refreshComments,
   onError: (error: Error) => toast.error(error.message),
 }))
 
@@ -244,12 +349,21 @@ const estimateMenu = $derived<MenuItem[]>([
 ])
 
 /** Comments and history interleaved, oldest first, the way the design shows the activity feed. */
+/** Replies, grouped under the comment they answer — the feed shows only top-level comments. */
+const repliesOf = $derived.by(() => {
+  const byParent = new Map<string, IssueComment[]>()
+  for (const c of commentsQuery.data?.items ?? []) {
+    if (!c.parentId) continue
+    byParent.set(c.parentId, [...(byParent.get(c.parentId) ?? []), c])
+  }
+  return byParent
+})
+
 const activity = $derived.by(() => {
-  const comments = (commentsQuery.data?.items ?? []).map((c) => ({
-    kind: 'comment' as const,
-    at: c.createdAt,
-    comment: c,
-  }))
+  const all = commentsQuery.data?.items ?? []
+  const comments = all
+    .filter((c) => !c.parentId)
+    .map((c) => ({ kind: 'comment' as const, at: c.createdAt, comment: c }))
   const events = (historyQuery.data?.items ?? []).map((h) => ({
     kind: 'event' as const,
     at: h.occurredAt,
@@ -514,6 +628,53 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
       {/each}
     </dl>
 
+    {#if issueAttachments.length || canEdit}
+      <section class="attachments">
+        <div class="ahead">
+          <span class="kern-sublabel">{m.tracker_attachments()}</span>
+          {#if canEdit}
+            <input
+              bind:this={issueFileInput}
+              type="file"
+              multiple
+              hidden
+              onchange={(e) => {
+                void uploadIssueFiles(e.currentTarget.files)
+                e.currentTarget.value = ''
+              }}
+            />
+            <IconButton
+              icon="paperclip"
+              size={26}
+              label={m.tracker_attach_file()}
+              onclick={() => issueFileInput?.click()}
+            />
+          {/if}
+        </div>
+        {#if issueAttachments.length}
+          <ul class="afiles">
+            {#each issueAttachments as file (file.id)}
+              <li>
+                <Icon name="paperclip" size={13} strokeWidth={1.8} />
+                <span class="aname" title={file.name}>{file.name}</span>
+                <span class="asize">{formatBytes(file.size)}</span>
+                {#if canEdit}
+                  <IconButton
+                    icon="x"
+                    size={22}
+                    label={m.tracker_attachment_remove()}
+                    onclick={() => removeAttachment.mutate(file.id)}
+                  />
+                {/if}
+              </li>
+            {/each}
+          </ul>
+        {:else}
+          <p class="empty">{m.tracker_attachments_empty()}</p>
+        {/if}
+      </section>
+    {/if}
+
     <section class="desc">
       {#if editingDescription}
         <textarea
@@ -559,39 +720,19 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
 
       {#each activity as entry (entry.kind === 'comment' ? entry.comment.id : entry.event.id)}
         {#if entry.kind === 'comment'}
-          {@const person = cat.person(entry.comment.authorId)}
-          <article class="thread">
-            <Avatar name={person?.name} src={person?.avatarUrl} id={person?.id} size={28} />
-            <div class="tbody">
-              <div class="thead">
-                <span class="author">{person?.name ?? ''}</span>
-                <time datetime={entry.comment.createdAt}>{relativeTime(entry.comment.createdAt)}</time>
-              </div>
-              <div class="tprose">{@html renderDoc(entry.comment.body)}</div>
-              <div class="reactions">
-                {#each entry.comment.reactions as reaction (reaction.emoji)}
-                  <button
-                    type="button"
-                    class="reaction"
-                    class:mine={session.user ? reaction.userIds.includes(session.user.id) : false}
-                    onclick={() =>
-                      react.mutate({ commentId: entry.comment.id, emoji: reaction.emoji })}
-                  >
-                    {reaction.emoji}
-                    {reaction.count}
-                  </button>
-                {/each}
-                <button
-                  type="button"
-                  class="reaction add"
-                  aria-label={m.tracker_add_reaction()}
-                  onclick={() => react.mutate({ commentId: entry.comment.id, emoji: '👍' })}
-                >
-                  <Icon name="smile" size={13} strokeWidth={1.6} />
-                </button>
-              </div>
-            </div>
-          </article>
+          <CommentThread
+            {workspaceId}
+            comment={entry.comment}
+            replies={repliesOf.get(entry.comment.id) ?? []}
+            attachments={attachmentsByComment.get(entry.comment.id) ?? []}
+            {canComment}
+            onreact={(commentId, emoji) => react.mutate({ commentId, emoji })}
+            onedit={(commentId, body) => editComment.mutate({ commentId, body: body as RichDoc })}
+            ondelete={(commentId) => deleteComment.mutate(commentId)}
+            onreply={(parentId, body, fileIds) =>
+              comment.mutate({ body: body as RichDoc, fileIds, internal: false, parentId })}
+            onremoveAttachment={(attachmentId) => removeAttachment.mutate(attachmentId)}
+          />
         {:else}
           {@const person = cat.person(entry.event.actorId)}
           <div class="event">
@@ -605,25 +746,57 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
   {/if}
 
   {#snippet footer()}
-    <form
-      class="reply"
-      onsubmit={(e) => {
-        e.preventDefault()
-        if (commentDraft.trim()) comment.mutate(commentDraft)
-      }}
-    >
-      <input
-        bind:value={commentDraft}
-        disabled={!canComment}
-        placeholder={canComment ? m.tracker_comment_placeholder() : m.tracker_no_permission()}
-        aria-label={m.tracker_comment_placeholder()}
-        data-testid="comment-input"
+    {#if canComment}
+      <CommentComposer
+        {workspaceId}
+        busy={comment.isPending}
+        onsubmit={(body, fileIds, internal) => comment.mutate({ body, fileIds, internal })}
       />
-    </form>
+    {:else}
+      <p class="no-comment">{m.tracker_no_permission()}</p>
+    {/if}
   {/snippet}
 </Sheet>
 
 <style>
+  .attachments {
+    margin-top: 16px;
+  }
+  .ahead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .afiles {
+    list-style: none;
+    margin: 6px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .afiles li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+  }
+  .aname {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .asize {
+    color: var(--kern-ink-350);
+    font-size: 12px;
+  }
+  .empty,
+  .no-comment {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: var(--kern-ink-350);
+  }
   .loading {
     display: grid;
     place-items: center;

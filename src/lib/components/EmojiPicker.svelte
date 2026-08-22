@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Icon } from '@kernhq/ui'
+import { EMOJI_GROUPS, searchEmoji } from '$lib/emoji'
 import * as m from '$msg'
-import { EMOJI_GROUPS, searchEmoji } from '../emoji'
 
 /**
  * Picking an emoji.

@@ -22,6 +22,8 @@ export const trackerKeys = {
   issues: (workspaceId: string, scope: string) => ['tracker', 'issue', workspaceId, scope] as const,
   issue: (workspaceId: string, issueId: string) => ['tracker', 'issue', workspaceId, issueId] as const,
   comments: (workspaceId: string, issueId: string) => ['tracker', 'comment', workspaceId, issueId] as const,
+  attachments: (workspaceId: string, issueId: string) =>
+    ['tracker', 'attachment', workspaceId, issueId] as const,
   history: (workspaceId: string, issueId: string) => ['tracker', 'history', workspaceId, issueId] as const,
   transitions: (workspaceId: string, issueId: string) =>
     ['tracker', 'transition', workspaceId, issueId] as const,

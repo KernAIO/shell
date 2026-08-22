@@ -149,3 +149,30 @@ export function textToDoc(text: string, picked: PickedMention[]): RichDoc {
 
   return { type: 'doc', content: paragraphs } as RichDoc
 }
+
+/**
+ * The mentions already in a document, as the composer's `picked` list.
+ *
+ * Editing goes through a textarea, so a mention becomes the literal `@Name` again. Without this the
+ * next `textToDoc` has nothing to match and every existing mention is silently demoted to text —
+ * the person stops being notified and nobody sees that it happened.
+ */
+export function mentionsIn(doc: unknown): PickedMention[] {
+  const out: PickedMention[] = []
+  const seen = new Set<string>()
+  const walk = (node: unknown) => {
+    if (!node || typeof node !== 'object') return
+    const n = node as { type?: string; attrs?: Record<string, unknown>; content?: unknown[] }
+    if (n.type === 'mention') {
+      const userId = String(n.attrs?.id ?? '')
+      const label = String(n.attrs?.label ?? '')
+      if (userId && label && !seen.has(userId)) {
+        seen.add(userId)
+        out.push({ userId, label, literal: `@${label}` })
+      }
+    }
+    for (const child of n.content ?? []) walk(child)
+  }
+  for (const child of (doc as { content?: unknown[] } | null)?.content ?? []) walk(child)
+  return out
+}

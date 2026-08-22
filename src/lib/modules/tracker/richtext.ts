@@ -68,6 +68,13 @@ function renderMarks(html: string, marks: Node['marks']): string {
 
 function renderNode(node: Node): string {
   if (node.type === 'text') return renderMarks(escapeHtml(node.text ?? ''), node.marks)
+  if (node.type === 'mention') {
+    // A mention is an inline leaf: it has no children, so the default branch below would render
+    // nothing and the mention would simply disappear from the comment.
+    const label = String(node.attrs?.label ?? '')
+    const id = String(node.attrs?.id ?? '')
+    return `<span class="kern-mention" data-user-id="${escapeHtml(id)}">@${escapeHtml(label)}</span>`
+  }
   const children = (node.content ?? []).map(renderNode).join('')
   switch (node.type) {
     case 'paragraph':
@@ -104,8 +111,13 @@ export function renderDoc(doc: RichDoc | null | undefined): string {
 /** Plain text, for previews, search and the textarea editor. */
 export function textFromDoc(doc: RichDoc | null | undefined): string {
   if (!doc) return ''
-  const walk = (node: Node): string =>
-    typeof node.text === 'string' ? node.text : (node.content ?? []).map(walk).join('')
+  const walk = (node: Node): string => {
+    if (typeof node.text === 'string') return node.text
+    // A mention becomes the literal that produced it, so editing a comment round-trips instead of
+    // quietly deleting whoever was mentioned.
+    if (node.type === 'mention') return `@${String(node.attrs?.label ?? '')}`
+    return (node.content ?? []).map(walk).join('')
+  }
   return (doc.content ?? [])
     .map((n) => walk(n as Node))
     .join('\n\n')

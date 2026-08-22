@@ -14,12 +14,12 @@ import {
   type PickedMention,
   rankCandidates,
   textToDoc,
-} from '../mentions'
+} from '$lib/mentions'
 import { workspacePeople } from '../people.svelte'
 import { canChat } from '../permissions'
 import AttachmentTray from './AttachmentTray.svelte'
-import EmojiPicker from './EmojiPicker.svelte'
-import MentionMenu from './MentionMenu.svelte'
+import EmojiPicker from '$lib/components/EmojiPicker.svelte'
+import MentionMenu from '$lib/components/MentionMenu.svelte'
 import RecorderBar from './RecorderBar.svelte'
 
 /**

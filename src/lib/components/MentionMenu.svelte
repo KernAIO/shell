@@ -1,7 +1,7 @@
 <script lang="ts">
 import { Avatar } from '@kernhq/ui'
+import type { MentionCandidate } from '$lib/mentions'
 import * as m from '$msg'
-import type { MentionCandidate } from '../mentions'
 
 /**
  * The people list that opens when somebody types `@`.

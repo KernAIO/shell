@@ -12,7 +12,7 @@
   "scripts": {
     "dev": "vite dev --port 5173",
     "dev:mock": "PUBLIC_API_MOCK=1 vite dev --port 5173",
-    "build": "vite build",
+    "build": "pnpm i18n && vite build",
     "preview": "vite preview --port 5173",
     "start": "node build",
     "lint": "biome check .",
@@ -28,7 +28,7 @@
     "@kernhq/contracts": "^0.1.0",
     "@kernhq/kernel": "^0.1.0",
     "@kernhq/module-chat": "^0.2.1",
-    "@kernhq/module-tracker": "^0.2.1",
+    "@kernhq/module-tracker": "^0.3.0",
     "@kernhq/sdk": "^0.1.0",
     "@kernhq/ui": "^0.1.0",
     "@lucide/svelte": "^1.33.0",
