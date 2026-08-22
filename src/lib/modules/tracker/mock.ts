@@ -1,0 +1,1230 @@
+import type { UserId, WorkspaceId } from '@kernhq/contracts'
+import {
+  type Comment,
+  type Cycle,
+  type FieldDef,
+  type GroupBy,
+  type Issue,
+  type IssueHistoryEntry,
+  type KqlExpr,
+  type KqlValue,
+  type Label,
+  type Milestone,
+  type Priority,
+  type Project,
+  parseKql,
+  rankBetween,
+  rankSequence,
+  type StatusInfo,
+  type View,
+  type WorkItemType,
+} from '@kernhq/module-tracker/client'
+
+/**
+ * In-memory tracker backend.
+ *
+ * Enabled with `PUBLIC_API_MOCK=1` (`pnpm dev:mock`). It exists so the issues experience can be
+ * built, demoed and tested without Postgres and the services, and so the end-to-end tests have a
+ * deterministic backend. It answers the same procedures with the same shapes as the contract,
+ * including KQL: queries are parsed with the same reader the query box uses and evaluated against
+ * the seed data, so filtering behaves the way it will against the real server.
+ *
+ * Anything not implemented throws loudly rather than quietly returning nothing.
+ */
+
+const NOW = Date.now()
+const DAY = 864e5
+const iso = (msAgo = 0) => new Date(NOW - msAgo).toISOString()
+const day = (offsetDays: number) => new Date(NOW + offsetDays * DAY).toISOString().slice(0, 10)
+/**
+ * Same id scheme as the core mock, so people and workspaces line up across the two.
+ *
+ * The contract brands user and workspace ids so they cannot be mixed up by accident; at runtime they
+ * are ordinary uuids, and this is the one place the mock mints them.
+ */
+const uid = (n: number) =>
+  `01920000-0000-7000-8000-${String(n).padStart(12, '0')}` as string & UserId & WorkspaceId
+const clone = <T>(v: T): T => structuredClone(v)
+
+type Uid = ReturnType<typeof uid>
+
+const WORKSPACE = uid(10)
+const PEOPLE = [uid(1), uid(2), uid(3), uid(4)] as const
+/** Pick a person by index, wrapping — the seed data spreads reporters and actors around. */
+const who = (i: number): Uid => PEOPLE[i % PEOPLE.length] as Uid
+const PERSON_NAMES: Record<string, string> = {
+  [uid(1)]: 'Maya Rivera',
+  [uid(2)]: 'Dan Brekke',
+  [uid(3)]: 'Tomás Lindqvist',
+  [uid(4)]: 'Inés Cabrera',
+}
+/** The signed-in user in mock mode, so `assignee = currentUser()` resolves. */
+const ME = uid(1)
+
+// ---------------------------------------------------------------------------------------------
+// workflow
+// ---------------------------------------------------------------------------------------------
+
+const WORKFLOW_ID = uid(710)
+
+const statuses: StatusInfo[] = [
+  { id: 'triage', name: 'Triage', category: 'triage', color: null, order: 0, workflowId: WORKFLOW_ID },
+  { id: 'backlog', name: 'Backlog', category: 'backlog', color: null, order: 1, workflowId: WORKFLOW_ID },
+  { id: 'todo', name: 'Todo', category: 'todo', color: null, order: 2, workflowId: WORKFLOW_ID },
+  {
+    id: 'in_progress',
+    name: 'In progress',
+    category: 'in_progress',
+    color: null,
+    order: 3,
+    workflowId: WORKFLOW_ID,
+  },
+  {
+    id: 'in_review',
+    name: 'In review',
+    category: 'in_progress',
+    color: null,
+    order: 4,
+    workflowId: WORKFLOW_ID,
+  },
+  { id: 'done', name: 'Done', category: 'done', color: null, order: 5, workflowId: WORKFLOW_ID },
+  {
+    id: 'cancelled',
+    name: 'Cancelled',
+    category: 'cancelled',
+    color: null,
+    order: 6,
+    workflowId: WORKFLOW_ID,
+  },
+]
+const statusById = new Map(statuses.map((s) => [s.id, s]))
+
+// ---------------------------------------------------------------------------------------------
+// projects, types, labels, planning
+// ---------------------------------------------------------------------------------------------
+
+const projectSettings: Project['settings'] = {
+  estimation: 'points',
+  estimateScale: [0, 1, 2, 3, 5, 8, 13, 21],
+  cycles: {
+    enabled: true,
+    lengthWeeks: 2,
+    cooldownDays: 0,
+    autoRoll: true,
+    startDay: 1,
+    autoCreateUpcoming: 1,
+  },
+  triage: { enabled: true },
+  sla: { enabled: false, goals: {}, pauseInCategories: ['backlog'] },
+  requireResolution: false,
+  autoCreateIssueChannel: false,
+  timezone: 'UTC',
+}
+
+const project = (n: number, key: string, name: string, color: string, leadId: Uid): Project => ({
+  id: uid(n),
+  workspaceId: WORKSPACE,
+  key,
+  name,
+  description: null,
+  icon: null,
+  color,
+  leadId,
+  visibility: 'workspace',
+  defaultAssignee: 'unassigned',
+  workflowSchemeId: null,
+  typeSchemeId: null,
+  fieldSchemeId: null,
+  settings: projectSettings,
+  intakeToken: null,
+  issueCounter: 0,
+  cycleCounter: 0,
+  memberCount: 4,
+  openIssueCount: 0,
+  archivedAt: null,
+  createdBy: uid(1),
+  createdAt: iso(120 * DAY),
+  updatedAt: iso(2 * DAY),
+})
+
+const projects: Project[] = [
+  project(700, 'KRN', 'Kern Platform', '#7E6A93', uid(2)),
+  project(701, 'RTM', 'Realtime', '#6E8B62', uid(3)),
+  project(702, 'DOC', 'Docs', '#B49A5F', uid(4)),
+]
+
+const workItemType = (n: number, key: string, name: string, icon: string, level: number): WorkItemType => ({
+  id: uid(n),
+  workspaceId: WORKSPACE,
+  projectId: null,
+  key,
+  name,
+  description: null,
+  icon,
+  color: null,
+  level,
+  isDefault: key === 'task',
+  workflowId: WORKFLOW_ID,
+  fieldLayout: [],
+  templateBody: null,
+  order: n - 720,
+  archivedAt: null,
+  createdAt: iso(120 * DAY),
+  updatedAt: iso(120 * DAY),
+})
+
+const types: WorkItemType[] = [
+  workItemType(720, 'task', 'Task', 'square-check-big', 0),
+  workItemType(721, 'bug', 'Bug', 'circle-alert', 0),
+  workItemType(722, 'story', 'Story', 'bookmark', 0),
+  workItemType(723, 'epic', 'Epic', 'zap', 1),
+]
+
+const label = (n: number, name: string, color: string, group: string | null = null): Label => ({
+  id: uid(n),
+  workspaceId: WORKSPACE,
+  projectId: null,
+  name,
+  color,
+  description: null,
+  groupName: group,
+  issueCount: 0,
+  archivedAt: null,
+  createdAt: iso(100 * DAY),
+})
+
+const labels: Label[] = [
+  label(740, 'performance', '#B4661C'),
+  label(741, 'security', '#A63D26'),
+  label(742, 'design', '#B7714E'),
+  label(743, 'infra', '#5F7383'),
+  label(744, 'good first issue', '#4F7A55'),
+  label(745, 'regression', '#7A55B5'),
+]
+
+const cycles: Cycle[] = [
+  {
+    id: uid(760),
+    workspaceId: WORKSPACE,
+    projectId: uid(700),
+    number: 23,
+    name: 'Sprint 23',
+    goal: 'Ship the permissions rewrite',
+    startAt: iso(28 * DAY),
+    endAt: iso(14 * DAY),
+    status: 'completed',
+    startedAt: iso(28 * DAY),
+    completedAt: iso(14 * DAY),
+    carryOverCount: 3,
+    stats: { total: 18, done: 15, estimateTotal: 41, estimateDone: 34 },
+    createdAt: iso(40 * DAY),
+    updatedAt: iso(14 * DAY),
+  },
+  {
+    id: uid(761),
+    workspaceId: WORKSPACE,
+    projectId: uid(700),
+    number: 24,
+    name: 'Sprint 24',
+    goal: 'Realtime presence and the new issue list',
+    startAt: iso(10 * DAY),
+    endAt: iso(-4 * DAY),
+    status: 'active',
+    startedAt: iso(10 * DAY),
+    completedAt: null,
+    carryOverCount: 3,
+    stats: { total: 21, done: 9, estimateTotal: 52, estimateDone: 21 },
+    createdAt: iso(20 * DAY),
+    updatedAt: iso(2 * 3600e3),
+  },
+  {
+    id: uid(762),
+    workspaceId: WORKSPACE,
+    projectId: uid(700),
+    number: 25,
+    name: 'Sprint 25',
+    goal: null,
+    startAt: iso(-4 * DAY),
+    endAt: iso(-18 * DAY),
+    status: 'upcoming',
+    startedAt: null,
+    completedAt: null,
+    carryOverCount: 0,
+    stats: { total: 4, done: 0, estimateTotal: 11, estimateDone: 0 },
+    createdAt: iso(6 * DAY),
+    updatedAt: iso(6 * DAY),
+  },
+]
+
+const milestones: Milestone[] = [
+  {
+    id: uid(770),
+    workspaceId: WORKSPACE,
+    projectId: uid(700),
+    name: 'Beta launch',
+    description: 'Everything a self-hosted pilot needs',
+    targetDate: day(24),
+    status: 'open',
+    stats: { total: 14, done: 6 },
+    completedAt: null,
+    createdAt: iso(60 * DAY),
+    updatedAt: iso(3 * DAY),
+  },
+  {
+    id: uid(771),
+    workspaceId: WORKSPACE,
+    projectId: uid(701),
+    name: 'Presence v1',
+    description: null,
+    targetDate: day(10),
+    status: 'open',
+    stats: { total: 7, done: 4 },
+    completedAt: null,
+    createdAt: iso(45 * DAY),
+    updatedAt: iso(DAY),
+  },
+]
+
+const fields: FieldDef[] = [
+  {
+    id: uid(780),
+    workspaceId: WORKSPACE,
+    projectId: null,
+    key: 'severity',
+    name: 'Severity',
+    description: 'How badly this hurts in production',
+    type: 'select',
+    options: [
+      { id: uid(781), label: 'S1', color: '#A63D26', order: 0, archived: false },
+      { id: uid(782), label: 'S2', color: '#B4661C', order: 1, archived: false },
+      { id: uid(783), label: 'S3', color: '#B49A5F', order: 2, archived: false },
+      { id: uid(784), label: 'S4', color: '#8E8779', order: 3, archived: false },
+    ],
+    defaultValue: null,
+    config: {},
+    searchable: true,
+    required: false,
+    showInCards: true,
+    order: 0,
+    archivedAt: null,
+    createdAt: iso(80 * DAY),
+    updatedAt: iso(80 * DAY),
+  },
+  {
+    id: uid(785),
+    workspaceId: WORKSPACE,
+    projectId: null,
+    key: 'customer',
+    name: 'Customer',
+    description: null,
+    type: 'text',
+    options: [],
+    defaultValue: null,
+    config: { maxLength: 120 },
+    searchable: true,
+    required: false,
+    showInCards: false,
+    order: 1,
+    archivedAt: null,
+    createdAt: iso(80 * DAY),
+    updatedAt: iso(80 * DAY),
+  },
+]
+
+// ---------------------------------------------------------------------------------------------
+// issues
+// ---------------------------------------------------------------------------------------------
+
+/** `[project, type, title, status, priority, assignees, labels, estimate, dueInDays, cycle]` */
+type Seed = [
+  number,
+  string,
+  string,
+  string,
+  Priority,
+  number[],
+  number[],
+  number | null,
+  number | null,
+  number | null,
+]
+
+const SEEDS: Seed[] = [
+  [0, 'bug', 'Voice rooms drop after 20 minutes', 'in_progress', 'urgent', [0], [740, 745], 5, 0, 761],
+  [0, 'task', 'Row-level security policies for module schemas', 'in_review', 'high', [1], [741], 8, 1, 761],
+  [0, 'story', 'Issue list keyboard navigation', 'in_progress', 'high', [0, 2], [742], 3, 2, 761],
+  [0, 'bug', 'Workspace switcher loses focus on Escape', 'todo', 'medium', [2], [742], 1, null, 761],
+  [0, 'task', 'Cache effective permissions in Valkey', 'done', 'high', [1], [740, 743], 5, null, 761],
+  [0, 'task', 'Audit log export as NDJSON', 'backlog', 'low', [], [], 3, null, null],
+  [0, 'bug', 'Invite links expire a day early', 'triage', 'medium', [], [745], null, null, null],
+  [0, 'story', 'Saved views with shared visibility', 'todo', 'medium', [3], [], 8, 6, 762],
+  [0, 'task', 'Migrate job queue to pg-boss 11', 'in_progress', 'medium', [1], [743], 5, 4, 761],
+  [0, 'bug', 'Duplicate notifications on reconnect', 'in_review', 'high', [0], [745], 2, 1, 761],
+  [0, 'task', 'Rate limit the public intake form', 'todo', 'high', [1], [741], 2, 3, 761],
+  [0, 'story', 'Bulk edit from the issue list', 'backlog', 'medium', [], [], 5, null, null],
+  [0, 'task', 'Drop the legacy members endpoint', 'done', 'low', [2], [], 1, null, 760],
+  [0, 'bug', 'Avatar initials wrong for single-word names', 'done', 'low', [3], [742], 1, null, 760],
+  [0, 'epic', 'Self-hosted install in one command', 'in_progress', 'high', [1], [743], 21, 20, null],
+  [0, 'task', 'Postgres 18 upgrade for the dev compose file', 'todo', 'low', [], [743], 2, null, 762],
+  [0, 'bug', 'Search returns archived workspaces', 'triage', 'low', [], [], null, null, null],
+  [0, 'task', 'Document the module contract lifecycle', 'backlog', 'none', [], [744], 3, null, null],
+  [0, 'story', 'Board drag and drop with WIP limits', 'in_progress', 'urgent', [0], [742], 8, 1, 761],
+  [0, 'task', 'Ship signed release artefacts', 'cancelled', 'medium', [1], [741], 5, null, 760],
+
+  [1, 'bug', 'Presence flickers when a tab is backgrounded', 'in_progress', 'high', [2], [740], 3, 2, null],
+  [1, 'task', 'Heartbeat interval should back off on failure', 'todo', 'medium', [2], [743], 2, null, null],
+  [1, 'story', 'Typing indicators across devices', 'backlog', 'medium', [], [], 5, null, null],
+  [
+    1,
+    'bug',
+    'WebSocket reconnect storms after a deploy',
+    'in_review',
+    'urgent',
+    [1, 2],
+    [740, 743],
+    5,
+    0,
+    null,
+  ],
+  [1, 'task', 'Publish presence to the workspace channel only', 'done', 'medium', [2], [741], 3, null, null],
+  [1, 'task', 'Trim the realtime payload for board updates', 'todo', 'low', [], [740], 2, 9, null],
+  [1, 'bug', 'Away status never clears on mobile', 'triage', 'medium', [], [], null, null, null],
+  [1, 'story', 'Live cursors in the planner', 'backlog', 'low', [], [742], 8, null, null],
+  [1, 'task', 'Load test 5k concurrent sockets', 'todo', 'high', [1], [740], 5, 5, null],
+  [1, 'task', 'Retire the polling fallback', 'done', 'low', [2], [], 1, null, null],
+  [1, 'bug', 'Presence dot misaligned in RTL', 'todo', 'low', [3], [742], 1, 3, null],
+  [1, 'story', 'Huddles from any channel', 'backlog', 'medium', [], [], 13, null, null],
+
+  [2, 'task', 'Write the KQL reference page', 'in_progress', 'medium', [3], [744], 5, 3, null],
+  [2, 'bug', 'Code blocks lose language on paste', 'todo', 'low', [3], [], 2, null, null],
+  [2, 'story', 'Publish docs to a public site', 'backlog', 'medium', [], [], 8, null, null],
+  [2, 'task', 'Persian translation pass for the shell', 'in_review', 'high', [3], [742], 3, 1, null],
+  [2, 'task', 'Screenshot the board for the README', 'done', 'low', [0], [], 1, null, null],
+  [2, 'bug', 'Embedded issue cards break in dark mode', 'triage', 'medium', [], [742], null, null, null],
+  [2, 'task', 'Contributing guide for module authors', 'todo', 'medium', [1], [744], 3, 8, null],
+  [2, 'story', 'Versioned docs per release', 'backlog', 'low', [], [], 8, null, null],
+  [2, 'task', 'Alt text for every diagram', 'todo', 'low', [], [744, 742], 2, 12, null],
+  [2, 'bug', 'Search index misses headings', 'done', 'medium', [3], [], 2, null, null],
+]
+
+const emptyRelations = () => ({
+  blocks: 0,
+  blockedBy: 0,
+  openBlockers: 0,
+  relates: 0,
+  duplicates: 0,
+  subItems: 0,
+  subItemsDone: 0,
+})
+
+function buildIssues(): Issue[] {
+  const ranks = rankSequence(SEEDS.length)
+  const counters = new Map<string, number>()
+  return SEEDS.map((seed, i) => {
+    const [p, typeKey, title, statusId, priority, assignees, labelIds, estimate, dueIn, cycle] = seed
+    const proj = projects[p] as Project
+    const number = (counters.get(proj.id) ?? 0) + 1
+    counters.set(proj.id, number)
+    const status = statusById.get(statusId) as StatusInfo
+    const type = types.find((t) => t.key === typeKey) as WorkItemType
+    const done = status.category === 'done'
+    const cancelled = status.category === 'cancelled'
+    return {
+      id: uid(800 + i),
+      workspaceId: WORKSPACE,
+      projectId: proj.id,
+      key: `${proj.key}-${number}`,
+      number,
+      typeId: type.id,
+      title,
+      description: {
+        type: 'doc',
+        content: [{ type: 'paragraph', content: [{ type: 'text', text: describe(title, typeKey) }] }],
+      },
+      descriptionText: describe(title, typeKey),
+      statusId: status.id,
+      statusCategory: status.category,
+      priority,
+      assigneeIds: assignees.map((a) => who(a)),
+      reporterId: who(i + 1),
+      creatorId: who(i + 2),
+      labelIds: labelIds.map((n) => uid(n)),
+      componentIds: [],
+      versionIds: [],
+      affectsVersionIds: [],
+      cycleId: cycle ? uid(cycle) : null,
+      milestoneId: p === 0 && i % 3 === 0 ? uid(770) : p === 1 && i % 2 === 0 ? uid(771) : null,
+      parentId: null,
+      rank: ranks[i] as string,
+      estimate,
+      estimateUnit: 'points',
+      startDate: null,
+      dueDate: dueIn === null ? null : day(dueIn),
+      completedAt: done ? iso((i % 7) * DAY) : null,
+      cancelledAt: cancelled ? iso(5 * DAY) : null,
+      resolution: done ? 'fixed' : cancelled ? 'wontfix' : null,
+      custom: typeKey === 'bug' ? { severity: i % 4 === 0 ? 'S1' : 'S3' } : {},
+      watcherIds: i % 4 === 0 ? [ME] : [],
+      subscriberCount: assignees.length + 1,
+      commentCount: 0,
+      attachmentCount: 0,
+      relationSummary: emptyRelations(),
+      timeSpentSec: done ? 3600 * ((i % 5) + 1) : i % 3 === 0 ? 3600 * 2 : 0,
+      remainingSec: null,
+      originalEstimateSec: null,
+      sla: null,
+      triage: status.category === 'triage',
+      snoozedUntil: null,
+      source: status.category === 'triage' ? 'intake' : 'app',
+      externalRef: null,
+      chatChannelId: null,
+      archivedAt: null,
+      createdAt: iso((SEEDS.length - i + 2) * DAY),
+      updatedAt: iso((i % 9) * 3600e3 + 600e3),
+      lastActivityAt: iso((i % 9) * 3600e3 + 600e3),
+    } satisfies Issue
+  })
+}
+
+function describe(title: string, typeKey: string): string {
+  return typeKey === 'bug'
+    ? `Reproduced on the current main branch. ${title} — the fix likely belongs in the module that owns the surface, not the shell.`
+    : `${title}. Scope it small enough to land in one cycle and leave the contract unchanged where possible.`
+}
+
+// ---------------------------------------------------------------------------------------------
+// KQL evaluation
+// ---------------------------------------------------------------------------------------------
+
+type Scalar = string | number | boolean | null
+
+/** Field accessor used by the KQL evaluator, mirroring `SYSTEM_FIELDS`. */
+function fieldValue(issue: Issue, name: string): Scalar | Scalar[] {
+  switch (name.toLowerCase()) {
+    case 'key':
+      return issue.key
+    case 'project':
+      return issue.projectId
+    case 'type':
+      return issue.typeId
+    case 'title':
+      return issue.title
+    case 'status':
+      return issue.statusId
+    case 'statuscategory':
+      return issue.statusCategory
+    case 'priority':
+      return issue.priority
+    case 'assignee':
+      return issue.assigneeIds
+    case 'reporter':
+      return issue.reporterId
+    case 'label':
+      return issue.labelIds
+    case 'component':
+      return issue.componentIds
+    case 'version':
+      return issue.versionIds
+    case 'cycle':
+      return issue.cycleId
+    case 'milestone':
+      return issue.milestoneId
+    case 'parent':
+      return issue.parentId
+    case 'created':
+      return issue.createdAt
+    case 'updated':
+      return issue.updatedAt
+    case 'completed':
+      return issue.completedAt
+    case 'due':
+      return issue.dueDate
+    case 'start':
+      return issue.startDate
+    case 'estimate':
+      return issue.estimate
+    case 'timespent':
+      return issue.timeSpentSec
+    case 'watcher':
+      return issue.watcherIds
+    case 'resolution':
+      return issue.resolution
+    case 'triage':
+      return issue.triage
+    case 'archived':
+      return issue.archivedAt !== null
+    case 'text':
+      return `${issue.key} ${issue.title} ${issue.descriptionText}`
+    default:
+      return name.startsWith('cf.') ? ((issue.custom[name.slice(3)] ?? null) as Scalar) : null
+  }
+}
+
+/** Every spelling a value may be written as: an id, a key, a name or a person's handle. */
+function aliasesFor(value: string): string[] {
+  const out = [value]
+  const proj = projects.find((p) => p.id === value)
+  if (proj) out.push(proj.key, proj.name)
+  const type = types.find((t) => t.id === value)
+  if (type) out.push(type.key, type.name)
+  const lbl = labels.find((l) => l.id === value)
+  if (lbl) out.push(lbl.name)
+  const cyc = cycles.find((c) => c.id === value)
+  if (cyc) out.push(cyc.name, String(cyc.number))
+  const ms = milestones.find((m) => m.id === value)
+  if (ms) out.push(ms.name)
+  const status = statusById.get(value)
+  if (status) out.push(status.name)
+  const person = PERSON_NAMES[value]
+  if (person) out.push(person, person.split(' ')[0] as string)
+  return out.map((s) => s.toLowerCase())
+}
+
+function literal(v: KqlValue): Scalar {
+  switch (v.kind) {
+    case 'string':
+    case 'ident':
+    case 'date':
+      return v.value
+    case 'number':
+      return v.value
+    case 'bool':
+      return v.value
+    case 'reldate': {
+      const per = { h: 3600e3, d: DAY, w: 7 * DAY, m: 30 * DAY, y: 365 * DAY }[v.unit]
+      return new Date(NOW + v.amount * per).toISOString()
+    }
+    case 'func':
+      return v.name === 'currentUser' ? ME : v.name === 'now' ? new Date(NOW).toISOString() : null
+    default:
+      return null
+  }
+}
+
+function equals(actual: Scalar | Scalar[], expected: Scalar): boolean {
+  if (expected === null) return actual === null || (Array.isArray(actual) && actual.length === 0)
+  const wanted = String(expected).toLowerCase()
+  const candidates = Array.isArray(actual) ? actual : [actual]
+  return candidates.some((c) => c !== null && aliasesFor(String(c)).includes(wanted))
+}
+
+function compare(actual: Scalar | Scalar[], expected: Scalar): number {
+  const a = Array.isArray(actual) ? (actual[0] ?? null) : actual
+  if (a === null || expected === null) return Number.NaN
+  if (typeof a === 'number' || typeof expected === 'number') return Number(a) - Number(expected)
+  return String(a) < String(expected) ? -1 : String(a) > String(expected) ? 1 : 0
+}
+
+function matches(issue: Issue, expr: KqlExpr | null): boolean {
+  if (!expr) return true
+  switch (expr.kind) {
+    case 'and':
+      return expr.children.every((c) => matches(issue, c))
+    case 'or':
+      return expr.children.some((c) => matches(issue, c))
+    case 'not':
+      return !matches(issue, expr.child)
+    case 'cmp': {
+      const actual = fieldValue(issue, expr.field)
+      const empty = actual === null || actual === '' || (Array.isArray(actual) && actual.length === 0)
+      switch (expr.op) {
+        case 'is-empty':
+          return empty
+        case 'is-not-empty':
+          return !empty
+        case 'in':
+          return (expr.values ?? []).some((v) => equals(actual, literal(v)))
+        case 'not-in':
+          return !(expr.values ?? []).some((v) => equals(actual, literal(v)))
+        case '=':
+          return equals(actual, expr.value ? literal(expr.value) : null)
+        case '!=':
+          return !equals(actual, expr.value ? literal(expr.value) : null)
+        case '~':
+        case '!~': {
+          const needle = String(expr.value ? literal(expr.value) : '').toLowerCase()
+          const hay = (Array.isArray(actual) ? actual.join(' ') : String(actual ?? '')).toLowerCase()
+          const hit = needle.length > 0 && hay.includes(needle)
+          return expr.op === '~' ? hit : !hit
+        }
+        default: {
+          const d = compare(actual, expr.value ? literal(expr.value) : null)
+          if (Number.isNaN(d)) return false
+          return expr.op === '<' ? d < 0 : expr.op === '<=' ? d <= 0 : expr.op === '>' ? d > 0 : d >= 0
+        }
+      }
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// the client
+// ---------------------------------------------------------------------------------------------
+
+/** Every workspace-scoped procedure carries the workspace; the mock has one, so it only checks shape. */
+type Ws = { workspaceId: string }
+
+const notImplemented = (name: string) => () => {
+  throw new Error(`[mock] tracker.${name} is not implemented`)
+}
+
+const RICH = (text: string) => ({
+  type: 'doc' as const,
+  content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
+})
+
+export function createMockTrackerApi() {
+  const state = {
+    issues: buildIssues(),
+    comments: [] as Comment[],
+    history: [] as IssueHistoryEntry[],
+    counters: new Map<string, number>(),
+  }
+  for (const issue of state.issues) {
+    state.counters.set(issue.projectId, Math.max(state.counters.get(issue.projectId) ?? 0, issue.number))
+  }
+
+  const seedComment = (issueIndex: number, authorIdx: number, text: string, minutesAgo: number) => {
+    const issue = state.issues[issueIndex] as Issue
+    state.comments.push({
+      id: uid(900 + state.comments.length),
+      workspaceId: WORKSPACE,
+      issueId: issue.id,
+      parentId: null,
+      authorId: who(authorIdx),
+      body: RICH(text),
+      bodyText: text,
+      mentionIds: [],
+      reactions:
+        state.comments.length % 3 === 0 ? [{ emoji: '👍', count: 2, userIds: [who(0), who(2)] }] : [],
+      internal: false,
+      source: 'app',
+      replyCount: 0,
+      editedAt: null,
+      deletedAt: null,
+      createdAt: iso(minutesAgo * 60e3),
+      updatedAt: iso(minutesAgo * 60e3),
+    })
+    issue.commentCount += 1
+  }
+
+  seedComment(
+    0,
+    1,
+    'Reproduced on staging — the socket closes at exactly 20 minutes, so it smells like an idle timeout on the proxy rather than our heartbeat.',
+    240,
+  )
+  seedComment(0, 2, 'Agreed. I bumped the proxy read timeout locally and it survived an hour.', 180)
+  seedComment(
+    0,
+    0,
+    'Let us keep the heartbeat anyway; it protects us from every other proxy we do not control.',
+    45,
+  )
+  seedComment(
+    2,
+    3,
+    'j and k for up and down, x to select, enter to open. Anything else and we are inventing a new language.',
+    600,
+  )
+  seedComment(2, 0, 'Works for me. Escape closes the panel and returns focus to the row.', 90)
+  seedComment(
+    18,
+    1,
+    'WIP limits should warn rather than block — a hard stop just makes people rename columns.',
+    320,
+  )
+
+  for (const [i, issue] of state.issues.entries()) {
+    if (i % 5 !== 0) continue
+    state.history.push({
+      id: uid(950 + i),
+      issueId: issue.id,
+      actorId: who(i),
+      action: 'created',
+      changes: [],
+      data: {},
+      occurredAt: issue.createdAt,
+    })
+    state.history.push({
+      id: uid(951 + i),
+      issueId: issue.id,
+      actorId: who(i + 1),
+      action: 'status_changed',
+      changes: [{ field: 'status', from: 'todo', to: issue.statusId }],
+      data: {},
+      occurredAt: issue.updatedAt,
+    })
+  }
+
+  const find = (issueId: string) => {
+    const issue = state.issues.find((i) => i.id === issueId)
+    if (!issue) throw new Error(`[mock] unknown issue ${issueId}`)
+    return issue
+  }
+  const touch = (issue: Issue) => {
+    issue.updatedAt = new Date().toISOString()
+    issue.lastActivityAt = issue.updatedAt
+  }
+
+  const sortKey = (issue: Issue, field: string): string | number => {
+    switch (field) {
+      case 'priority':
+        return -['none', 'low', 'medium', 'high', 'urgent'].indexOf(issue.priority)
+      case 'updated':
+        return -new Date(issue.updatedAt).getTime()
+      case 'created':
+        return -new Date(issue.createdAt).getTime()
+      case 'due':
+        return issue.dueDate ?? '9999-12-31'
+      case 'estimate':
+        return issue.estimate ?? Number.MAX_SAFE_INTEGER
+      case 'key':
+        return issue.key
+      default:
+        return issue.rank
+    }
+  }
+
+  return {
+    projects: {
+      list: async (_input: Ws) => clone(projects),
+      get: async ({ projectId }: Ws & { projectId: string }) =>
+        clone(projects.find((p) => p.id === projectId) ?? (projects[0] as Project)),
+      getByKey: async ({ key }: Ws & { key: string }) =>
+        clone(projects.find((p) => p.key === key) ?? (projects[0] as Project)),
+      create: notImplemented('projects.create'),
+      update: notImplemented('projects.update'),
+    },
+
+    types: { list: async (_input: Ws) => clone(types) },
+    labels: { list: async (_input: Ws) => clone(labels) },
+    fields: { list: async (_input: Ws) => clone(fields) },
+    workflows: { statuses: async (_input: Ws) => clone(statuses) },
+    milestones: {
+      list: async ({ projectId }: Ws & { projectId?: string }) =>
+        clone(milestones.filter((m) => !projectId || m.projectId === projectId)),
+    },
+    cycles: {
+      list: async ({ projectId }: Ws & { projectId?: string }) =>
+        clone(cycles.filter((c) => !projectId || c.projectId === projectId)),
+    },
+    views: {
+      list: async (_input: Ws): Promise<View[]> => [],
+      create: notImplemented('views.create'),
+    },
+
+    kql: {
+      fields: async (_input: Ws) =>
+        [
+          ...SYSTEM_FIELD_INFO,
+          ...fields.map((f) => ({
+            name: `cf.${f.key}`,
+            type: f.type === 'number' ? ('number' as const) : ('enum' as const),
+            label: f.name,
+            operators: ['=', '!=', 'in', 'not-in', 'is-empty', 'is-not-empty'],
+            values: f.options.map((o) => ({ value: o.label, label: o.label })),
+            custom: true,
+            sortable: true,
+          })),
+        ] as never,
+      parse: async ({ kql }: Ws & { kql: string }) => {
+        const parsed = parseKql(kql)
+        return {
+          ok: parsed.ok,
+          ast: parsed.ast as unknown,
+          errors: parsed.errors,
+          normalized: parsed.normalized,
+          suggestions: parsed.suggestions,
+        }
+      },
+    },
+
+    issues: {
+      query: async (
+        input: Ws & {
+          kql?: string
+          projectIds?: string[]
+          orderBy?: Array<{ field: string; dir: 'asc' | 'desc' }>
+          groupBy?: GroupBy
+          limit?: number
+          includeArchived?: boolean
+        },
+      ) => {
+        const parsed = parseKql(input.kql ?? '')
+        const where = parsed.ok ? (parsed.ast?.where ?? null) : null
+        let items = state.issues
+          .filter((i) => input.includeArchived || i.archivedAt === null)
+          .filter((i) => !input.projectIds?.length || input.projectIds.includes(i.projectId))
+          .filter((i) => matches(i, where))
+
+        const order = input.orderBy?.length ? input.orderBy : (parsed.ast?.orderBy ?? [])
+        if (order.length) {
+          items = [...items].sort((a, b) => {
+            for (const o of order) {
+              const av = sortKey(a, o.field)
+              const bv = sortKey(b, o.field)
+              const d = av < bv ? -1 : av > bv ? 1 : 0
+              if (d !== 0) return o.dir === 'desc' ? -d : d
+            }
+            return a.rank < b.rank ? -1 : 1
+          })
+        } else {
+          items = [...items].sort((a, b) => (a.rank < b.rank ? -1 : 1))
+        }
+
+        return {
+          items: clone(items.slice(0, input.limit ?? 100)),
+          nextCursor: null,
+          total: items.length,
+          fields: [],
+        }
+      },
+
+      get: async ({ issueId }: Ws & { issueId: string }) => clone(find(issueId)),
+      getByKey: async ({ key }: Ws & { key: string }) => {
+        const issue = state.issues.find((i) => i.key.toLowerCase() === key.toLowerCase())
+        if (!issue) throw new Error(`[mock] unknown issue ${key}`)
+        return clone(issue)
+      },
+      getMany: async ({ ids }: Ws & { ids: string[] }) =>
+        clone(state.issues.filter((i) => ids.includes(i.id))),
+
+      create: async (
+        input: Ws & {
+          projectId: string
+          title: string
+          typeId?: string
+          description?: Issue['description']
+          priority?: Priority
+          assigneeIds?: Uid[]
+          labelIds?: string[]
+          estimate?: number | null
+          dueDate?: string | null
+          cycleId?: string | null
+          statusId?: string
+        },
+      ) => {
+        const proj = projects.find((p) => p.id === input.projectId) ?? (projects[0] as Project)
+        const number = (state.counters.get(proj.id) ?? 0) + 1
+        state.counters.set(proj.id, number)
+        const status = statusById.get(input.statusId ?? 'todo') ?? (statuses[2] as StatusInfo)
+        const text = input.description?.content?.length ? plainText(input.description) : ''
+        const issue: Issue = {
+          ...(state.issues[0] as Issue),
+          id: uid(1000 + state.issues.length),
+          projectId: proj.id,
+          key: `${proj.key}-${number}`,
+          number,
+          typeId: input.typeId ?? (types[0] as WorkItemType).id,
+          title: input.title,
+          description: input.description ?? null,
+          descriptionText: text,
+          statusId: status.id,
+          statusCategory: status.category,
+          priority: input.priority ?? 'none',
+          assigneeIds: input.assigneeIds ?? [],
+          reporterId: ME,
+          creatorId: ME,
+          labelIds: input.labelIds ?? [],
+          cycleId: input.cycleId ?? null,
+          milestoneId: null,
+          rank: rankSequence(1)[0] as string,
+          estimate: input.estimate ?? null,
+          dueDate: input.dueDate ?? null,
+          completedAt: null,
+          cancelledAt: null,
+          resolution: null,
+          custom: {},
+          watcherIds: [ME],
+          subscriberCount: 1,
+          commentCount: 0,
+          attachmentCount: 0,
+          relationSummary: emptyRelations(),
+          timeSpentSec: 0,
+          triage: status.category === 'triage',
+          source: 'app',
+          archivedAt: null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastActivityAt: new Date().toISOString(),
+        }
+        // new work lands at the top of its column, which is where people look for it
+        const first = state.issues[0]
+        if (first) issue.rank = rankBetweenSafe(null, first.rank)
+        state.issues.unshift(issue)
+        return clone(issue)
+      },
+
+      update: async ({ issueId, patch }: Ws & { issueId: string; patch: Record<string, unknown> }) => {
+        const issue = find(issueId)
+        for (const [key, value] of Object.entries(patch)) {
+          if (value === undefined) continue
+          if (key === 'assigneeAdd') {
+            issue.assigneeIds = [...new Set([...issue.assigneeIds, ...(value as Uid[])])]
+          } else if (key === 'assigneeRemove') {
+            issue.assigneeIds = issue.assigneeIds.filter((a) => !(value as UserId[]).includes(a))
+          } else if (key === 'labelAdd') {
+            issue.labelIds = [...new Set([...issue.labelIds, ...(value as string[])])]
+          } else if (key === 'labelRemove') {
+            issue.labelIds = issue.labelIds.filter((l) => !(value as string[]).includes(l))
+          } else if (key === 'custom') {
+            issue.custom = { ...issue.custom, ...(value as Record<string, unknown>) }
+          } else if (key === 'description') {
+            issue.description = value as Issue['description']
+            issue.descriptionText = plainText(issue.description)
+          } else {
+            ;(issue as unknown as Record<string, unknown>)[key] = value
+          }
+        }
+        touch(issue)
+        return clone(issue)
+      },
+
+      bulkUpdate: async ({ ids, patch }: Ws & { ids: string[]; patch: Record<string, unknown> }) => {
+        const results = ids.map((id) => {
+          const issue = state.issues.find((i) => i.id === id)
+          if (!issue) return { id, ok: false, error: { code: 'NOT_FOUND', message: 'Unknown issue' } }
+          Object.assign(issue, patch)
+          touch(issue)
+          return { id, ok: true }
+        })
+        return {
+          results,
+          succeeded: results.filter((r) => r.ok).length,
+          failed: results.filter((r) => !r.ok).length,
+        }
+      },
+
+      rank: async ({
+        issueId,
+        afterId,
+        beforeId,
+      }: Ws & {
+        issueId: string
+        afterId?: string
+        beforeId?: string
+      }) => {
+        const issue = find(issueId)
+        const after = afterId ? find(afterId).rank : null
+        const before = beforeId ? find(beforeId).rank : null
+        issue.rank = rankBetweenSafe(after, before)
+        touch(issue)
+        return { id: issue.id, rank: issue.rank }
+      },
+
+      archive: async ({ issueId, archived = true }: Ws & { issueId: string; archived?: boolean }) => {
+        const issue = find(issueId)
+        issue.archivedAt = archived ? new Date().toISOString() : null
+        touch(issue)
+        return clone(issue)
+      },
+
+      delete: async ({ issueId }: Ws & { issueId: string }) => {
+        state.issues = state.issues.filter((i) => i.id !== issueId)
+        return { ok: true as const }
+      },
+
+      history: async ({ issueId }: Ws & { issueId: string }) => ({
+        items: clone(state.history.filter((h) => h.issueId === issueId)),
+        statusHistory: [],
+        nextCursor: null,
+      }),
+
+      watchers: {
+        add: async ({ issueId, userId }: Ws & { issueId: string; userId?: Uid }) => {
+          const issue = find(issueId)
+          issue.watcherIds = [...new Set([...issue.watcherIds, userId ?? ME])]
+          return { watcherIds: [...issue.watcherIds] }
+        },
+        remove: async ({ issueId, userId }: Ws & { issueId: string; userId: Uid }) => {
+          const issue = find(issueId)
+          issue.watcherIds = issue.watcherIds.filter((w) => w !== userId)
+          return { watcherIds: [...issue.watcherIds] }
+        },
+      },
+
+      transitions: {
+        available: async ({ issueId }: Ws & { issueId: string }) => {
+          const issue = find(issueId)
+          return statuses
+            .filter((s) => s.id !== issue.statusId)
+            .map((s) => ({
+              id: `to:${s.id}`,
+              name: s.name,
+              toStatusId: s.id,
+              toStatus: clone(s),
+              allowed: true,
+              reasons: [],
+              requiresApproval: false,
+              screen: null,
+              hidden: false,
+            }))
+        },
+        apply: async ({ issueId, transitionId }: Ws & { issueId: string; transitionId: string }) => {
+          const issue = find(issueId)
+          const target = statusById.get(transitionId.replace(/^to:/, ''))
+          if (!target) throw new Error(`[mock] unknown transition ${transitionId}`)
+          state.history.push({
+            id: uid(1200 + state.history.length),
+            issueId: issue.id,
+            actorId: ME,
+            action: 'status_changed',
+            changes: [{ field: 'status', from: issue.statusId, to: target.id }],
+            data: {},
+            occurredAt: new Date().toISOString(),
+          })
+          issue.statusId = target.id
+          issue.statusCategory = target.category
+          issue.triage = target.category === 'triage'
+          issue.completedAt = target.category === 'done' ? new Date().toISOString() : null
+          issue.cancelledAt = target.category === 'cancelled' ? new Date().toISOString() : null
+          touch(issue)
+          return { issue: clone(issue), approval: null }
+        },
+      },
+
+      comments: {
+        list: async ({ issueId }: Ws & { issueId: string }) => ({
+          items: clone(
+            state.comments
+              .filter((c) => c.issueId === issueId)
+              .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+          ),
+          nextCursor: null,
+        }),
+        create: async ({ issueId, body }: Ws & { issueId: string; body: Comment['body'] }) => {
+          const issue = find(issueId)
+          const comment: Comment = {
+            id: uid(1100 + state.comments.length),
+            workspaceId: WORKSPACE,
+            issueId,
+            parentId: null,
+            authorId: ME,
+            body,
+            bodyText: plainText(body),
+            mentionIds: [],
+            reactions: [],
+            internal: false,
+            source: 'app',
+            replyCount: 0,
+            editedAt: null,
+            deletedAt: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          }
+          state.comments.push(comment)
+          issue.commentCount += 1
+          touch(issue)
+          return clone(comment)
+        },
+        react: async ({ commentId, emoji }: Ws & { commentId: string; emoji: string }) => {
+          const comment = state.comments.find((c) => c.id === commentId)
+          if (!comment) throw new Error(`[mock] unknown comment ${commentId}`)
+          const existing = comment.reactions.find((r) => r.emoji === emoji)
+          if (!existing) {
+            comment.reactions = [...comment.reactions, { emoji, count: 1, userIds: [ME] }]
+          } else if (existing.userIds.includes(ME)) {
+            existing.userIds = existing.userIds.filter((u) => u !== ME)
+            existing.count = existing.userIds.length
+            comment.reactions = comment.reactions.filter((r) => r.count > 0)
+          } else {
+            existing.userIds = [...existing.userIds, ME]
+            existing.count = existing.userIds.length
+          }
+          return clone(comment)
+        },
+        delete: async ({ commentId }: Ws & { commentId: string }) => {
+          state.comments = state.comments.filter((c) => c.id !== commentId)
+          return { ok: true as const }
+        },
+      },
+    },
+  }
+}
+
+function plainText(doc: Issue['description'] | Comment['body']): string {
+  const walk = (node: unknown): string => {
+    if (!node || typeof node !== 'object') return ''
+    const n = node as { text?: string; content?: unknown[] }
+    if (typeof n.text === 'string') return n.text
+    return (n.content ?? []).map(walk).join(' ')
+  }
+  return doc ? walk(doc).trim() : ''
+}
+
+/** A drop can land next to an equal rank after a concurrent edit; a fresh key is better than a throw. */
+function rankBetweenSafe(before: string | null, after: string | null): string {
+  try {
+    return rankBetween(before, after)
+  } catch {
+    return rankBetween(null, null)
+  }
+}
+
+const SYSTEM_FIELD_INFO = [
+  {
+    name: 'project',
+    type: 'ref',
+    label: 'Project',
+    operators: ['=', '!=', 'in', 'not-in'],
+    custom: false,
+    sortable: true,
+  },
+  {
+    name: 'status',
+    type: 'ref',
+    label: 'Status',
+    operators: ['=', '!=', 'in', 'not-in'],
+    custom: false,
+    sortable: true,
+  },
+  {
+    name: 'priority',
+    type: 'enum',
+    label: 'Priority',
+    operators: ['=', '!=', 'in', 'not-in'],
+    custom: false,
+    sortable: true,
+    values: [
+      { value: 'urgent', label: 'Urgent' },
+      { value: 'high', label: 'High' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'low', label: 'Low' },
+      { value: 'none', label: 'None' },
+    ],
+  },
+  {
+    name: 'assignee',
+    type: 'user',
+    label: 'Assignee',
+    operators: ['=', '!=', 'in', 'not-in', 'is-empty', 'is-not-empty'],
+    custom: false,
+    sortable: false,
+  },
+  {
+    name: 'label',
+    type: 'ref',
+    label: 'Label',
+    operators: ['=', '!=', 'in', 'not-in', 'is-empty'],
+    custom: false,
+    sortable: false,
+  },
+  {
+    name: 'cycle',
+    type: 'ref',
+    label: 'Cycle',
+    operators: ['=', '!=', 'in', 'not-in'],
+    custom: false,
+    sortable: true,
+  },
+  {
+    name: 'due',
+    type: 'date',
+    label: 'Due date',
+    operators: ['=', '!=', '<', '<=', '>', '>='],
+    custom: false,
+    sortable: true,
+  },
+  { name: 'text', type: 'text', label: 'Full text', operators: ['~', '!~'], custom: false, sortable: false },
+]

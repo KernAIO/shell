@@ -118,6 +118,7 @@
   "tracker_no_estimate": "Keine Schätzung",
   "tracker_no_label": "Kein Label",
   "tracker_no_milestone": "Kein Meilenstein",
+  "tracker_no_permission": "Sie dürfen das nicht ändern",
   "tracker_points": "{count} Pkt.",
   "tracker_preset_active": "Aktiv",
   "tracker_preset_all": "Alle",

@@ -1,4 +1,5 @@
 import type { SvelteClientModule as ClientModule, ClientNavItem } from '@kernhq/ui'
+import { trackerClientModule } from './tracker/client'
 
 /**
  * The client-side module registry.
@@ -44,3 +45,7 @@ export function commandsFor(ctx: NavContext) {
     .flatMap((m) => (m.commands ?? []).map((c) => ({ ...c, moduleId: m.id })))
     .filter((c) => !c.permission || ctx.can(c.permission))
 }
+
+// Composition happens here, at build time. Importing a module's client and registering it is the only
+// wiring the shell needs: navigation, commands, presenters and routes all follow from the manifest.
+registerModule(trackerClientModule)

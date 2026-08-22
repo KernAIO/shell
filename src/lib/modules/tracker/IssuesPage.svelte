@@ -1,0 +1,503 @@
+<script lang="ts">
+import {
+  customKqlField,
+  type GroupBy,
+  type Issue,
+  type KqlField,
+  SYSTEM_FIELDS,
+} from '@kernhq/module-tracker/client'
+import {
+  Button,
+  EmptyState,
+  PageHeader,
+  Skeleton,
+  Tabs,
+  Toolbar,
+  ToolbarButton,
+  toast,
+  ViewToggle,
+} from '@kernhq/ui'
+import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
+import { goto } from '$app/navigation'
+import { page } from '$app/state'
+import { getApi } from '$lib/api/client'
+import { keys } from '$lib/query'
+import { session } from '$lib/state/session.svelte'
+import * as m from '$msg'
+import { getTrackerApi } from './api'
+import BoardView from './components/BoardView.svelte'
+import FilterMenu from './components/FilterMenu.svelte'
+import IssueDetailPanel from './components/IssueDetailPanel.svelte'
+import IssueListView from './components/IssueListView.svelte'
+import KqlInput from './components/KqlInput.svelte'
+import NewIssueDialog from './components/NewIssueDialog.svelte'
+import { setTrackerCatalogue, TrackerCatalogue } from './context.svelte'
+import { composeKql, emptyFilters, filterCount, PRESETS, type Preset, type TrackerFilters } from './filters'
+import { GROUP_CYCLE, groupByLabel, presetLabel } from './labels'
+import { canTracker } from './permissions'
+import { trackerKeys } from './query'
+
+/**
+ * The issues view: the list and the board over one query.
+ *
+ * What is being shown lives in the URL — the layout, the grouping, the preset, the query and the
+ * open issue — so a view can be linked to, reloaded and shared, and the browser's back button
+ * behaves the way people expect when they close a panel.
+ */
+const api = getApi()
+const tracker = getTrackerApi()
+const queryClient = useQueryClient()
+
+const slug = $derived(page.params.ws ?? '')
+const workspace = $derived(session.workspaces.find((w) => w.slug === slug))
+const workspaceId = $derived(workspace?.id ?? '')
+
+// ---- URL-backed view state ------------------------------------------------------------------
+
+const params = $derived(page.url.searchParams)
+const layout = $derived(params.get('view') === 'board' ? 'board' : 'list')
+const groupBy = $derived((params.get('group') ?? 'status') as GroupBy)
+const preset = $derived((params.get('preset') ?? 'all') as Preset)
+const manualKql = $derived(params.get('q') ?? '')
+const openIssueKey = $derived(params.get('issue'))
+/** `?new=1` lets the command palette and any deep link open the create dialog. */
+const newRequested = $derived(params.get('new') === '1')
+
+function setParams(next: Record<string, string | null>) {
+  const url = new URL(page.url)
+  for (const [key, value] of Object.entries(next)) {
+    if (value === null || value === '') url.searchParams.delete(key)
+    else url.searchParams.set(key, value)
+  }
+  void goto(url, { replaceState: true, keepFocus: true, noScroll: true })
+}
+
+// what this person may do here; the server checks again, this only keeps the interface honest
+const canCreate = $derived(canTracker('create'))
+const canTransition = $derived(canTracker('transition'))
+const canBulkEdit = $derived(canTracker('bulkEdit'))
+
+let filters = $state<TrackerFilters>(emptyFilters())
+let selection = $state<string[]>([])
+let creating = $state(false)
+let createDefaults = $state<{ projectId?: string; statusId?: string }>({})
+let listView = $state<ReturnType<typeof IssueListView> | null>(null)
+
+// ---- reference data -------------------------------------------------------------------------
+
+const catalogue = new TrackerCatalogue()
+setTrackerCatalogue(catalogue)
+
+const enabled = $derived(Boolean(workspaceId))
+
+const projectsQuery = createQuery(() => ({
+  queryKey: trackerKeys.projects(workspaceId),
+  queryFn: () => tracker.projects.list({ workspaceId }),
+  enabled,
+}))
+const statusesQuery = createQuery(() => ({
+  queryKey: trackerKeys.statuses(workspaceId),
+  queryFn: () => tracker.workflows.statuses({ workspaceId }),
+  enabled,
+}))
+const typesQuery = createQuery(() => ({
+  queryKey: trackerKeys.types(workspaceId),
+  queryFn: () => tracker.types.list({ workspaceId }),
+  enabled,
+}))
+const labelsQuery = createQuery(() => ({
+  queryKey: trackerKeys.labels(workspaceId),
+  queryFn: () => tracker.labels.list({ workspaceId }),
+  enabled,
+}))
+const fieldsQuery = createQuery(() => ({
+  queryKey: trackerKeys.fields(workspaceId),
+  queryFn: () => tracker.fields.list({ workspaceId }),
+  enabled,
+}))
+const membersQuery = createQuery(() => ({
+  queryKey: keys.members(workspaceId),
+  queryFn: () => api.workspaces.members.list({ workspaceId }),
+  enabled,
+}))
+
+const projects = $derived(projectsQuery.data ?? [])
+
+// planning data is per project, so ask for every project the workspace has and flatten
+const cyclesQuery = createQuery(() => ({
+  queryKey: trackerKeys.cycles(workspaceId, null),
+  queryFn: async () =>
+    (await Promise.all(projects.map((p) => tracker.cycles.list({ workspaceId, projectId: p.id })))).flat(),
+  enabled: enabled && projects.length > 0,
+}))
+const milestonesQuery = createQuery(() => ({
+  queryKey: trackerKeys.milestones(workspaceId, null),
+  queryFn: async () =>
+    (
+      await Promise.all(projects.map((p) => tracker.milestones.list({ workspaceId, projectId: p.id })))
+    ).flat(),
+  enabled: enabled && projects.length > 0,
+}))
+
+$effect(() => {
+  catalogue.projects = projects
+})
+$effect(() => {
+  catalogue.statuses = statusesQuery.data ?? []
+})
+$effect(() => {
+  catalogue.types = typesQuery.data ?? []
+})
+$effect(() => {
+  catalogue.labels = labelsQuery.data ?? []
+})
+$effect(() => {
+  catalogue.cycles = cyclesQuery.data ?? []
+})
+$effect(() => {
+  catalogue.milestones = milestonesQuery.data ?? []
+})
+$effect(() => {
+  catalogue.people = (membersQuery.data?.items ?? []).map((member) => ({
+    id: member.user.id,
+    name: member.user.name,
+    avatarUrl: member.user.avatarUrl,
+  }))
+})
+
+/** System fields plus this workspace's custom fields, for the query box's validation. */
+const kqlFields = $derived<KqlField[]>([
+  ...SYSTEM_FIELDS,
+  ...(fieldsQuery.data ?? []).map((f) => customKqlField(f.key, f.type, f.name)),
+])
+
+// ---- the query ------------------------------------------------------------------------------
+
+const effectiveKql = $derived(composeKql(preset, filters, manualKql))
+
+const issuesQuery = createQuery(() => ({
+  queryKey: trackerKeys.issues(workspaceId, `${effectiveKql}|${layout}`),
+  queryFn: () =>
+    tracker.issues.query({
+      workspaceId,
+      kql: effectiveKql,
+      limit: 500,
+      include: { total: true, groupCounts: false, full: true },
+    }),
+  enabled,
+}))
+
+const issues = $derived(issuesQuery.data?.items ?? [])
+const totalPoints = $derived(issues.reduce((sum, issue) => sum + (issue.estimate ?? 0), 0))
+
+const activeCycle = $derived(catalogue.activeCycle)
+const cycleProgress = $derived(
+  activeCycle && activeCycle.stats.estimateTotal > 0
+    ? Math.round((activeCycle.stats.estimateDone / activeCycle.stats.estimateTotal) * 100)
+    : null,
+)
+
+const subtitle = $derived(
+  [
+    activeCycle ? activeCycle.name : presetLabel(preset),
+    m.tracker_issues_count({ count: issues.length }),
+    totalPoints > 0 ? m.tracker_points({ count: totalPoints }) : null,
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join(' · '),
+)
+
+// ---- mutations ------------------------------------------------------------------------------
+
+const moveIssue = createMutation(() => ({
+  mutationFn: async (input: {
+    issue: Issue
+    toStatusId: string
+    afterId: string | null
+    beforeId: string | null
+  }) => {
+    if (input.issue.statusId !== input.toStatusId) {
+      const available = await tracker.issues.transitions.available({
+        workspaceId,
+        issueId: input.issue.id,
+      })
+      const target = available.find((t) => t.toStatusId === input.toStatusId && t.allowed)
+      if (!target) throw new Error(m.tracker_transition_blocked({ status: input.toStatusId }))
+      await tracker.issues.transitions.apply({
+        workspaceId,
+        issueId: input.issue.id,
+        transitionId: target.id,
+      })
+    }
+    await tracker.issues.rank({
+      workspaceId,
+      issueId: input.issue.id,
+      afterId: input.afterId ?? undefined,
+      beforeId: input.beforeId ?? undefined,
+    })
+  },
+  onSuccess: () => queryClient.invalidateQueries({ queryKey: ['tracker', 'issue'] }),
+  onError: (error: Error) => {
+    toast.error(error.message)
+    void queryClient.invalidateQueries({ queryKey: ['tracker', 'issue'] })
+  },
+}))
+
+const bulkPriority = createMutation(() => ({
+  mutationFn: (priority: Issue['priority']) =>
+    tracker.issues.bulkUpdate({ workspaceId, ids: selection, patch: { priority } }),
+  onSuccess: () => {
+    toast.success(m.tracker_bulk_done({ count: selection.length }))
+    selection = []
+    void queryClient.invalidateQueries({ queryKey: ['tracker', 'issue'] })
+  },
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+// ---- interactions ---------------------------------------------------------------------------
+
+function open(issue: Issue) {
+  setParams({ issue: issue.key })
+}
+
+function toggleSelect(issue: Issue) {
+  selection = selection.includes(issue.id)
+    ? selection.filter((id) => id !== issue.id)
+    : [...selection, issue.id]
+}
+
+function startCreate(defaults: { projectId?: string; statusId?: string } = {}) {
+  createDefaults = { projectId: defaults.projectId ?? projects[0]?.id, statusId: defaults.statusId }
+  creating = true
+}
+
+function cycleGroupBy() {
+  const next = GROUP_CYCLE[(GROUP_CYCLE.indexOf(groupBy) + 1) % GROUP_CYCLE.length] ?? 'status'
+  setParams({ group: next === 'status' ? null : next })
+}
+
+const isTyping = (target: EventTarget | null) => {
+  const el = target as HTMLElement | null
+  return Boolean(el && (el.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(el.tagName ?? '')))
+}
+
+function onWindowKeydown(event: KeyboardEvent) {
+  if (event.metaKey || event.ctrlKey || event.altKey || isTyping(event.target)) return
+  if (creating) return
+  if (event.key === 'c' && canCreate) {
+    event.preventDefault()
+    startCreate()
+    return
+  }
+  if (event.key === 'Escape' && openIssueKey) {
+    event.preventDefault()
+    setParams({ issue: null })
+    return
+  }
+  if (layout === 'list' && listView?.handleKey(event)) event.preventDefault()
+}
+
+const selected = $derived(new Set(selection))
+
+// the palette navigates here with ?new=1 rather than reaching into this component's state
+$effect(() => {
+  if (newRequested && !creating) {
+    startCreate()
+    setParams({ new: null })
+  }
+})
+</script>
+
+<svelte:head><title>{m.tracker_title()} · Kern</title></svelte:head>
+<svelte:window onkeydown={onWindowKeydown} />
+
+<div class="ktracker">
+  <PageHeader
+    crumbs={[{ label: workspace?.name ?? '' }, { label: m.tracker_title() }]}
+    title={m.tracker_title()}
+    {subtitle}
+    measure={cycleProgress}
+  />
+
+  <Toolbar>
+    <ViewToggle
+      items={[
+        { value: 'list', icon: 'list', label: m.tracker_view_list() },
+        { value: 'board', icon: 'columns-3', label: m.tracker_view_board() },
+      ]}
+      value={layout}
+      onValueChange={(value) => setParams({ view: value === 'board' ? 'board' : null })}
+    />
+    <span class="divider"></span>
+
+    <FilterMenu {filters} onchange={(next) => (filters = next)} />
+
+    {#if layout === 'list'}
+      <ToolbarButton prefix={m.tracker_group_by()} onclick={cycleGroupBy} data-testid="group-by">
+        {groupByLabel(groupBy)}
+      </ToolbarButton>
+    {/if}
+
+    {#if filterCount(filters) > 0}
+      <ToolbarButton active onClear={() => (filters = emptyFilters())}>
+        {m.tracker_filter_count({ count: filterCount(filters) })}
+      </ToolbarButton>
+    {/if}
+
+    <KqlInput value={manualKql} fields={kqlFields} onapply={(kql) => setParams({ q: kql })} />
+
+    {#snippet end()}
+      <Tabs
+        variant="underline"
+        items={PRESETS.map((p) => ({ value: p, label: presetLabel(p) }))}
+        value={preset}
+        onValueChange={(value) => setParams({ preset: value === 'all' ? null : value })}
+        label={m.tracker_presets()}
+      />
+    {/snippet}
+  </Toolbar>
+
+  <div class="body" class:board={layout === 'board'}>
+    {#if issuesQuery.isPending}
+      <div class="skeleton" aria-busy="true" aria-label={m.loading()}>
+        {#each [1, 2, 3, 4, 5, 6, 7, 8] as row (row)}
+          <div class="srow">
+            <Skeleton class="h-[15px] w-[15px] rounded-[4px]" />
+            <Skeleton class="h-[11px] w-[52px]" />
+            <Skeleton class="h-[15px] w-[15px] rounded-[4px]" />
+            <Skeleton class="h-[11px] w-[42%]" />
+          </div>
+        {/each}
+      </div>
+    {:else if issuesQuery.isError}
+      <div class="state">
+        <EmptyState icon="triangle-alert" title={m.tracker_error_title()} description={m.tracker_error_body()}>
+          {#snippet actions()}
+            <Button size="sm" variant="secondary" onclick={() => issuesQuery.refetch()}>{m.retry()}</Button>
+          {/snippet}
+        </EmptyState>
+      </div>
+    {:else if layout === 'board'}
+      <BoardView
+        {issues}
+        columns={catalogue.statuses}
+        wipLimits={{ in_progress: 5, in_review: 3 }}
+        draggable={canTransition}
+        onopen={open}
+        onmove={(issue, toStatusId, afterId, beforeId) =>
+          moveIssue.mutate({ issue, toStatusId, afterId, beforeId })}
+        oncreate={canCreate ? (statusId) => startCreate({ statusId }) : undefined}
+      />
+    {:else}
+      <IssueListView
+        bind:this={listView}
+        {issues}
+        {groupBy}
+        selection={selected}
+        loading={issuesQuery.isFetching}
+        onopen={open}
+        onselect={toggleSelect}
+        oncreate={canCreate ? () => startCreate() : undefined}
+      />
+    {/if}
+  </div>
+
+  {#if selection.length > 0}
+    <div class="bulk" role="status">
+      <span>{m.tracker_selected({ count: selection.length })}</span>
+      {#if canBulkEdit}
+        <span class="bdiv"></span>
+        <button type="button" onclick={() => bulkPriority.mutate('urgent')}>
+          {m.tracker_bulk_urgent()}
+        </button>
+      {/if}
+      <span class="bdiv"></span>
+      <button type="button" onclick={() => (selection = [])}>{m.close()}</button>
+    </div>
+  {/if}
+
+  <IssueDetailPanel {workspaceId} issueKey={openIssueKey} onclose={() => setParams({ issue: null })} />
+</div>
+
+<NewIssueDialog
+  bind:open={creating}
+  {workspaceId}
+  defaults={createDefaults}
+  oncreated={(issue) => setParams({ issue: issue.key })}
+/>
+
+<style>
+  .ktracker {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--kern-surface);
+  }
+  .divider {
+    width: 1px;
+    height: 18px;
+    margin: 0 4px;
+    background: var(--kern-border);
+    flex: none;
+    align-self: center;
+  }
+  .body {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  /* the board is its own scroller in both directions, so the page must not add a second one */
+  .body.board {
+    overflow: hidden;
+  }
+  .skeleton {
+    display: flex;
+    flex-direction: column;
+  }
+  .srow {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    height: 40px;
+    padding: 0 16px;
+    border-bottom: 1px solid var(--kern-border-hairline);
+  }
+  .state {
+    padding: 40px 28px;
+  }
+  .bulk {
+    position: absolute;
+    bottom: 20px;
+    inset-inline-start: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    border-radius: var(--kern-r-lg);
+    background: var(--kern-ink-900);
+    color: var(--kern-ink-inverse);
+    font-size: 13px;
+    box-shadow: var(--kern-shadow-toast);
+    z-index: 30;
+    animation: kfade 0.14s ease-out;
+  }
+  :global([dir='rtl']) .bulk {
+    transform: translateX(50%);
+  }
+  .bulk button {
+    color: inherit;
+  }
+  .bulk button:hover {
+    opacity: 0.75;
+  }
+  .bdiv {
+    width: 1px;
+    height: 16px;
+    background: rgb(255 255 255 / 0.2);
+  }
+</style>

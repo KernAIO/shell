@@ -1,5 +1,6 @@
 <script lang="ts">
-import { Command, type CommandItem } from '@kernhq/ui'
+import type { ClientContext } from '@kernhq/ui'
+import { Command, type CommandItem, toast } from '@kernhq/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { getApi } from '$lib/api/client'
@@ -32,6 +33,36 @@ const go = (path: string) => {
   query = ''
   void goto(`/${workspaceSlug}${path}`)
 }
+
+// module commands only make sense for modules this workspace has turned on
+const modules = createQuery(() => ({
+  queryKey: keys.modules(workspaceId),
+  queryFn: () => api.workspaces.modules.list({ workspaceId }),
+  enabled: Boolean(workspaceId),
+}))
+const enabledModules = $derived(
+  new Set((modules.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
+)
+
+/** What a module command is handed when it runs. Hrefs are workspace-relative, as in `nav`. */
+const clientContext = (): ClientContext => ({
+  workspaceId,
+  workspaceSlug,
+  userId: session.user?.id ?? null,
+  permissions: session.permissions,
+  navigate: (href) => go(href),
+  openPalette: (q) => {
+    query = q ?? ''
+    open = true
+  },
+  toast: ({ title, description, kind }) =>
+    kind === 'error'
+      ? toast.error(title, { description })
+      : kind === 'success'
+        ? toast.success(title, { description })
+        : toast.info(title, { description }),
+  api,
+})
 
 const navigation: CommandItem[] = $derived([
   {
@@ -92,13 +123,14 @@ const commands: CommandItem[] = $derived([
       open = false
     },
   },
-  ...commandsFor({ enabled: new Set(), can: (p) => session.can(p) }).map((c) => ({
+  ...commandsFor({ enabled: enabledModules, can: (p) => session.can(p) }).map((c) => ({
     id: c.id,
     label: c.label,
     icon: c.icon,
     group: m.palette_group_commands(),
     onSelect: () => {
       open = false
+      void c.run(clientContext())
     },
   })),
 ])
