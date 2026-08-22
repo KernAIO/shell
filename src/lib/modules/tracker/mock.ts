@@ -1247,6 +1247,88 @@ export function createMockTrackerApi() {
       },
     },
 
+    reports: {
+      burndown: async ({ cycleId }: Ws & { cycleId: string }) => {
+        const cycle = cycles.find((c) => c.id === cycleId) ?? cycles[0]
+        if (!cycle) throw new Error('[mock] no cycle to burn down')
+        // A straight ideal line and a plausible actual one: enough for the chart to be exercised
+        // without pretending the mock recomputes history.
+        const days = 14
+        const scope = 40
+        const points = Array.from({ length: days }, (_, i) => {
+          const done = Math.min(scope, Math.round((i / (days - 1)) * scope * 0.85))
+          return {
+            // `iso` counts backwards from now, so day 0 is the furthest back and the axis reads
+            // left to right the way a person reads a date.
+            date: day(-(days - 1 - i)),
+            remaining: scope - done,
+            ideal: Math.round(scope - (i / (days - 1)) * scope),
+            completed: done,
+            scope,
+            scopeChange: 0,
+          }
+        })
+        return clone({ cycle, unit: 'points' as const, points })
+      },
+      velocity: async (_input: Ws & { projectId: string }) => ({
+        unit: 'points' as const,
+        cycles: cycles.slice(0, 4).map((c, i) => ({
+          cycle: {
+            id: c.id,
+            number: c.number,
+            name: c.name,
+            startAt: c.startAt,
+            endAt: c.endAt,
+            status: c.status,
+          },
+          committed: 30 + i * 4,
+          completed: 26 + i * 3,
+          committedCount: 12 + i,
+          completedCount: 10 + i,
+        })),
+        average: 29,
+      }),
+      createdVsResolved: async ({ from, to }: Ws & { from: string; to: string }) => {
+        const start = Date.parse(from)
+        const days = Math.max(1, Math.round((Date.parse(to) - start) / DAY) + 1)
+        let open = 18
+        const points = Array.from({ length: days }, (_, i) => {
+          const created = (i % 5) + 1
+          const resolved = (i % 4) + 1
+          open = Math.max(0, open + created - resolved)
+          return {
+            date: new Date(start + i * DAY).toISOString().slice(0, 10),
+            created,
+            resolved,
+            openTotal: open,
+          }
+        })
+        return { points }
+      },
+      time: async ({ from, to }: Ws & { from: string; to: string }) => {
+        const withTime = state.issues.filter((i) => i.timeSpentSec > 0).slice(0, 10)
+        const totalSec = withTime.reduce((sum, i) => sum + i.timeSpentSec, 0)
+        return clone({
+          from,
+          to,
+          totalSec,
+          billableSec: Math.round(totalSec * 0.8),
+          rows: [],
+          byUser: totalSec
+            ? [{ userId: ME, durationSec: totalSec, billableSec: Math.round(totalSec * 0.8) }]
+            : [],
+          byIssue: withTime.map((issue) => ({
+            issueId: issue.id,
+            issueKey: issue.key,
+            title: issue.title,
+            durationSec: issue.timeSpentSec,
+            originalEstimateSec: issue.estimate ? issue.estimate * 3600 : null,
+            remainingSec: null,
+          })),
+        })
+      },
+    },
+
     triage: {
       accept: async ({ issueId }: Ws & { issueId: string }) => {
         const issue = find(issueId)

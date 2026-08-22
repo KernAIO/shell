@@ -429,3 +429,27 @@ test('time can be logged on an issue, by timer or by hand', async ({ page }) => 
   await time.getByTestId('timer-stop').click()
   await expect(time.getByTestId('timer-start')).toBeVisible()
 })
+
+test('reports answer how the work is going', async ({ page }) => {
+  // Five reports had a server and no screen, so "are we going to make it" lived in the database.
+  await page.goto('/northstar/tracker/reports')
+  await expect(page.getByRole('heading', { name: 'Reports', level: 1 })).toBeVisible()
+
+  // burndown shows what is left against what would be left if it went evenly
+  const burndown = page.getByTestId('report-burndown')
+  await expect(burndown).toBeVisible()
+  await expect(burndown.getByRole('img', { name: 'Burndown' })).toBeVisible()
+  await expect(burndown).toContainText('If it went evenly')
+
+  // each report is its own tab, because each answers a different question
+  await page.getByRole('radio', { name: 'Velocity' }).click()
+  const velocity = page.getByTestId('report-velocity')
+  await expect(velocity.getByRole('img', { name: 'Velocity' })).toBeVisible()
+  await expect(velocity).toContainText('On average')
+
+  await page.getByRole('radio', { name: 'Created and resolved' }).click()
+  await expect(page.getByTestId('report-flow')).toContainText('Still open')
+
+  // the numbers are given as a table too, for anyone the picture does not reach
+  await expect(page.getByRole('table', { name: /Created and resolved/ })).toBeAttached()
+})

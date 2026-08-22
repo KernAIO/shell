@@ -34,6 +34,14 @@ export const trackerClientModule = defineClientModule({
 
   routes: [
     {
+      path: '/tracker/reports',
+      component: () => import('./ReportsPage.svelte'),
+      get title() {
+        return m.tracker_reports_title()
+      },
+      permission: TRACKER_PERMISSIONS.view,
+    },
+    {
       path: '/tracker',
       component: () => import('./IssuesPage.svelte'),
       get title() {
@@ -89,6 +97,15 @@ export const trackerClientModule = defineClientModule({
       icon: 'inbox',
       permission: TRACKER_PERMISSIONS.view,
       run: (ctx) => ctx.navigate('/tracker?q=triage%20%3D%20true'),
+    },
+    {
+      id: 'tracker.reports',
+      get label() {
+        return m.tracker_reports_title()
+      },
+      icon: 'activity',
+      permission: TRACKER_PERMISSIONS.view,
+      run: (ctx) => ctx.navigate('/tracker/reports'),
     },
     {
       id: 'tracker.by-project',
