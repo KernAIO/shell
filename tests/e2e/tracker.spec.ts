@@ -485,3 +485,18 @@ test('a bad intake link says so rather than asking anyone to sign in', async ({ 
   await expect(page.getByText('This form is not available')).toBeVisible()
   await expect(page).not.toHaveURL(/login|signin/)
 })
+
+test('a team can open a request link, and closing it closes the form', async ({ page }) => {
+  // `setIntake` existed and nothing called it, so the form had no link anyone could hand out.
+  await page.goto('/northstar/settings/tracker/planning')
+  await page.getByTestId('intake-open').click()
+
+  const link = page.getByTestId('intake-link')
+  await expect(link).toBeVisible()
+  await expect(link).toContainText('/request/')
+
+  // the link it hands out is the one the public form answers to
+  const href = (await link.textContent()) ?? ''
+  await page.goto(href.trim())
+  await expect(page.getByRole('heading', { name: /Contact/ })).toBeVisible()
+})

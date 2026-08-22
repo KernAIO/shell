@@ -965,6 +965,12 @@ export function createMockTrackerApi() {
         Object.assign(project, patch, { updatedAt: new Date().toISOString() })
         return clone(project)
       },
+      setIntake: async ({
+        enabled,
+        rotate,
+      }: Ws & { projectId: string; enabled: boolean; rotate?: boolean }) => ({
+        token: enabled ? (rotate ? 'demo-intake-token-2' : 'demo-intake-token') : null,
+      }),
       templates: {
         // The four the tracker ships with. The mock does not apply them — it has no schema to seed —
         // but the chooser is what this exists for, and it must offer what the server offers.

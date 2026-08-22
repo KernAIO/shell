@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Button, Select, Spinner, toast } from '@kernhq/ui'
-import { createQuery, useQueryClient } from '@tanstack/svelte-query'
+import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
@@ -84,6 +84,44 @@ const renameLabel = mutation((input: { id: string; name: string }) =>
 )
 const removeLabel = mutation((id: string) => api.labels.delete({ workspaceId, id }))
 
+/**
+ * The intake link.
+ *
+ * `setIntake` returns the token and nothing else stores it, so the page keeps what it was handed.
+ * Turning intake off returns `null`, which is the same thing as "there is no link" — the form then
+ * says it is unavailable rather than accepting requests nobody reads.
+ */
+let intakeToken = $state<string | null>(null)
+const intakeUrl = $derived(
+  intakeToken ? `${typeof location === 'undefined' ? '' : location.origin}/request/${intakeToken}` : '',
+)
+
+const setIntake = createMutation(() => ({
+  mutationFn: (input: { enabled: boolean; rotate: boolean }) =>
+    api.projects.setIntake({ workspaceId, projectId, ...input }),
+  onSuccess: (result: { token: string | null }) => {
+    intakeToken = result.token
+    toast.success(result.token ? m.tracker_intake_opened() : m.tracker_intake_closed())
+  },
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+/** Switching project drops the link: it belonged to the project that was showing. */
+$effect(() => {
+  void projectId
+  intakeToken = null
+})
+
+const copyLink = async () => {
+  try {
+    await navigator.clipboard.writeText(intakeUrl)
+    toast.success(m.tracker_intake_copied())
+  } catch {
+    // A denied clipboard is not a failure worth an error: the link is on screen to select.
+    toast.info(m.tracker_intake_copy_manually())
+  }
+}
+
 const components = $derived(
   (componentsQuery.data ?? []).map((c) => ({
     id: c.id,
@@ -120,6 +158,44 @@ const releasedIds = $derived(
         options={projects.map((p) => ({ value: p.id, label: `${p.key} · ${p.name}` }))}
         onValueChange={(v: string) => (selectedId = v)}
       />
+    </SettingsSection>
+
+    <SettingsSection
+      title={m.tracker_intake_title()}
+      description={m.tracker_intake_hint()}
+    >
+      {#if intakeToken}
+        <p class="intake-link">
+          <code data-testid="intake-link">{intakeUrl}</code>
+        </p>
+        <div class="row">
+          <Button size="sm" variant="ghost" onclick={() => copyLink()} data-testid="intake-copy">
+            {m.tracker_intake_copy()}
+          </Button>
+          <Button size="sm" variant="ghost" onclick={() => setIntake.mutate({ enabled: true, rotate: true })}>
+            {m.tracker_intake_rotate()}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onclick={() => setIntake.mutate({ enabled: false, rotate: false })}
+            data-testid="intake-close"
+          >
+            {m.tracker_intake_close()}
+          </Button>
+        </div>
+        <p class="note">{m.tracker_intake_rotate_hint()}</p>
+      {:else}
+        <Button
+          size="sm"
+          disabled={!canManage}
+          loading={setIntake.isPending}
+          onclick={() => setIntake.mutate({ enabled: true, rotate: false })}
+          data-testid="intake-open"
+        >
+          {m.tracker_intake_open()}
+        </Button>
+      {/if}
     </SettingsSection>
 
     <SettingsSection>
@@ -171,6 +247,24 @@ const releasedIds = $derived(
 </SettingsPage>
 
 <style>
+.intake-link {
+  margin: 0 0 8px;
+  font-size: 12.5px;
+  overflow-wrap: anywhere;
+}
+.intake-link code {
+  font-family: var(--kern-font-mono);
+}
+.row {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--kern-ink-400);
+}
 .state {
   display: grid;
   place-items: center;
