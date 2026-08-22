@@ -1,5 +1,5 @@
 {
-  "name": "@kernaio/app",
+  "name": "@kernhq/app",
   "version": "0.1.0",
   "private": true,
   "description": "Kern web app \u2014 SvelteKit PWA shell hosting every module's client",
@@ -25,11 +25,11 @@
   "dependencies": {
     "@better-auth/passkey": "^1.7.1",
     "@internationalized/date": "^3.12.0",
-    "@kernaio/contracts": "^0.1.0",
-    "@kernaio/kernel": "^0.1.0",
-    "@kernaio/module-template": "^0.1.0",
-    "@kernaio/sdk": "^0.1.0",
-    "@kernaio/ui": "^0.1.0",
+    "@kernhq/contracts": "^0.1.0",
+    "@kernhq/kernel": "^0.1.0",
+    "@kernhq/module-template": "^0.1.0",
+    "@kernhq/sdk": "^0.1.0",
+    "@kernhq/ui": "^0.1.0",
     "@lucide/svelte": "^1.33.0",
     "@tanstack/svelte-query": "^6.1.0",
     "better-auth": "^1.7.1"

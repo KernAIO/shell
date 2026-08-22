@@ -1,7 +1,7 @@
 <script lang="ts">
-import { Toaster, TooltipProvider } from '@kernaio/ui'
+import { Toaster, TooltipProvider } from '@kernhq/ui'
 import { QueryClientProvider } from '@tanstack/svelte-query'
-import '@kernaio/ui/styles/index.css'
+import '@kernhq/ui/styles/index.css'
 import '../app.css'
 import { getLocale } from '$lib/paraglide/runtime'
 import { createQueryClient } from '$lib/query'

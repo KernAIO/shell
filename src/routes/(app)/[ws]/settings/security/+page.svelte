@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, Field, Input, toast } from '@kernaio/ui'
+import { Button, Field, Input, toast } from '@kernhq/ui'
 import { auth, authDisabled } from '$lib/auth/client'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsRow from '$lib/components/settings/SettingsRow.svelte'

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, EmptyState } from '@kernaio/ui'
+import { Button, EmptyState } from '@kernhq/ui'
 import { page } from '$app/state'
 import * as m from '$msg'
 

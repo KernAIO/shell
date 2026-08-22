@@ -16,7 +16,7 @@ import {
   TableRow,
   Textarea,
   toast,
-} from '@kernaio/ui'
+} from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'

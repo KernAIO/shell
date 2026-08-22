@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Avatar, Button, Input, Select, toast } from '@kernaio/ui'
+import { Avatar, Button, Input, Select, toast } from '@kernhq/ui'
 import { createMutation, useQueryClient } from '@tanstack/svelte-query'
 import { getApi } from '$lib/api/client'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'

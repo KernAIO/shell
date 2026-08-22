@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, Card, Field, Input } from '@kernaio/ui'
+import { Button, Card, Field, Input } from '@kernhq/ui'
 import { goto } from '$app/navigation'
 import { getApi } from '$lib/api/client'
 import * as m from '$msg'

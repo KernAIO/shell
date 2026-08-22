@@ -1,7 +1,7 @@
 <script lang="ts">
 // Entry point: send people to the workspace they used last, or to sign-in / onboarding.
 
-import { Spinner } from '@kernaio/ui'
+import { Spinner } from '@kernhq/ui'
 import { goto } from '$app/navigation'
 import { getApi } from '$lib/api/client'
 import { authDisabled } from '$lib/auth/client'

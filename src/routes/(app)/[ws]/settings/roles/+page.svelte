@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Badge, Button, Checkbox, Dialog, Field, Icon, Input, Skeleton, Textarea, toast } from '@kernaio/ui'
+import { Badge, Button, Checkbox, Dialog, Field, Icon, Input, Skeleton, Textarea, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'

@@ -1,4 +1,4 @@
-import type { SvelteClientModule as ClientModule, ClientNavItem } from '@kernaio/ui'
+import type { SvelteClientModule as ClientModule, ClientNavItem } from '@kernhq/ui'
 
 /**
  * The client-side module registry.

@@ -1,6 +1,6 @@
 @import "tailwindcss";
-@import "@kernaio/ui/styles/index.css";
-@import "@kernaio/ui/styles/theme.css";
+@import "@kernhq/ui/styles/index.css";
+@import "@kernhq/ui/styles/theme.css";
 
 html,
 body {

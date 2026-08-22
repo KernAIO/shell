@@ -1,4 +1,4 @@
-import { type CoreClient, createCoreClient } from '@kernaio/sdk'
+import { type CoreClient, createCoreClient } from '@kernhq/sdk'
 import { browser } from '$app/environment'
 import { env } from '$env/dynamic/public'
 import { createMockApi } from './mock'

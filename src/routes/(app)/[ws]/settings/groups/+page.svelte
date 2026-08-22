@@ -1,16 +1,5 @@
 <script lang="ts">
-import {
-  Avatar,
-  Button,
-  Dialog,
-  EmptyState,
-  Field,
-  Icon,
-  Input,
-  Skeleton,
-  Textarea,
-  toast,
-} from '@kernaio/ui'
+import { Avatar, Button, Dialog, EmptyState, Field, Icon, Input, Skeleton, Textarea, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'

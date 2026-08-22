@@ -16,7 +16,7 @@ import {
   SidebarSwitcher,
   Spinner,
   StatusDot,
-} from '@kernaio/ui'
+} from '@kernhq/ui'
 import { createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'

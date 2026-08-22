@@ -1,4 +1,4 @@
-import type { core } from '@kernaio/contracts'
+import type { core } from '@kernhq/contracts'
 
 /**
  * The signed-in user, their workspaces and the permissions they hold in the workspace they are

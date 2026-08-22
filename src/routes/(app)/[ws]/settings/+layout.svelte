@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Avatar, Icon, SectionLabel } from '@kernaio/ui'
+import { Avatar, Icon, SectionLabel } from '@kernhq/ui'
 import { page } from '$app/state'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
