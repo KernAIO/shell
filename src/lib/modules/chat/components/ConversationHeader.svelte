@@ -1,9 +1,10 @@
 <script lang="ts">
 import type { ChannelView, ChatStore } from '@kernhq/module-chat/client'
-import { AvatarStack, Button, DropdownMenu, Icon, IconButton } from '@kernhq/ui'
+import { AvatarStack, Button, Dialog, DropdownMenu, Icon, IconButton, toast } from '@kernhq/ui'
 import * as m from '$msg'
 import { KIND_TILE, kindOf } from '../labels'
 import { canChat } from '../permissions'
+import { attempt } from '../report'
 
 /**
  * Who you are talking to, and what you can do about it.
@@ -17,8 +18,13 @@ interface Props {
   channel: ChannelView
   onshowpins: () => void
   pinsOpen?: boolean
+  /**
+   * Called after leaving. The conversation is still in the address bar at that point, and the page
+   * re-opens whatever the URL names — which puts the channel you just left straight back.
+   */
+  onleft?: () => void
 }
-let { store, channel, onshowpins, pinsOpen = false }: Props = $props()
+let { store, channel, onshowpins, pinsOpen = false, onleft }: Props = $props()
 
 const kind = $derived(kindOf(channel))
 const tile = $derived(KIND_TILE[kind])
@@ -26,11 +32,35 @@ const label = $derived(store.channelLabel(channel))
 const muted = $derived(channel.membership?.muted ?? false)
 const isDm = $derived(kind === 'dm' || kind === 'group')
 
+/**
+ * Only people we actually know are in this conversation. Falling back to every cached user showed
+ * strangers as members of a channel they had never joined.
+ */
 const members = $derived(
-  (channel.dmUserIds.length ? channel.dmUserIds : Object.keys(store.users))
-    .slice(0, 4)
-    .map((userId) => ({ id: userId, name: store.users[userId]?.name ?? '…' })),
+  channel.dmUserIds.slice(0, 4).map((userId) => ({
+    id: userId,
+    name: store.users[userId]?.name ?? '…',
+    avatarUrl: store.users[userId]?.avatarUrl ?? null,
+  })),
 )
+
+let confirmLeave = $state(false)
+let leaving = $state(false)
+
+async function leave() {
+  leaving = true
+  try {
+    const name = store.channelLabel(channel)
+    await store.leaveChannel(channel.id)
+    confirmLeave = false
+    onleft?.()
+    toast.success(m.chat_left({ name }))
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : m.chat_failed())
+  } finally {
+    leaving = false
+  }
+}
 
 const subtitle = $derived(isDm ? (channel.topic ?? '') : m.chat_members_count({ count: channel.memberCount }))
 </script>
@@ -78,15 +108,15 @@ const subtitle = $derived(isDm ? (channel.topic ?? '') : m.chat_members_count({ 
         id: 'favorite',
         label: channel.favorite ? m.chat_unfavorite() : m.chat_favorite(),
         icon: 'star',
-        onSelect: () => void store.setFavorite(channel.id, !channel.favorite),
+        onSelect: () => attempt(() => store.setFavorite(channel.id, !channel.favorite)),
       },
       {
         id: 'mute',
         label: muted ? m.chat_unmute() : m.chat_mute(),
         icon: muted ? 'bell' : 'bell-off',
-        onSelect: () => void store.setMuted(channel.id, !muted),
+        onSelect: () => attempt(() => store.setMuted(channel.id, !muted)),
       },
-      ...(isDm || !canChat('view')
+      ...(isDm
         ? []
         : [
             {
@@ -94,7 +124,7 @@ const subtitle = $derived(isDm ? (channel.topic ?? '') : m.chat_members_count({ 
               label: m.chat_leave(),
               icon: 'log-out',
               danger: true,
-              onSelect: () => void store.leaveChannel(channel.id),
+              onSelect: () => (confirmLeave = true),
             },
           ]),
     ]}
@@ -105,7 +135,23 @@ const subtitle = $derived(isDm ? (channel.topic ?? '') : m.chat_members_count({ 
   </DropdownMenu>
 </header>
 
+<Dialog bind:open={confirmLeave} title={m.chat_leave()} initialFocus={false}>
+  <p class="confirm">{m.chat_leave_confirm({ name: store.channelLabel(channel) })}</p>
+  {#snippet footer()}
+    <Button variant="secondary" onclick={() => (confirmLeave = false)}>{m.chat_cancel()}</Button>
+    <Button variant="danger" loading={leaving} onclick={leave} data-testid="confirm-leave">
+      {m.chat_leave()}
+    </Button>
+  {/snippet}
+</Dialog>
+
 <style>
+  .confirm {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--kern-ink-700);
+  }
   .head {
     display: flex;
     align-items: flex-start;

@@ -48,6 +48,7 @@ let picked = $state<PickedMention[]>([])
 let sending = $state(false)
 let el = $state<HTMLTextAreaElement | null>(null)
 let emojiOpen = $state(false)
+let emojiTrigger = $state<HTMLButtonElement | null>(null)
 
 // the open @ menu, if any
 let mentionStart = $state<number | null>(null)
@@ -55,7 +56,21 @@ let mentionQuery = $state('')
 let mentionActive = $state(0)
 
 const allowed = $derived(canChat('post'))
-const typing = $derived(typingLabel(store.typingNames(channelId)))
+
+/**
+ * Typing indicators expire on a timer rather than an event — the store filters by how long ago the
+ * signal arrived. Nothing re-renders when time passes, so without this tick "Ines is typing…" stays
+ * on screen forever after she stops.
+ */
+let clock = $state(0)
+$effect(() => {
+  const id = setInterval(() => (clock = Date.now()), 1000)
+  return () => clearInterval(id)
+})
+const typing = $derived.by(() => {
+  clock
+  return typingLabel(store.typingNames(channelId))
+})
 const people = workspacePeople()
 
 const candidates = $derived(mentionStart === null ? [] : rankCandidates(people.list, mentionQuery))
@@ -239,6 +254,7 @@ function onkeydown(event: KeyboardEvent) {
     <div class="tools">
       <div class="emoji-anchor">
         <IconButton
+          bind:ref={emojiTrigger}
           icon="smile"
           label={m.chat_emoji()}
           size={26}
@@ -251,6 +267,7 @@ function onkeydown(event: KeyboardEvent) {
         />
         {#if emojiOpen}
           <EmojiPicker
+            trigger={emojiTrigger}
             onpick={(emoji) => {
               emojiOpen = false
               insertAtCaret(emoji)

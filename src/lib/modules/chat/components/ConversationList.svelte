@@ -61,6 +61,7 @@ const otherUser = (c: ChannelView) => {
               class:active={c.id === activeId}
               class:unread={unread > 0 && !muted}
               class:muted
+              aria-current={c.id === activeId ? 'page' : undefined}
               data-testid="conversation-row"
               data-channel-id={c.id}
               onclick={() => onselect(c.id)}

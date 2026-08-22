@@ -1,7 +1,7 @@
 <script lang="ts">
 import type { ChatStore, Message } from '@kernhq/module-chat/client'
 import { dayKey, dayLabel } from '@kernhq/module-chat/client'
-import { Button, Skeleton } from '@kernhq/ui'
+import { Button, EmptyState, Skeleton } from '@kernhq/ui'
 import { tick } from 'svelte'
 import { getLocale } from '$lib/paraglide/runtime'
 import * as m from '$msg'
@@ -73,7 +73,14 @@ $effect(() => {
 </script>
 
 <div class="scroll" bind:this={viewport} {onscroll} data-testid="message-list">
-  {#if win.loading && !items.length}
+  {#if win.error}
+    <div class="state" data-testid="transcript-error">
+      <EmptyState icon="triangle-alert" title={m.chat_transcript_failed()} description={win.error} />
+      <Button variant="secondary" size="sm" onclick={() => store.retryChannel(channelId)}>
+        {m.chat_retry()}
+      </Button>
+    </div>
+  {:else if win.loading && !items.length}
     <div class="loading">
       {#each [0, 1, 2, 3] as i (i)}
         <div class="skeleton-row">
@@ -91,6 +98,16 @@ $effect(() => {
         <Button variant="secondary" size="sm" onclick={loadOlder} loading={win.loading}>
           {m.chat_load_older()}
         </Button>
+      </div>
+    {/if}
+
+    {#if items.length === 0}
+      <div class="state" data-testid="empty-conversation">
+        <EmptyState
+          icon="message-circle"
+          title={m.chat_no_messages()}
+          description={m.chat_no_messages_hint()}
+        />
       </div>
     {/if}
 
@@ -147,6 +164,13 @@ $effect(() => {
     display: flex;
     justify-content: center;
     padding: 4px 0 12px;
+  }
+  .state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 40px 24px;
   }
   .loading {
     display: flex;

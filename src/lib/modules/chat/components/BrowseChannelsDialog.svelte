@@ -14,8 +14,10 @@ interface Props {
   open?: boolean
   store: ChatStore
   onopen?: (channelId: string) => void
+  /** the URL carries whether this is open, so closing has to clear it or it cannot reopen */
+  onclose?: () => void
 }
-let { open = $bindable(false), store, onopen }: Props = $props()
+let { open = $bindable(false), store, onopen, onclose }: Props = $props()
 
 type Row = Channel & { joined: boolean }
 
@@ -52,7 +54,15 @@ async function join(row: Row) {
 }
 </script>
 
-<Dialog bind:open title={m.chat_browse_channels()} description={m.chat_browse_hint()} size="lg">
+<Dialog
+  open={open}
+  onOpenChange={(next) => {
+    if (!next) onclose?.()
+  }}
+  title={m.chat_browse_channels()}
+  description={m.chat_browse_hint()}
+  size="lg"
+>
   <div class="search">
     <SearchBox
       bind:ref={searchEl}
@@ -83,7 +93,7 @@ async function join(row: Row) {
               variant="secondary"
               size="sm"
               onclick={() => {
-                open = false
+                onclose?.()
                 onopen?.(row.id)
               }}
             >

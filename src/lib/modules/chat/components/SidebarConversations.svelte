@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, EmptyState, SearchBox, Skeleton } from '@kernhq/ui'
+import { Button, EmptyState, IconButton, SearchBox, Skeleton } from '@kernhq/ui'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { session } from '$lib/state/session.svelte'
@@ -32,6 +32,15 @@ let newChannelOpen = $state(false)
 
 const searching = $derived(search.trim().length > 0)
 
+/**
+ * `SearchBox` clears itself — the ✕ button and Escape both write to `value` directly. Binding is
+ * therefore the only way to hear about it; passing the value one-way left the results on screen
+ * after the box was already empty.
+ */
+$effect(() => {
+  void store?.search(search)
+})
+
 $effect(() => {
   if (store && !store.channelsLoaded) void store.loadChannels()
 })
@@ -51,23 +60,38 @@ function openHit(channelId: string, messageId: string) {
   )
 }
 
-function runSearch(value: string) {
-  search = value
-  void store?.search(value)
-}
-
 function clearSearch() {
-  runSearch('')
+  search = ''
 }
 </script>
 
 <div class="chat-sidebar">
-  <div class="search">
+  <div class="controls">
     <SearchBox
-      value={search}
+      bind:value={search}
       placeholder={m.chat_search_placeholder()}
-      oninput={(e) => runSearch((e.currentTarget as HTMLInputElement).value)}
       data-testid="chat-search"
+    />
+    {#if canChat('createChannel')}
+      <IconButton
+        icon="plus"
+        label={m.chat_new_channel()}
+        size={34}
+        radius={9}
+        variant="outline"
+        strokeWidth={1.9}
+        onclick={() => (newChannelOpen = true)}
+        data-testid="new-channel"
+      />
+    {/if}
+    <IconButton
+      icon="hash"
+      label={m.chat_browse_channels()}
+      size={34}
+      radius={9}
+      variant="outline"
+      onclick={() => goto(`/${workspaceSlug}/chat?browse=1`)}
+      data-testid="browse-channels"
     />
   </div>
 
@@ -108,9 +132,18 @@ function clearSearch() {
     flex: 1;
     min-height: 0;
   }
-  .search {
-    padding: 8px 12px 6px;
+  /* DESIGN.md 2.3 control strip: the module owns this row, and every action stays reachable
+     whether or not there are conversations yet. */
+  .controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 12px 12px 4px;
     flex: none;
+  }
+  .controls :global(.ksb) {
+    flex: 1;
+    min-width: 0;
   }
   .scroll {
     flex: 1;

@@ -537,17 +537,20 @@ export function createMockChatApi() {
       async react({ messageId, emoji }: { messageId: string; emoji: string }) {
         const msg = findMessage(messageId)
         const existing = msg.reactions.find((r) => r.emoji === emoji)
+        let added = true
         if (!existing) {
           msg.reactions = [...msg.reactions, { emoji, count: 1, userIds: [ME] }]
         } else if (existing.userIds.includes(ME)) {
           existing.userIds = existing.userIds.filter((u) => u !== ME)
           existing.count -= 1
+          added = false
           if (existing.count <= 0) msg.reactions = msg.reactions.filter((r) => r.emoji !== emoji)
         } else {
           existing.userIds = [...existing.userIds, ME]
           existing.count += 1
         }
-        return { reactions: msg.reactions }
+        // the contract returns `added` alongside the reactions; the mock used to omit it
+        return { reactions: msg.reactions, added }
       },
       async pin({ messageId, pinned }: { messageId: string; pinned: boolean }) {
         findMessage(messageId).pinned = pinned

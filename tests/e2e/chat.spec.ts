@@ -274,3 +274,88 @@ test('an arbitrary reaction can be picked from the message', async ({ page }) =>
 
   await expect(message.locator('.chip', { hasText: '🔥' })).toContainText('1')
 })
+
+/**
+ * Regressions. Each of these was a real defect found by auditing the built interface rather than
+ * the plan: a control that existed but could not be reached, or one that could not be undone.
+ */
+
+test('creating a channel is reachable when conversations already exist', async ({ page }) => {
+  await openChat(page)
+  // the affordance used to live only in the empty state, so it vanished as soon as you had a channel
+  expect(await page.getByTestId('conversation-row').count()).toBeGreaterThan(0)
+
+  await page.getByTestId('new-channel').click()
+  await expect(page.getByTestId('channel-name')).toBeVisible()
+
+  await page.getByTestId('channel-name').fill('release-notes')
+  await page.getByTestId('create-channel').click()
+
+  await expect(page.getByTestId('conversation-name')).toHaveText('release-notes')
+})
+
+test('the emoji picker closes from the button that opened it', async ({ page }) => {
+  await openChat(page)
+  await page.getByTestId('conversation-row').filter({ hasText: 'design' }).click()
+
+  const button = page.getByTestId('emoji-button')
+  await button.click()
+  await expect(page.getByTestId('emoji-picker')).toBeVisible()
+
+  // pointerdown outside used to close it and the click then reopened it
+  await button.click()
+  await expect(page.getByTestId('emoji-picker')).toBeHidden()
+})
+
+test('browse channels can be opened twice', async ({ page }) => {
+  await openChat(page)
+
+  await page.getByTestId('browse-channels').click()
+  await expect(page.getByTestId('browse-search')).toBeVisible()
+
+  await page.keyboard.press('Escape')
+  await expect(page.getByTestId('browse-search')).toBeHidden()
+
+  // the URL kept ?browse=1, so the dialog could never be reopened
+  await page.getByTestId('browse-channels').click()
+  await expect(page.getByTestId('browse-search')).toBeVisible()
+})
+
+test('clearing the search box brings the conversations back', async ({ page }) => {
+  await openChat(page)
+  const search = page.getByTestId('chat-search')
+
+  await search.fill('tracker')
+  await expect(page.getByTestId('search-results')).toBeVisible()
+  await expect(page.getByTestId('conversation-row')).toHaveCount(0)
+
+  // SearchBox clears its own value; a one-way binding never heard about it
+  await search.press('Escape')
+  await expect(page.getByTestId('search-results')).toBeHidden()
+  expect(await page.getByTestId('conversation-row').count()).toBeGreaterThan(0)
+})
+
+test('leaving a channel asks first and says what happens', async ({ page }) => {
+  await openChat(page)
+  await page.getByTestId('conversation-row').filter({ hasText: 'design' }).click()
+
+  await page.getByRole('button', { name: 'Chat' }).last().click()
+  await page.getByRole('menuitem', { name: 'Leave channel' }).click()
+
+  const dialog = page.getByRole('dialog')
+  await expect(dialog).toContainText('stop receiving its messages')
+  await expect(dialog).toContainText('Nothing is deleted')
+
+  await page.getByTestId('confirm-leave').click()
+  await expect(page.getByTestId('conversation-row').filter({ hasText: 'design' })).toHaveCount(0)
+})
+
+test('an empty conversation says so instead of showing nothing', async ({ page }) => {
+  await openChat(page)
+  await page.getByTestId('new-channel').click()
+  await page.getByTestId('channel-name').fill('brand-new')
+  await page.getByTestId('create-channel').click()
+
+  await expect(page.getByTestId('empty-conversation')).toBeVisible()
+  await expect(page.getByText('No messages yet')).toBeVisible()
+})

@@ -32,7 +32,8 @@ const label = $derived(name ?? id.slice(0, 8))
     align-items: center;
     gap: 4px;
     max-width: 100%;
-    padding: 1px 7px 1px 5px;
+    padding-block: 1px;
+    padding-inline: 5px 7px;
     border-radius: var(--kern-r-2xl);
     background: var(--kern-surface-chip);
     color: var(--kern-ink-700);

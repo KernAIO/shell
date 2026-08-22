@@ -89,7 +89,7 @@ async function create() {
   </form>
 
   {#snippet footer()}
-    <Button variant="secondary" onclick={() => (open = false)}>{m.chat_close_thread()}</Button>
+    <Button variant="secondary" onclick={() => (open = false)}>{m.chat_cancel()}</Button>
     <Button onclick={create} disabled={!canSubmit} loading={saving} data-testid="create-channel">
       {m.chat_create()}
     </Button>

@@ -1,5 +1,6 @@
 <script lang="ts">
 import { EmptyState, Skeleton } from '@kernhq/ui'
+import { untrack } from 'svelte'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { realtime } from '$lib/realtime.svelte'
@@ -42,23 +43,36 @@ const channel = $derived(activeId && store ? store.channel(activeId) : undefined
 $effect(() => {
   const s = store
   if (!s) return
-  if (!s.channelsLoaded) void s.loadChannels()
   return realtime.tap((msg) => {
     s.handle(msg)
   })
 })
 
-// open whatever the URL points at, and mark it read once it is on screen
+/**
+ * Open whatever the URL points at, and mark it read once it is on screen.
+ *
+ * `openChannel` writes the transcript window, and reading that window is what this effect would
+ * otherwise depend on — so it re-ran itself every time it worked. That was not merely wasteful: on
+ * leaving a channel the store deletes its window, the effect fired again with the old id still in
+ * the address bar, and `openChannel` re-fetched and re-added the channel you had just left. It only
+ * ever depends on which conversation is named.
+ */
 $effect(() => {
   const s = store
-  if (!s || !activeId) return
-  void s.openChannel(activeId).then(() => s.markRead(activeId))
+  const id = activeId
+  if (!s || !id) return
+  untrack(() => {
+    void s.openChannel(id).then(() => s.markRead(id))
+  })
 })
 
 $effect(() => {
   const s = store
-  if (!s || !threadId) return
-  void s.openThread(threadId)
+  const id = threadId
+  if (!s || !id) return
+  untrack(() => {
+    void s.openThread(id)
+  })
 })
 
 const setParams = (mutate: (params: URLSearchParams) => void) => {
@@ -101,7 +115,18 @@ const selectChannel = (channelId: string) =>
         />
       </div>
     {:else}
-      <ConversationHeader {store} {channel} onshowpins={showPins} pinsOpen={sidePanel === 'pins'} />
+      <ConversationHeader
+        {store}
+        {channel}
+        onshowpins={showPins}
+        pinsOpen={sidePanel === 'pins'}
+        onleft={() =>
+          setParams((p) => {
+            p.delete('c')
+            p.delete('t')
+            p.delete('pins')
+          })}
+      />
       <MessageList {store} channelId={channel.id} onreply={openThread} />
       <Composer
         {store}
@@ -124,7 +149,12 @@ const selectChannel = (channelId: string) =>
 </div>
 
 {#if store}
-  <BrowseChannelsDialog open={browseOpen} {store} onopen={selectChannel} />
+  <BrowseChannelsDialog
+    open={browseOpen}
+    {store}
+    onopen={selectChannel}
+    onclose={() => setParams((p) => p.delete('browse'))}
+  />
 {/if}
 
 <style>

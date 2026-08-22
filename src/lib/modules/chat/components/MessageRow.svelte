@@ -7,6 +7,7 @@ import * as m from '$msg'
 import { QUICK_REACTIONS } from '../emoji'
 import { textToDoc } from '../mentions'
 import { canChat } from '../permissions'
+import { attempt } from '../report'
 import EmojiPicker from './EmojiPicker.svelte'
 
 /**
@@ -43,6 +44,7 @@ let editEl = $state<HTMLTextAreaElement | null>(null)
 let confirmDelete = $state(false)
 let deleting = $state(false)
 let reactionPickerOpen = $state(false)
+let reactionTrigger = $state<HTMLButtonElement | null>(null)
 
 /** `userIds` is a branded `UserId[]`; the store holds the plain string, so compare as strings. */
 const reactedByMe = (userIds: readonly string[]) => userIds.includes(store.userId)
@@ -122,7 +124,7 @@ const actions = $derived<MenuItem[]>([
     icon: 'bookmark',
     disabled: !canChat('pin'),
     hint: canChat('pin') ? undefined : m.chat_pin_denied(),
-    onSelect: () => void store.togglePin(message.id, message.channelId, !message.pinned),
+    onSelect: () => attempt(() => store.togglePin(message.id, message.channelId, !message.pinned)),
   },
   { id: 'copy', label: m.chat_copy_link(), icon: 'link', onSelect: copyLink },
   ...(canEdit
@@ -211,7 +213,7 @@ const actions = $derived<MenuItem[]>([
             type="button"
             class="chip"
             class:mine={reactedByMe(r.userIds)}
-            onclick={() => void store.toggleReaction(message.id, message.channelId, r.emoji)}
+            onclick={() => attempt(() => store.toggleReaction(message.id, message.channelId, r.emoji))}
           >
             <span aria-hidden="true">{r.emoji}</span>
             <span class="count">{r.count}</span>
@@ -236,13 +238,14 @@ const actions = $derived<MenuItem[]>([
           class="quick"
           title={m.chat_react()}
           aria-label={`${m.chat_react()} ${emoji}`}
-          onclick={() => void store.toggleReaction(message.id, message.channelId, emoji)}
+          onclick={() => attempt(() => store.toggleReaction(message.id, message.channelId, emoji))}
         >
           <span aria-hidden="true">{emoji}</span>
         </button>
       {/each}
       <div class="picker-anchor">
         <IconButton
+          bind:ref={reactionTrigger}
           icon="smile"
           label={m.chat_react_other()}
           size={26}
@@ -254,9 +257,10 @@ const actions = $derived<MenuItem[]>([
         {#if reactionPickerOpen}
           <EmojiPicker
             align="end"
+            trigger={reactionTrigger}
             onpick={(emoji) => {
               reactionPickerOpen = false
-              void store.toggleReaction(message.id, message.channelId, emoji)
+              attempt(() => store.toggleReaction(message.id, message.channelId, emoji))
             }}
             onclose={() => (reactionPickerOpen = false)}
           />

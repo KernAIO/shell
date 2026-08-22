@@ -19,8 +19,13 @@ interface Props {
   onclose: () => void
   /** anchor the panel to the end of its container instead of the start */
   align?: 'start' | 'end'
+  /**
+   * The button that opened this. A pointerdown on it must NOT count as "outside": closing here and
+   * letting the trigger's own click reopen leaves a picker that its own button can never dismiss.
+   */
+  trigger?: HTMLElement | null
 }
-let { onpick, onclose, align = 'start' }: Props = $props()
+let { onpick, onclose, align = 'start', trigger = null }: Props = $props()
 
 let query = $state('')
 let panel = $state<HTMLElement | null>(null)
@@ -34,7 +39,9 @@ $effect(() => {
 
 $effect(() => {
   const onPointerDown = (event: PointerEvent) => {
-    if (panel && !panel.contains(event.target as Node)) onclose()
+    const target = event.target as Node
+    if (trigger?.contains(target)) return
+    if (panel && !panel.contains(target)) onclose()
   }
   const onKeyDown = (event: KeyboardEvent) => {
     if (event.key === 'Escape') {

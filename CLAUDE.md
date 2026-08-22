@@ -76,6 +76,11 @@ in-memory API with demo data — no backend, no database.
   block, so wrap flex layouts in your own element).
 - **Kill stale dev servers before debugging.** A second process on :5173 served old code twice in one
   day and made correct fixes look broken. `lsof -ti:5173` should print exactly one pid.
+- **An `$effect` that calls something which writes state it also reads re-runs itself.** Chat's page
+  effect called `openChannel`, which writes the transcript window; reading that window made the
+  effect its own trigger. It was not just wasteful — leaving a channel deleted the window, the effect
+  fired again with the old id still in the URL, and the channel you had just left came back. Wrap the
+  call in `untrack`, and let the effect depend only on what genuinely selects it.
 - **A control with no handler is a bug, not a placeholder.** Chat shipped with four composer buttons,
   a pin button and a search box that all did nothing. Before calling a screen done, grep it for
   `IconButton`/`Button` without an `onclick`, and for `() => {}` callbacks. If something genuinely is

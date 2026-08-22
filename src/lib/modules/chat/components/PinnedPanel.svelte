@@ -121,7 +121,8 @@ $effect(() => {
     align-items: center;
     justify-content: space-between;
     height: 56px;
-    padding: 0 12px 0 24px;
+    padding-block: 0;
+    padding-inline: 24px 12px;
     border-bottom: 1px solid var(--kern-border);
     flex: none;
   }
