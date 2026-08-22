@@ -6,6 +6,7 @@ import {
   type FieldDef,
   type GroupBy,
   type Issue,
+  type IssueApproval,
   type IssueHistoryEntry,
   type KqlExpr,
   type KqlValue,
@@ -770,6 +771,7 @@ export function createMockTrackerApi() {
     attachments: [] as Attachment[],
     relations: [] as RelationView[],
     links: [] as Link[],
+    approvals: [] as IssueApproval[],
     history: [] as IssueHistoryEntry[],
     counters: new Map<string, number>(),
   }
@@ -1154,7 +1156,9 @@ export function createMockTrackerApi() {
               toStatus: clone(s),
               allowed: true,
               reasons: [],
-              requiresApproval: false,
+              // Closing needs a sign-off in the demo, so an approval is something you can see
+              // and decide rather than a screen nobody ever reaches.
+              requiresApproval: s.category === 'done',
               screen: null,
               hidden: false,
             }))
@@ -1163,6 +1167,17 @@ export function createMockTrackerApi() {
           const issue = find(issueId)
           const target = statusById.get(transitionId.replace(/^to:/, ''))
           if (!target) throw new Error(`[mock] unknown transition ${transitionId}`)
+          if (target.category === 'done') {
+            const existing = state.approvals.find(
+              (a) => a.issueId === issue.id && a.state.transitionId === transitionId,
+            )
+            if (existing?.state.status !== 'approved') {
+              // Park it: the issue stays where it is until somebody signs off.
+              const approval = existing ?? newApproval(issue.id, transitionId)
+              if (!existing) state.approvals.push(approval)
+              return { issue: clone(issue), approval: clone(approval) }
+            }
+          }
           state.history.push({
             id: uid(1200 + state.history.length),
             issueId: issue.id,
@@ -1265,6 +1280,55 @@ export function createMockTrackerApi() {
             if (issue) issue.commentCount = Math.max(0, issue.commentCount - 1)
           }
           return { ok: true as const }
+        },
+      },
+      approvals: {
+        list: async ({ issueId }: Ws & { issueId: string }) =>
+          clone(state.approvals.filter((a) => a.issueId === issueId)),
+        decide: async ({
+          issueId,
+          transitionId,
+          decision,
+          comment,
+        }: Ws & {
+          issueId: string
+          transitionId: string
+          decision: 'approve' | 'reject'
+          comment?: string
+        }) => {
+          const approval = state.approvals.find(
+            (a) => a.issueId === issueId && a.state.transitionId === transitionId,
+          )
+          if (!approval) throw new Error(`[mock] no approval for ${transitionId}`)
+          approval.state.decisions = [
+            ...approval.state.decisions,
+            { userId: ME, decision, comment: comment ?? null, at: new Date().toISOString() },
+          ]
+          const approved = approval.state.decisions.filter(
+            (d: { decision: string }) => d.decision === 'approve',
+          ).length
+          approval.state.status =
+            decision === 'reject' && approval.state.spec.rejectOnAnyRejection
+              ? 'rejected'
+              : approved >= approval.state.spec.minApprovals
+                ? 'approved'
+                : 'pending'
+          approval.updatedAt = new Date().toISOString()
+
+          // An approval that completes applies the transition it was blocking.
+          let issue: Issue | null = null
+          if (approval.state.status === 'approved') {
+            const target = statusById.get(transitionId.replace(/^to:/, ''))
+            const row = find(issueId)
+            if (target) {
+              row.statusId = target.id
+              row.statusCategory = target.category
+              row.completedAt = new Date().toISOString()
+              touch(row)
+            }
+            issue = clone(row)
+          }
+          return { approval: clone(approval), issue }
         },
       },
       relations: {
@@ -1383,6 +1447,28 @@ const RELATION_INVERSE: Record<RelationType, RelationType> = {
   clones: 'cloned_by',
   cloned_by: 'clones',
 }
+
+/** A fresh pending approval, shaped the way the workflow engine writes one. */
+function newApproval(issueId: string, transitionId: string): IssueApproval {
+  const at = new Date().toISOString()
+  return {
+    id: uid(1700 + approvalCounter++),
+    workspaceId: WORKSPACE,
+    issueId,
+    transitionId,
+    state: {
+      transitionId,
+      spec: { approvers: [{ kind: 'role', id: 'admin' }], minApprovals: 1, rejectOnAnyRejection: true },
+      requestedBy: ME,
+      requestedAt: at,
+      decisions: [],
+      status: 'pending',
+    },
+    createdAt: at,
+    updatedAt: at,
+  } as IssueApproval
+}
+let approvalCounter = 0
 
 /** Which issue each relation view belongs to, and which view is its other half. */
 const relationOwner = new Map<string, string>()

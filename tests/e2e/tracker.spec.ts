@@ -193,3 +193,26 @@ test('an issue connects to children, other issues and pages elsewhere', async ({
   await panel.getByRole('button', { name: 'Add', exact: true }).click()
   await expect(panel.getByRole('link', { name: 'https://example.test/spec' })).toBeVisible()
 })
+
+test('closing an issue that needs sign-off parks it until somebody approves', async ({ page }) => {
+  await page.goto('/northstar/tracker?issue=KRN-18')
+  const panel = page.getByRole('dialog')
+  await expect(panel).toBeVisible()
+
+  // ask to close it: the issue does not move, an approval appears instead
+  await panel.getByTestId('status-picker').click()
+  await page.getByRole('menu').getByRole('menuitem', { name: 'Done', exact: true }).click()
+
+  const approvals = panel.getByTestId('approvals')
+  await expect(approvals).toBeVisible()
+  await expect(approvals).toContainText('0 of 1 approved')
+  await expect(panel.getByTestId('status-picker')).not.toContainText('Done')
+
+  // a note is optional, and approving applies the transition that was blocked
+  await approvals.getByRole('button', { name: 'Add a note' }).click()
+  await approvals.getByRole('textbox', { name: /Why/ }).fill('Shipped in 1.2')
+  await approvals.getByRole('button', { name: 'Approve' }).click()
+
+  await expect(approvals).toBeHidden()
+  await expect(panel.getByTestId('status-picker')).toContainText('Done')
+})

@@ -26,6 +26,7 @@ export const trackerKeys = {
     ['tracker', 'attachment', workspaceId, issueId] as const,
   relations: (workspaceId: string, issueId: string) => ['tracker', 'relation', workspaceId, issueId] as const,
   links: (workspaceId: string, issueId: string) => ['tracker', 'link', workspaceId, issueId] as const,
+  approvals: (workspaceId: string, issueId: string) => ['tracker', 'approval', workspaceId, issueId] as const,
   /** an issue's sub-issues — an issue query, but keyed to the parent it hangs off */
   children: (workspaceId: string, issueId: string) =>
     ['tracker', 'issue', workspaceId, 'children', issueId] as const,

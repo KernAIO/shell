@@ -35,6 +35,7 @@ import CommentComposer from './CommentComposer.svelte'
 import CommentThread from './CommentThread.svelte'
 import CustomField from './CustomField.svelte'
 import DueDate from './DueDate.svelte'
+import IssueApprovals from './IssueApprovals.svelte'
 import IssueConnections from './IssueConnections.svelte'
 import PriorityGlyph from './PriorityGlyph.svelte'
 import StatusIcon from './StatusIcon.svelte'
@@ -181,9 +182,18 @@ const patch = createMutation(() => ({
 const transition = createMutation(() => ({
   mutationFn: (transitionId: string) =>
     api.issues.transitions.apply({ workspaceId, issueId: issue?.id as string, transitionId }),
-  onSuccess: () => {
+  onSuccess: (result) => {
     invalidate()
     void queryClient.invalidateQueries({ queryKey: trackerKeys.history(workspaceId, issue?.id ?? '') })
+    // A transition that needs sign-off does not move the issue; it returns the approval it is
+    // waiting on. Without refetching approvals — and saying so — the click looks like it did
+    // nothing at all.
+    if (result.approval) {
+      void queryClient.invalidateQueries({
+        queryKey: trackerKeys.approvals(workspaceId, issue?.id ?? ''),
+      })
+      toast.info(m.tracker_approval_requested_toast())
+    }
   },
   onError: (error: Error) => toast.error(error.message),
 }))
@@ -630,6 +640,17 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
         {/if}
       {/each}
     </dl>
+
+    <IssueApprovals
+      {workspaceId}
+      issueId={issue.id}
+      oninvalidate={() => {
+        invalidate()
+        void queryClient.invalidateQueries({
+          queryKey: trackerKeys.transitions(workspaceId, issue.id),
+        })
+      }}
+    />
 
     <IssueConnections
       {workspaceId}

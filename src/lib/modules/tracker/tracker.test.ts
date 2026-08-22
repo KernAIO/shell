@@ -303,20 +303,56 @@ describe('mock backend', () => {
     if (!issue) return
 
     const transitions = await api.issues.transitions.available({ workspaceId: WORKSPACE, issueId: issue.id })
-    const toDone = transitions.find((t) => t.toStatusId === 'done')
-    expect(toDone).toBeDefined()
-    if (!toDone) return
+    const toReview = transitions.find((t) => t.toStatusId === 'in_review')
+    expect(toReview).toBeDefined()
+    if (!toReview) return
 
     const applied = await api.issues.transitions.apply({
       workspaceId: WORKSPACE,
       issueId: issue.id,
-      transitionId: toDone.id,
+      transitionId: toReview.id,
     })
-    expect(applied.issue.statusId).toBe('done')
-    expect(applied.issue.completedAt).not.toBeNull()
+    expect(applied.issue.statusId).toBe('in_review')
 
     const history = await api.issues.history({ workspaceId: WORKSPACE, issueId: issue.id })
     expect(history.items.some((h) => h.action === 'status_changed')).toBe(true)
+  })
+
+  it('parks a close behind an approval and applies it once approved', async () => {
+    // Closing needs a sign-off in the demo data, so an approval is something you can see and
+    // decide rather than a screen nobody ever reaches.
+    const api = createMockTrackerApi()
+    const { items } = await api.issues.query({ workspaceId: WORKSPACE, kql: 'status = todo' })
+    const issue = items[0]
+    expect(issue).toBeDefined()
+    if (!issue) return
+
+    const transitions = await api.issues.transitions.available({ workspaceId: WORKSPACE, issueId: issue.id })
+    const toDone = transitions.find((t) => t.toStatusId === 'done')
+    expect(toDone?.requiresApproval).toBe(true)
+    if (!toDone) return
+
+    const parked = await api.issues.transitions.apply({
+      workspaceId: WORKSPACE,
+      issueId: issue.id,
+      transitionId: toDone.id,
+    })
+    expect(parked.approval).toBeTruthy()
+    expect(parked.issue.statusId).toBe('todo')
+
+    const waiting = await api.issues.approvals.list({ workspaceId: WORKSPACE, issueId: issue.id })
+    expect(waiting).toHaveLength(1)
+    expect(waiting[0]?.state.status).toBe('pending')
+
+    const decided = await api.issues.approvals.decide({
+      workspaceId: WORKSPACE,
+      issueId: issue.id,
+      transitionId: toDone.id,
+      decision: 'approve',
+    })
+    expect(decided.approval.state.status).toBe('approved')
+    expect(decided.issue?.statusId).toBe('done')
+    expect(decided.issue?.completedAt).not.toBeNull()
   })
 
   it('creates an issue with the next key in its project', async () => {
