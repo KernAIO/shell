@@ -20,9 +20,8 @@ interface Props {
   store: ChatStore
   channelId: string
   onreply: (messageId: string) => void
-  onedit: (message: Message) => void
 }
-let { store, channelId, onreply, onedit }: Props = $props()
+let { store, channelId, onreply }: Props = $props()
 
 let viewport = $state<HTMLElement | null>(null)
 let stuckToBottom = $state(true)
@@ -108,7 +107,7 @@ $effect(() => {
             >
           </div>
         {/if}
-        <MessageRow {store} message={msg} grouped={isGrouped(msg, prev)} {onreply} {onedit} />
+        <MessageRow {store} message={msg} grouped={isGrouped(msg, prev)} {onreply} />
       {/each}
     </div>
   {/if}

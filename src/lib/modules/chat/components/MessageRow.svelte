@@ -1,10 +1,13 @@
 <script lang="ts">
 import type { ChatStore, Message } from '@kernhq/module-chat/client'
 import { renderDocToHtml, timeOf } from '@kernhq/module-chat/client'
-import { Avatar, DropdownMenu, Icon, IconButton, type MenuItem } from '@kernhq/ui'
+import { Avatar, Button, Dialog, DropdownMenu, Icon, IconButton, type MenuItem, toast } from '@kernhq/ui'
 import { getLocale } from '$lib/paraglide/runtime'
 import * as m from '$msg'
+import { QUICK_REACTIONS } from '../emoji'
+import { textToDoc } from '../mentions'
 import { canChat } from '../permissions'
+import EmojiPicker from './EmojiPicker.svelte'
 
 /**
  * One message.
@@ -20,10 +23,10 @@ interface Props {
   message: Message
   /** true when this message continues a run from the same author */
   grouped: boolean
-  onreply: (messageId: string) => void
-  onedit: (message: Message) => void
+  /** absent inside a thread panel, where every message is already in the thread */
+  onreply?: (messageId: string) => void
 }
-let { store, message, grouped, onreply, onedit }: Props = $props()
+let { store, message, grouped, onreply }: Props = $props()
 
 const author = $derived(message.authorId ? store.users[message.authorId] : undefined)
 const mine = $derived(message.authorId === store.userId)
@@ -33,22 +36,97 @@ const time = $derived(timeOf(message.createdAt, getLocale()))
 const canEdit = $derived(mine || canChat('editAny'))
 const canDelete = $derived(mine || canChat('deleteAny'))
 
-const QUICK = ['👍', '🎉', '👀', '✅']
+let editing = $state(false)
+let draft = $state('')
+let saving = $state(false)
+let editEl = $state<HTMLTextAreaElement | null>(null)
+let confirmDelete = $state(false)
+let deleting = $state(false)
+let reactionPickerOpen = $state(false)
 
 /** `userIds` is a branded `UserId[]`; the store holds the plain string, so compare as strings. */
 const reactedByMe = (userIds: readonly string[]) => userIds.includes(store.userId)
 
+function startEditing() {
+  draft = message.bodyText
+  editing = true
+  queueMicrotask(() => {
+    editEl?.focus()
+    // caret at the end, because you are almost always fixing the end of what you wrote
+    const end = editEl?.value.length ?? 0
+    editEl?.setSelectionRange(end, end)
+  })
+}
+
+function cancelEditing() {
+  editing = false
+  draft = ''
+}
+
+async function saveEdit() {
+  const value = draft.trim()
+  if (!value || saving) return
+  if (value === message.bodyText) {
+    cancelEditing()
+    return
+  }
+  saving = true
+  try {
+    // an edit keeps whatever mentions the text still spells out; it cannot add new ones, because
+    // the edit box has no people list behind it
+    await store.editMessage(message.id, textToDoc(value, []))
+    editing = false
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : m.chat_failed())
+  } finally {
+    saving = false
+  }
+}
+
+async function remove() {
+  deleting = true
+  try {
+    await store.deleteMessage(message.channelId, message.id)
+    confirmDelete = false
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : m.chat_failed())
+  } finally {
+    deleting = false
+  }
+}
+
+function copyLink() {
+  const url = new URL(window.location.href)
+  url.searchParams.set('c', message.channelId)
+  url.searchParams.set('msg', message.id)
+  void navigator.clipboard
+    .writeText(url.toString())
+    .then(() => toast.success(m.chat_link_copied()))
+    .catch(() => toast.error(m.chat_link_copy_failed()))
+}
+
 const actions = $derived<MenuItem[]>([
-  { id: 'reply', label: m.chat_reply(), icon: 'message-square-text', onSelect: () => onreply(message.id) },
+  ...(onreply
+    ? [
+        {
+          id: 'reply',
+          label: m.chat_reply(),
+          icon: 'message-square-text',
+          onSelect: () => onreply?.(message.id),
+        } as MenuItem,
+      ]
+    : []),
   {
     id: 'pin',
     label: message.pinned ? m.chat_unpin() : m.chat_pin(),
     icon: 'bookmark',
     disabled: !canChat('pin'),
+    hint: canChat('pin') ? undefined : m.chat_pin_denied(),
     onSelect: () => void store.togglePin(message.id, message.channelId, !message.pinned),
   },
+  { id: 'copy', label: m.chat_copy_link(), icon: 'link', onSelect: copyLink },
   ...(canEdit
-    ? [{ id: 'edit', label: m.chat_edit(), icon: 'pencil', onSelect: () => onedit(message) } as MenuItem]
+    ? [{ id: 'edit', label: m.chat_edit(), icon: 'pencil', onSelect: startEditing } as MenuItem]
     : []),
   ...(canDelete
     ? [
@@ -58,9 +136,7 @@ const actions = $derived<MenuItem[]>([
           label: m.chat_delete(),
           icon: 'trash-2',
           danger: true,
-          onSelect: () => {
-            if (confirm(m.chat_delete_confirm())) void store.deleteMessage(message.channelId, message.id)
-          },
+          onSelect: () => (confirmDelete = true),
         } as MenuItem,
       ]
     : []),
@@ -90,12 +166,45 @@ const actions = $derived<MenuItem[]>([
 
     {#if message.deletedAt}
       <p class="deleted">{m.chat_deleted()}</p>
+    {:else if editing}
+      <div class="editor">
+        <textarea
+          bind:this={editEl}
+          bind:value={draft}
+          rows="2"
+          aria-label={m.chat_edit()}
+          data-testid="edit-input"
+          onkeydown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+              e.preventDefault()
+              void saveEdit()
+            }
+            if (e.key === 'Escape') {
+              e.preventDefault()
+              cancelEditing()
+            }
+          }}
+        ></textarea>
+        <div class="editor-actions">
+          <Button variant="secondary" size="xs" onclick={cancelEditing}>{m.chat_cancel()}</Button>
+          <Button
+            size="xs"
+            loading={saving}
+            disabled={!draft.trim()}
+            onclick={saveEdit}
+            data-testid="save-edit"
+          >
+            {m.chat_save()}
+          </Button>
+          <span class="hint">{m.chat_edit_hint()}</span>
+        </div>
+      </div>
     {:else}
       <!-- the store renders the document to sanitised HTML; it never interpolates raw input -->
       <div class="text">{@html html}</div>
     {/if}
 
-    {#if message.reactions.length}
+    {#if message.reactions.length && !editing}
       <div class="reactions">
         {#each message.reactions as r (r.emoji)}
           <button
@@ -111,17 +220,17 @@ const actions = $derived<MenuItem[]>([
       </div>
     {/if}
 
-    {#if message.replyCount > 0}
-      <button type="button" class="thread" onclick={() => onreply(message.id)} data-testid="open-thread">
+    {#if message.replyCount > 0 && onreply}
+      <button type="button" class="thread" onclick={() => onreply?.(message.id)} data-testid="open-thread">
         <Icon name="message-square-text" size={13} strokeWidth={1.7} />
         {message.replyCount === 1 ? m.chat_one_reply() : m.chat_replies({ count: message.replyCount })}
       </button>
     {/if}
   </div>
 
-  {#if !message.deletedAt}
+  {#if !message.deletedAt && !editing}
     <div class="actions">
-      {#each QUICK as emoji (emoji)}
+      {#each QUICK_REACTIONS as emoji (emoji)}
         <button
           type="button"
           class="quick"
@@ -132,21 +241,62 @@ const actions = $derived<MenuItem[]>([
           <span aria-hidden="true">{emoji}</span>
         </button>
       {/each}
-      <IconButton
-        icon="message-square-text"
-        label={m.chat_reply()}
-        size={26}
-        variant="ghost"
-        onclick={() => onreply(message.id)}
-      />
+      <div class="picker-anchor">
+        <IconButton
+          icon="smile"
+          label={m.chat_react_other()}
+          size={26}
+          variant="ghost"
+          active={reactionPickerOpen}
+          onclick={() => (reactionPickerOpen = !reactionPickerOpen)}
+          data-testid="react-more"
+        />
+        {#if reactionPickerOpen}
+          <EmojiPicker
+            align="end"
+            onpick={(emoji) => {
+              reactionPickerOpen = false
+              void store.toggleReaction(message.id, message.channelId, emoji)
+            }}
+            onclose={() => (reactionPickerOpen = false)}
+          />
+        {/if}
+      </div>
+
+      {#if onreply}
+        <IconButton
+          icon="message-square-text"
+          label={m.chat_reply()}
+          size={26}
+          variant="ghost"
+          onclick={() => onreply?.(message.id)}
+        />
+      {/if}
+
       <DropdownMenu items={actions}>
         {#snippet trigger(props)}
-          <IconButton icon="ellipsis" label={m.chat_title()} size={26} variant="ghost" {...props} />
+          <IconButton
+            icon="ellipsis"
+            label={m.chat_message_actions()}
+            size={26}
+            variant="ghost"
+            {...props}
+          />
         {/snippet}
       </DropdownMenu>
     </div>
   {/if}
 </article>
+
+<Dialog bind:open={confirmDelete} title={m.chat_delete()} initialFocus={false}>
+  <p class="confirm">{m.chat_delete_confirm()}</p>
+  {#snippet footer()}
+    <Button variant="secondary" onclick={() => (confirmDelete = false)}>{m.chat_cancel()}</Button>
+    <Button variant="danger" loading={deleting} onclick={remove} data-testid="confirm-delete">
+      {m.chat_delete()}
+    </Button>
+  {/snippet}
+</Dialog>
 
 <style>
   .msg {
@@ -207,6 +357,64 @@ const actions = $derived<MenuItem[]>([
     line-height: 1.55;
     color: var(--kern-ink-700);
     overflow-wrap: anywhere;
+  }
+
+  /* The message body is rendered HTML, so these are the renderer's own classes and elements.
+     Without them a mention, a link and a code span all read as ordinary text. */
+  .text :global(.kern-chat-mention) {
+    padding: 0 3px;
+    border-radius: var(--kern-r-xs);
+    background: var(--kern-accent-tint);
+    color: var(--kern-accent-text);
+    font-weight: 500;
+  }
+  .text :global(.kern-chat-link) {
+    color: var(--kern-accent-text);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+  .text :global(.kern-chat-code) {
+    padding: 1px 4px;
+    border-radius: var(--kern-r-xs);
+    background: var(--kern-surface-chip);
+    font-family: var(--kern-font-mono);
+    font-size: 12.5px;
+  }
+  .text :global(.kern-chat-pre) {
+    margin: 6px 0;
+    padding: 10px 12px;
+    border: 1px solid var(--kern-border-hairline);
+    border-radius: var(--kern-r-md2);
+    background: var(--kern-surface-chip);
+    font-family: var(--kern-font-mono);
+    font-size: 12.5px;
+    line-height: 1.5;
+    overflow-x: auto;
+  }
+  .text :global(blockquote) {
+    margin: 6px 0;
+    padding-inline-start: 10px;
+    border-inline-start: 2px solid var(--kern-border-strong);
+    color: var(--kern-ink-600);
+  }
+  .text :global(ul),
+  .text :global(ol) {
+    margin: 4px 0;
+    padding-inline-start: 22px;
+  }
+  .text :global(li) {
+    margin: 2px 0;
+  }
+  .text :global(hr) {
+    margin: 10px 0;
+    border: 0;
+    border-top: 1px solid var(--kern-border-hairline);
+  }
+  .text :global(p) {
+    margin: 0;
+  }
+  .text :global(p + p) {
+    margin-top: 6px;
   }
   .deleted {
     margin: 3px 0 0;
@@ -293,5 +501,42 @@ const actions = $derived<MenuItem[]>([
   }
   .quick:hover {
     background: var(--kern-surface-hover);
+  }
+  .picker-anchor {
+    position: relative;
+    display: flex;
+  }
+  .editor {
+    margin-top: 4px;
+  }
+  .editor textarea {
+    display: block;
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--kern-border-strong);
+    border-radius: var(--kern-r-md2);
+    background: var(--kern-surface-raised);
+    resize: vertical;
+    font: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--kern-ink-800);
+    outline: none;
+  }
+  .editor-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+  }
+  .editor-actions .hint {
+    font-size: 11.5px;
+    color: var(--kern-ink-350);
+  }
+  .confirm {
+    margin: 0;
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--kern-ink-700);
   }
 </style>

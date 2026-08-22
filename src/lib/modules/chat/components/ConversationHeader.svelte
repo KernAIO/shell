@@ -16,8 +16,9 @@ interface Props {
   store: ChatStore
   channel: ChannelView
   onshowpins: () => void
+  pinsOpen?: boolean
 }
-let { store, channel, onshowpins }: Props = $props()
+let { store, channel, onshowpins, pinsOpen = false }: Props = $props()
 
 const kind = $derived(kindOf(channel))
 const tile = $derived(KIND_TILE[kind])
@@ -51,13 +52,22 @@ const subtitle = $derived(isDm ? (channel.topic ?? '') : m.chat_members_count({ 
     <AvatarStack people={members} size={24} max={4} />
   {/if}
 
-  <Button variant="secondary" size="sm" icon="video">{m.chat_huddle()}</Button>
+  <Button
+    variant="secondary"
+    size="sm"
+    icon="video"
+    disabled
+    title={m.chat_huddle_soon()}
+  >
+    {m.chat_huddle()}
+  </Button>
 
   <IconButton
     icon="bookmark"
-    label={m.chat_pinned()}
+    label={m.chat_pinned_messages()}
     size={32}
     variant="ghost"
+    active={pinsOpen}
     onclick={onshowpins}
     data-testid="show-pins"
   />

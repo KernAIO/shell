@@ -554,7 +554,7 @@ export function createMockChatApi() {
         return { ok: true }
       },
       async pins({ channelId }: { channelId: string }) {
-        return { items: messages.filter((m) => m.channelId === channelId && m.pinned) }
+        return messages.filter((m) => m.channelId === channelId && m.pinned)
       },
       async bookmark({ messageId, bookmarked }: { messageId: string; bookmarked: boolean }) {
         if (bookmarked) bookmarks.add(messageId)

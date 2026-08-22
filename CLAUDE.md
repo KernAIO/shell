@@ -76,6 +76,16 @@ in-memory API with demo data — no backend, no database.
   block, so wrap flex layouts in your own element).
 - **Kill stale dev servers before debugging.** A second process on :5173 served old code twice in one
   day and made correct fixes look broken. `lsof -ti:5173` should print exactly one pid.
+- **A control with no handler is a bug, not a placeholder.** Chat shipped with four composer buttons,
+  a pin button and a search box that all did nothing. Before calling a screen done, grep it for
+  `IconButton`/`Button` without an `onclick`, and for `() => {}` callbacks. If something genuinely is
+  not built, say so in the interface — disable it with a reason — rather than leaving it inert.
+- **`icon="…"` is not checked by the compiler.** An unregistered name renders a blank square and
+  fails silently. The registry is `@kernhq/ui`'s `icons/registry.ts`; `smile-plus` and `bookmark-x`
+  both looked plausible and neither exists.
+- **The message renderer's classes need styling by the consumer.** `renderDocToHtml` emits
+  `.kern-chat-mention`, `.kern-chat-link`, `.kern-chat-code` and `.kern-chat-pre`; without CSS for
+  them a mention reads as plain text.
 - **The sidebar belongs to the module you are in** (DESIGN.md 2.3). A module fills it by contributing
   a `sidebar.widget` slot, which the shell renders under the nav groups — that is how chat puts its
   conversations there instead of adding a third column. Slots are the only way a module reaches into

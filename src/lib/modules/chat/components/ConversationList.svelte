@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { ChannelView, ChatStore } from '@kernhq/module-chat/client'
-import { Avatar, Icon, SearchBox, SectionLabel } from '@kernhq/ui'
+import { Avatar, Icon, SectionLabel } from '@kernhq/ui'
 import * as m from '$msg'
 import { kindOf } from '../labels'
 
@@ -15,11 +15,9 @@ import { kindOf } from '../labels'
 interface Props {
   store: ChatStore
   activeId: string | null
-  query: string
   onselect: (channelId: string) => void
-  onquery: (q: string) => void
 }
-let { store, activeId, query, onselect, onquery }: Props = $props()
+let { store, activeId, onselect }: Props = $props()
 
 const sorted = $derived.by(() => {
   const list = [...store.channels]
@@ -48,16 +46,6 @@ const otherUser = (c: ChannelView) => {
 </script>
 
 <div class="list">
-  <div class="search">
-    <SearchBox
-      value={query}
-      placeholder={m.chat_search_placeholder()}
-      oninput={(e) => onquery((e.currentTarget as HTMLInputElement).value)}
-      data-testid="chat-search"
-    />
-  </div>
-
-  <div class="scroll">
     {#snippet group(label: string, items: ChannelView[])}
       {#if items.length}
         <div class="group">
@@ -103,29 +91,14 @@ const otherUser = (c: ChannelView) => {
       {/if}
     {/snippet}
 
-    {@render group(m.chat_starred(), starred)}
-    {@render group(m.chat_channels(), channels)}
-    {@render group(m.chat_direct_messages(), dms)}
-  </div>
+  {@render group(m.chat_starred(), starred)}
+  {@render group(m.chat_channels(), channels)}
+  {@render group(m.chat_direct_messages(), dms)}
 </div>
 
 <style>
   .list {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    min-height: 0;
-    border-inline-end: 1px solid var(--kern-border);
-    background: var(--kern-shell);
-  }
-  .search {
-    padding: 10px 10px 6px;
-  }
-  .scroll {
-    flex: 1;
-    min-height: 0;
-    overflow-y: auto;
-    padding: 2px 8px 12px;
+    padding: 2px 4px 12px;
   }
   .group + .group {
     margin-top: 14px;

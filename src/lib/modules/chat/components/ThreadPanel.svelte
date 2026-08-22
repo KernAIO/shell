@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { ChatStore, Message } from '@kernhq/module-chat/client'
+import type { ChatStore } from '@kernhq/module-chat/client'
 import { IconButton, Skeleton } from '@kernhq/ui'
 import * as m from '$msg'
 import Composer from './Composer.svelte'
@@ -17,9 +17,8 @@ interface Props {
   rootId: string
   channelId: string
   onclose: () => void
-  onedit: (message: Message) => void
 }
-let { store, rootId, channelId, onclose, onedit }: Props = $props()
+let { store, rootId, channelId, onclose }: Props = $props()
 
 const thread = $derived(store.threads[rootId])
 </script>
@@ -45,20 +44,14 @@ const thread = $derived(store.threads[rootId])
         <Skeleton width="80%" height="14px" />
       </div>
     {:else}
-      <MessageRow
-        {store}
-        message={thread.root}
-        grouped={false}
-        onreply={() => {}}
-        {onedit}
-      />
+      <MessageRow {store} message={thread.root} grouped={false} />
       <div class="divider">
         {thread.root.replyCount === 1
           ? m.chat_one_reply()
           : m.chat_replies({ count: thread.root.replyCount })}
       </div>
       {#each thread.replies as reply (reply.id)}
-        <MessageRow {store} message={reply} grouped={false} onreply={() => {}} {onedit} />
+        <MessageRow {store} message={reply} grouped={false} />
       {/each}
     {/if}
   </div>

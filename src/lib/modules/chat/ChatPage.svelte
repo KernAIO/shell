@@ -1,5 +1,4 @@
 <script lang="ts">
-import type { Message } from '@kernhq/module-chat/client'
 import { EmptyState, Skeleton } from '@kernhq/ui'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
@@ -10,6 +9,7 @@ import BrowseChannelsDialog from './components/BrowseChannelsDialog.svelte'
 import Composer from './components/Composer.svelte'
 import ConversationHeader from './components/ConversationHeader.svelte'
 import MessageList from './components/MessageList.svelte'
+import PinnedPanel from './components/PinnedPanel.svelte'
 import ThreadPanel from './components/ThreadPanel.svelte'
 import { composerTarget, kindOf } from './labels'
 import { getChatStore } from './store.svelte'
@@ -31,6 +31,10 @@ const store = $derived(getChatStore(workspace?.id ?? '', session.user?.id ?? '')
 const activeId = $derived(page.url.searchParams.get('c'))
 const threadId = $derived(page.url.searchParams.get('t'))
 const browseOpen = $derived(page.url.searchParams.get('browse') === '1')
+const pinsOpen = $derived(page.url.searchParams.get('pins') === '1')
+
+/** A thread and the pin list share the same side; opening one closes the other. */
+const sidePanel = $derived(threadId ? 'thread' : pinsOpen ? 'pins' : null)
 
 const channel = $derived(activeId && store ? store.channel(activeId) : undefined)
 
@@ -63,24 +67,28 @@ const setParams = (mutate: (params: URLSearchParams) => void) => {
   void goto(`${url.pathname}${url.search}`, { keepFocus: true, noScroll: true })
 }
 
-const openThread = (messageId: string) => setParams((p) => p.set('t', messageId))
+const openThread = (messageId: string) =>
+  setParams((p) => {
+    p.set('t', messageId)
+    p.delete('pins')
+  })
+const showPins = () =>
+  setParams((p) => {
+    p.set('pins', '1')
+    p.delete('t')
+  })
+const closePins = () => setParams((p) => p.delete('pins'))
 const closeThread = () => setParams((p) => p.delete('t'))
 const selectChannel = (channelId: string) =>
   setParams((p) => {
     p.set('c', channelId)
     p.delete('t')
   })
-
-/** Editing reuses the composer: the message text goes back in the box. */
-let editing = $state<Message | null>(null)
-const edit = (message: Message) => {
-  editing = message
-}
 </script>
 
 <svelte:head><title>{m.chat_title()} · Kern</title></svelte:head>
 
-<div class="chat" class:with-thread={!!threadId && !!channel}>
+<div class="chat" class:with-thread={!!sidePanel && !!channel}>
   <section class="conversation">
     {#if !store}
       <div class="center"><Skeleton width="220px" height="14px" /></div>
@@ -93,8 +101,8 @@ const edit = (message: Message) => {
         />
       </div>
     {:else}
-      <ConversationHeader {store} {channel} onshowpins={() => {}} />
-      <MessageList {store} channelId={channel.id} onreply={openThread} onedit={edit} />
+      <ConversationHeader {store} {channel} onshowpins={showPins} pinsOpen={sidePanel === 'pins'} />
+      <MessageList {store} channelId={channel.id} onreply={openThread} />
       <Composer
         {store}
         channelId={channel.id}
@@ -103,8 +111,15 @@ const edit = (message: Message) => {
     {/if}
   </section>
 
-  {#if store && threadId && channel}
-    <ThreadPanel {store} rootId={threadId} channelId={channel.id} onclose={closeThread} onedit={edit} />
+  {#if store && channel && sidePanel === 'thread' && threadId}
+    <ThreadPanel {store} rootId={threadId} channelId={channel.id} onclose={closeThread} />
+  {:else if store && channel && sidePanel === 'pins'}
+    <PinnedPanel
+      {store}
+      channelId={channel.id}
+      workspaceId={workspace?.id ?? ''}
+      onclose={closePins}
+    />
   {/if}
 </div>
 
