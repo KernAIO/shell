@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { AvailableTransition, Issue, Priority } from '@kernhq/module-tracker/client'
+import type { AvailableTransition, Issue, Priority, ResolvedField } from '@kernhq/module-tracker/client'
 import { PRIORITY_GROUP_ORDER } from '@kernhq/module-tracker/client'
 import { Avatar, Button, DropdownMenu, Icon, type MenuItem, Sheet, Spinner, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
@@ -12,6 +12,7 @@ import { priorityLabel } from '../labels'
 import { canTracker } from '../permissions'
 import { trackerKeys } from '../query'
 import { docFromText, renderDoc, textFromDoc } from '../richtext'
+import CustomField from './CustomField.svelte'
 import DueDate from './DueDate.svelte'
 import PriorityGlyph from './PriorityGlyph.svelte'
 import StatusIcon from './StatusIcon.svelte'
@@ -31,6 +32,28 @@ interface Props {
 }
 let { workspaceId, issueKey, onclose }: Props = $props()
 
+/** The built-in properties, in the order the panel showed them before layouts existed. */
+const FALLBACK_SIDEBAR: ResolvedField[] = [
+  'status',
+  'assignees',
+  'priority',
+  'dueDate',
+  'labels',
+  'cycle',
+  'estimate',
+  'project',
+].map((fieldId, order) => ({
+  fieldId,
+  kind: 'system' as const,
+  label: fieldId,
+  section: 'sidebar' as const,
+  order,
+  required: false,
+  pinned: fieldId === 'status',
+  showInCards: false,
+  field: null,
+}))
+
 const api = getTrackerApi()
 const cat = getTrackerCatalogue()
 const queryClient = useQueryClient()
@@ -46,6 +69,28 @@ const issueQuery = createQuery(() => ({
 }))
 const issue = $derived(issueQuery.data ?? null)
 const issueId = $derived(issue?.id ?? null)
+
+/**
+ * What this issue's type says to show, in what order. The panel used to render eight fixed
+ * properties; it now renders whatever the type's layout resolves to, with the built-in controls
+ * keyed by field id so nothing about them changed.
+ */
+const layoutQuery = createQuery(() => ({
+  queryKey: trackerKeys.layout(workspaceId, issue?.typeId ?? '', issue?.projectId ?? null),
+  queryFn: () =>
+    api.types.layout({
+      workspaceId,
+      id: issue?.typeId as string,
+      projectId: issue?.projectId ?? null,
+    }),
+  enabled: Boolean(issue?.typeId),
+}))
+/**
+ * Until the layout arrives, show the built-in properties in their default order rather than an
+ * empty panel — the fields are already in `issue`, so a spinner here would be a blank column over
+ * data we have.
+ */
+const sidebarFields = $derived(layoutQuery.data?.sidebar ?? FALLBACK_SIDEBAR)
 
 const commentsQuery = createQuery(() => ({
   queryKey: trackerKeys.comments(workspaceId, issueId ?? ''),
@@ -254,162 +299,219 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
     {/if}
   {/snippet}
 
+
   {#if !issue}
     <div class="loading"><Spinner /></div>
   {:else}
     <h1 class="title">{issue.title}</h1>
 
-    <dl class="props">
-      <dt>{m.tracker_detail_status()}</dt>
-      <dd>
-        <DropdownMenu items={canTransition ? statusMenu : []} align="start">
-          {#snippet trigger(props)}
-            <button
-              {...props}
-              type="button"
-              class="val"
-              class:static={!canTransition}
-              disabled={!canTransition}
-              title={canTransition ? undefined : m.tracker_no_permission()}
-              data-testid="status-picker"
-            >
-              <StatusIcon
-                category={issue.statusCategory}
-                statusId={issue.statusId}
-                name={status?.name}
-                size={15}
-              />
-              {status?.name ?? issue.statusId}
-            </button>
-          {/snippet}
-        </DropdownMenu>
-      </dd>
+    {#snippet row_status()}
+            <dt>{m.tracker_detail_status()}</dt>
+            <dd>
+              <DropdownMenu items={canTransition ? statusMenu : []} align="start">
+                {#snippet trigger(props)}
+                  <button
+                    {...props}
+                    type="button"
+                    class="val"
+                    class:static={!canTransition}
+                    disabled={!canTransition}
+                    title={canTransition ? undefined : m.tracker_no_permission()}
+                    data-testid="status-picker"
+                  >
+                    <StatusIcon
+                      category={issue.statusCategory}
+                      statusId={issue.statusId}
+                      name={status?.name}
+                      size={15}
+                    />
+                    {status?.name ?? issue.statusId}
+                  </button>
+                {/snippet}
+              </DropdownMenu>
+            </dd>
 
-      <dt>{m.tracker_detail_assignee()}</dt>
-      <dd>
-        <DropdownMenu items={canEdit ? assigneeMenu : []} align="start">
-          {#snippet trigger(props)}
-            <button
-              {...props}
-              type="button"
-              class="val"
-              class:static={!canEdit}
-              disabled={!canEdit}
-              title={canEdit ? undefined : m.tracker_no_permission()}>
-              {#if issue.assigneeIds.length === 0}
-                <span class="muted">{m.tracker_unassigned()}</span>
-              {:else}
-                {#each issue.assigneeIds as id (id)}
-                  {@const person = cat.person(id)}
-                  <Avatar name={person?.name} src={person?.avatarUrl} {id} size={22} />
-                {/each}
-                <span>{cat.person(issue.assigneeIds[0])?.name ?? ''}</span>
-                {#if issue.assigneeIds.length > 1}
-                  <span class="muted">+{issue.assigneeIds.length - 1}</span>
+    {/snippet}
+
+    {#snippet row_assignees()}
+            <dt>{m.tracker_detail_assignee()}</dt>
+            <dd>
+              <DropdownMenu items={canEdit ? assigneeMenu : []} align="start">
+                {#snippet trigger(props)}
+                  <button
+                    {...props}
+                    type="button"
+                    class="val"
+                    class:static={!canEdit}
+                    disabled={!canEdit}
+                    title={canEdit ? undefined : m.tracker_no_permission()}>
+                    {#if issue.assigneeIds.length === 0}
+                      <span class="muted">{m.tracker_unassigned()}</span>
+                    {:else}
+                      {#each issue.assigneeIds as id (id)}
+                        {@const person = cat.person(id)}
+                        <Avatar name={person?.name} src={person?.avatarUrl} {id} size={22} />
+                      {/each}
+                      <span>{cat.person(issue.assigneeIds[0])?.name ?? ''}</span>
+                      {#if issue.assigneeIds.length > 1}
+                        <span class="muted">+{issue.assigneeIds.length - 1}</span>
+                      {/if}
+                    {/if}
+                  </button>
+                {/snippet}
+              </DropdownMenu>
+            </dd>
+
+    {/snippet}
+
+    {#snippet row_priority()}
+            <dt>{m.tracker_detail_priority()}</dt>
+            <dd>
+              <DropdownMenu items={canEdit ? priorityMenu : []} align="start">
+                {#snippet trigger(props)}
+                  <button
+                    {...props}
+                    type="button"
+                    class="val"
+                    class:static={!canEdit}
+                    disabled={!canEdit}
+                    title={canEdit ? undefined : m.tracker_no_permission()}>
+                    <PriorityGlyph priority={issue.priority} size={15} />
+                    {priorityLabel(issue.priority)}
+                  </button>
+                {/snippet}
+              </DropdownMenu>
+            </dd>
+
+    {/snippet}
+
+    {#snippet row_dueDate()}
+            <dt>{m.tracker_detail_due()}</dt>
+            <dd>
+              <label class="val date" class:static={!canEdit}>
+                {#if issue.dueDate}
+                  <DueDate date={issue.dueDate} />
+                {:else}
+                  <span class="muted">{m.tracker_no_due()}</span>
                 {/if}
-              {/if}
-            </button>
-          {/snippet}
-        </DropdownMenu>
-      </dd>
+                <input
+                  type="date"
+                  value={issue.dueDate ?? ''}
+                  aria-label={m.tracker_detail_due()}
+                  disabled={!canEdit}
+                  onchange={(e) => patch.mutate({ dueDate: e.currentTarget.value || null })}
+                />
+              </label>
+            </dd>
 
-      <dt>{m.tracker_detail_priority()}</dt>
-      <dd>
-        <DropdownMenu items={canEdit ? priorityMenu : []} align="start">
-          {#snippet trigger(props)}
-            <button
-              {...props}
-              type="button"
-              class="val"
-              class:static={!canEdit}
-              disabled={!canEdit}
-              title={canEdit ? undefined : m.tracker_no_permission()}>
-              <PriorityGlyph priority={issue.priority} size={15} />
-              {priorityLabel(issue.priority)}
-            </button>
-          {/snippet}
-        </DropdownMenu>
-      </dd>
+    {/snippet}
 
-      <dt>{m.tracker_detail_due()}</dt>
-      <dd>
-        <label class="val date" class:static={!canEdit}>
-          {#if issue.dueDate}
-            <DueDate date={issue.dueDate} />
-          {:else}
-            <span class="muted">{m.tracker_no_due()}</span>
-          {/if}
-          <input
-            type="date"
-            value={issue.dueDate ?? ''}
-            aria-label={m.tracker_detail_due()}
-            disabled={!canEdit}
-            onchange={(e) => patch.mutate({ dueDate: e.currentTarget.value || null })}
-          />
-        </label>
-      </dd>
+    {#snippet row_labels()}
+            <dt>{m.tracker_detail_labels()}</dt>
+            <dd>
+              <DropdownMenu items={labelMenu} align="start">
+                {#snippet trigger(props)}
+                  <button {...props} type="button" class="val wrap">
+                    {#if issue.labelIds.length === 0}
+                      <span class="muted">{m.tracker_no_label()}</span>
+                    {:else}
+                      {#each issue.labelIds as id (id)}
+                        {@const label = cat.label(id)}
+                        <span class="lbl">
+                          <span class="swatch" style:background={label?.color ?? 'var(--kern-ink-330)'}></span>
+                          {label?.name ?? ''}
+                        </span>
+                      {/each}
+                    {/if}
+                  </button>
+                {/snippet}
+              </DropdownMenu>
+            </dd>
 
-      <dt>{m.tracker_detail_labels()}</dt>
-      <dd>
-        <DropdownMenu items={labelMenu} align="start">
-          {#snippet trigger(props)}
-            <button {...props} type="button" class="val wrap">
-              {#if issue.labelIds.length === 0}
-                <span class="muted">{m.tracker_no_label()}</span>
-              {:else}
-                {#each issue.labelIds as id (id)}
-                  {@const label = cat.label(id)}
-                  <span class="lbl">
-                    <span class="swatch" style:background={label?.color ?? 'var(--kern-ink-330)'}></span>
-                    {label?.name ?? ''}
-                  </span>
-                {/each}
-              {/if}
-            </button>
-          {/snippet}
-        </DropdownMenu>
-      </dd>
+    {/snippet}
 
-      <dt>{m.tracker_detail_cycle()}</dt>
-      <dd>
-        <DropdownMenu items={canEdit ? cycleMenu : []} align="start">
-          {#snippet trigger(props)}
-            <button
-              {...props}
-              type="button"
-              class="val"
-              class:static={!canEdit}
-              disabled={!canEdit}
-              title={canEdit ? undefined : m.tracker_no_permission()}>
-              {#if cycle}{cycle.name}{:else}<span class="muted">{m.tracker_no_cycle()}</span>{/if}
-            </button>
-          {/snippet}
-        </DropdownMenu>
-      </dd>
+    {#snippet row_cycle()}
+            <dt>{m.tracker_detail_cycle()}</dt>
+            <dd>
+              <DropdownMenu items={canEdit ? cycleMenu : []} align="start">
+                {#snippet trigger(props)}
+                  <button
+                    {...props}
+                    type="button"
+                    class="val"
+                    class:static={!canEdit}
+                    disabled={!canEdit}
+                    title={canEdit ? undefined : m.tracker_no_permission()}>
+                    {#if cycle}{cycle.name}{:else}<span class="muted">{m.tracker_no_cycle()}</span>{/if}
+                  </button>
+                {/snippet}
+              </DropdownMenu>
+            </dd>
 
-      <dt>{m.tracker_detail_estimate()}</dt>
-      <dd>
-        <DropdownMenu items={canEdit ? estimateMenu : []} align="start">
-          {#snippet trigger(props)}
-            <button
-              {...props}
-              type="button"
-              class="val"
-              class:static={!canEdit}
-              disabled={!canEdit}
-              title={canEdit ? undefined : m.tracker_no_permission()}>
-              {#if issue.estimate !== null}
-                {m.tracker_points({ count: issue.estimate })}
-              {:else}
-                <span class="muted">{m.tracker_no_estimate()}</span>
-              {/if}
-            </button>
-          {/snippet}
-        </DropdownMenu>
-      </dd>
+    {/snippet}
 
-      <dt>{m.tracker_detail_project()}</dt>
-      <dd><span class="val static">{project?.name ?? ''}</span></dd>
+    {#snippet row_estimate()}
+            <dt>{m.tracker_detail_estimate()}</dt>
+            <dd>
+              <DropdownMenu items={canEdit ? estimateMenu : []} align="start">
+                {#snippet trigger(props)}
+                  <button
+                    {...props}
+                    type="button"
+                    class="val"
+                    class:static={!canEdit}
+                    disabled={!canEdit}
+                    title={canEdit ? undefined : m.tracker_no_permission()}>
+                    {#if issue.estimate !== null}
+                      {m.tracker_points({ count: issue.estimate })}
+                    {:else}
+                      <span class="muted">{m.tracker_no_estimate()}</span>
+                    {/if}
+                  </button>
+                {/snippet}
+              </DropdownMenu>
+            </dd>
+
+    {/snippet}
+
+    {#snippet row_project()}
+            <dt>{m.tracker_detail_project()}</dt>
+            <dd><span class="val static">{project?.name ?? ''}</span></dd>
+    {/snippet}
+
+    <dl class="props">
+      <!-- Dispatched by field id: the layout decides which rows appear and in what order, and each
+           built-in control is the same one the panel always had. -->
+      {#each sidebarFields as f (f.fieldId)}
+        {#if f.fieldId === 'status'}
+          {@render row_status()}
+        {:else if f.fieldId === 'assignees'}
+          {@render row_assignees()}
+        {:else if f.fieldId === 'priority'}
+          {@render row_priority()}
+        {:else if f.fieldId === 'dueDate'}
+          {@render row_dueDate()}
+        {:else if f.fieldId === 'labels'}
+          {@render row_labels()}
+        {:else if f.fieldId === 'cycle'}
+          {@render row_cycle()}
+        {:else if f.fieldId === 'estimate'}
+          {@render row_estimate()}
+        {:else if f.fieldId === 'project'}
+          {@render row_project()}
+        {:else if f.kind === 'custom' && f.field}
+          <dt>{f.label}</dt>
+          <dd>
+            <CustomField
+              field={f.field}
+              value={issue.custom?.[f.field.key] ?? null}
+              editable={canEdit}
+              required={f.required}
+              onchange={(value) => patch.mutate({ custom: { [f.field!.key]: value } })}
+            />
+          </dd>
+        {/if}
+      {/each}
     </dl>
 
     <section class="desc">

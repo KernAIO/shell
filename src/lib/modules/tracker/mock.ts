@@ -13,6 +13,8 @@ import {
   type Priority,
   type Project,
   parseKql,
+  type ResolvedField,
+  type ResolvedLayout,
   rankBetween,
   rankSequence,
   type StatusInfo,
@@ -134,7 +136,6 @@ const project = (n: number, key: string, name: string, color: string, leadId: Ui
   defaultAssignee: 'unassigned',
   workflowSchemeId: null,
   typeSchemeId: null,
-  fieldSchemeId: null,
   settings: projectSettings,
   intakeToken: null,
   issueCounter: 0,
@@ -175,7 +176,15 @@ const workItemType = (n: number, key: string, name: string, icon: string, level:
 
 const types: WorkItemType[] = [
   workItemType(720, 'task', 'Task', 'square-check-big', 0),
-  workItemType(721, 'bug', 'Bug', 'circle-alert', 0),
+  // Bug carries a real layout, so the demo shows a customised type beside default ones: Severity
+  // is promoted above the built-in properties and Cycle is hidden.
+  {
+    ...workItemType(721, 'bug', 'Bug', 'circle-alert', 0),
+    fieldLayout: [
+      { fieldId: 'cf.severity', section: 'sidebar', order: 1, required: true, hidden: false },
+      { fieldId: 'cycle', section: 'hidden', order: 20, required: false, hidden: true },
+    ],
+  },
   workItemType(722, 'story', 'Story', 'bookmark', 0),
   workItemType(723, 'epic', 'Epic', 'zap', 1),
 ]
@@ -330,6 +339,74 @@ const fields: FieldDef[] = [
     updatedAt: iso(80 * DAY),
   },
 ]
+
+/**
+ * The mock's version of the server's layout resolver.
+ *
+ * It follows the same two rules, because a demo that behaved differently would teach the wrong
+ * thing: an empty layout shows everything, and a field the layout does not name is appended.
+ * `bug` carries a real stored layout so the demo shows a customised type next to default ones.
+ */
+const SYSTEM_ROWS: Array<{ id: string; section: 'main' | 'sidebar'; pinned: boolean }> = [
+  { id: 'title', section: 'main', pinned: true },
+  { id: 'description', section: 'main', pinned: false },
+  { id: 'status', section: 'sidebar', pinned: true },
+  { id: 'type', section: 'sidebar', pinned: true },
+  { id: 'assignees', section: 'sidebar', pinned: false },
+  { id: 'priority', section: 'sidebar', pinned: false },
+  { id: 'labels', section: 'sidebar', pinned: false },
+  { id: 'estimate', section: 'sidebar', pinned: false },
+  { id: 'dueDate', section: 'sidebar', pinned: false },
+  { id: 'cycle', section: 'sidebar', pinned: false },
+  { id: 'project', section: 'sidebar', pinned: false },
+]
+
+function resolveMockLayout(typeId: string, projectId: string | null): ResolvedLayout {
+  const type = types.find((t) => t.id === typeId)
+  const stored = new Map((type?.fieldLayout ?? []).map((i) => [i.fieldId, i]))
+  const out: Array<ResolvedField & { placedHidden: boolean }> = []
+  let order = 0
+
+  const place = (
+    fieldId: string,
+    kind: 'system' | 'custom',
+    label: string,
+    defaultSection: 'main' | 'sidebar',
+    pinned: boolean,
+    field: FieldDef | null,
+  ) => {
+    const item = stored.get(fieldId)
+    const placedHidden = !pinned && (item?.hidden === true || item?.section === 'hidden')
+    out.push({
+      fieldId,
+      kind,
+      label,
+      section: item?.section === 'main' || item?.section === 'sidebar' ? item.section : defaultSection,
+      order: item?.order ?? order,
+      required: pinned || item?.required === true || field?.required === true,
+      pinned,
+      showInCards: field?.showInCards ?? false,
+      field,
+      placedHidden,
+    })
+    order += 1
+  }
+
+  for (const row of SYSTEM_ROWS) place(row.id, 'system', row.id, row.section, row.pinned, null)
+  for (const field of fields) place(`cf.${field.key}`, 'custom', field.name, 'sidebar', false, field)
+
+  const sort = (a: ResolvedField, b: ResolvedField) => a.order - b.order
+  const shown = ({ placedHidden: _drop, ...f }: ResolvedField & { placedHidden: boolean }) => f
+  const pick = (want: (f: (typeof out)[number]) => boolean) => out.filter(want).sort(sort).map(shown)
+
+  return {
+    typeId,
+    projectId,
+    main: pick((f) => !f.placedHidden && f.section === 'main'),
+    sidebar: pick((f) => !f.placedHidden && f.section === 'sidebar'),
+    hidden: pick((f) => f.placedHidden),
+  }
+}
 
 // ---------------------------------------------------------------------------------------------
 // issues
@@ -797,7 +874,11 @@ export function createMockTrackerApi() {
       update: notImplemented('projects.update'),
     },
 
-    types: { list: async (_input: Ws) => clone(types) },
+    types: {
+      list: async (_input: Ws) => clone(types),
+      layout: async ({ id, projectId }: Ws & { id: string; projectId?: string | null }) =>
+        clone(resolveMockLayout(id, projectId ?? null)),
+    },
     labels: { list: async (_input: Ws) => clone(labels) },
     fields: { list: async (_input: Ws) => clone(fields) },
     workflows: { statuses: async (_input: Ws) => clone(statuses) },

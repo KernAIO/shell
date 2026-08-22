@@ -26,4 +26,7 @@ export const trackerKeys = {
   transitions: (workspaceId: string, issueId: string) =>
     ['tracker', 'transition', workspaceId, issueId] as const,
   kqlFields: (workspaceId: string) => ['tracker', 'kql-field', workspaceId] as const,
+  /** the resolved field layout of one work item type in one project */
+  layout: (workspaceId: string, typeId: string, projectId: string | null) =>
+    ['tracker', 'type', workspaceId, 'layout', typeId, projectId ?? 'none'] as const,
 }
