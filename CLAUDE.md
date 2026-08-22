@@ -95,8 +95,24 @@ in-memory API with demo data — no backend, no database.
   `IconButton`/`Button` without an `onclick`, and for `() => {}` callbacks. If something genuinely is
   not built, say so in the interface — disable it with a reason — rather than leaving it inert.
 - **`icon="…"` is not checked by the compiler.** An unregistered name renders a blank square and
-  fails silently. The registry is `@kernhq/ui`'s `icons/registry.ts`; `smile-plus` and `bookmark-x`
-  both looked plausible and neither exists.
+  fails silently, and lucide renames icons between releases (`alert-triangle` became
+  `triangle-alert`). `pnpm lint` now runs `scripts/check-icons.mjs` over every `icon=`/`<Icon name=`
+  in `src`, so this class of bug cannot come back.
+- **`svelte-dnd-action` tracks items by an `id` property and nothing else.** A list keyed by
+  anything else (`fieldId`, `key`) renders fine and refuses to move — by mouse and by keyboard, with
+  no error. Map to `{...item, id: item.whatever}` before handing it to the zone. And offer a
+  non-drag route to the same result: a drag is unreachable by keyboard.
+- **An effect that reads a flag it also clears re-runs when the flag clears.** The layout editor's
+  seeding effect read `dragging`; setting `dragging = false` at the end of a drop re-ran it and
+  re-seeded the zones from the server, undoing the move on screen while the change was still
+  pending. Read the guard through `untrack`.
+- **A `$state` array is a deep proxy, and a proxy cannot be `structuredClone`d.** Passing one
+  straight into a mutation fails in `dev:mock` (and posts a proxy anywhere else). Send
+  `$state.snapshot(value)`.
+- **`pnpm build` compiles the messages first, and it did not always.** A key added to
+  `messages/*.json` reached a build only if somebody happened to run `typecheck` (which runs
+  `i18n`); otherwise the built app called a message function that did not exist — a runtime failure
+  with a green build. `build` now runs `i18n` itself.
 - **The message renderer's classes need styling by the consumer.** `renderDocToHtml` emits
   `.kern-chat-mention`, `.kern-chat-link`, `.kern-chat-code` and `.kern-chat-pre`; without CSS for
   them a mention reads as plain text.
