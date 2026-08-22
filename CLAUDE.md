@@ -28,3 +28,35 @@ The repositories are **public**, so every commit is visible the moment it is pus
 - `pnpm typecheck && pnpm lint && pnpm test && pnpm build` must pass before pushing.
 - UI follows `app/DESIGN.md` (Ink/paper design system) and must work in RTL (fa/ar) and dark mode.
 - All user-facing strings go through i18n (Paraglide) — no hardcoded English in components.
+
+## Keeping this file current
+This file is how the next person — or the next agent — avoids repeating what we already worked out.
+When you learn something durable, add it here **in the same commit as the change that taught you**:
+- a trap that cost you time (a silent failure, a misleading error, a tool that lies about success)
+- a convention you had to infer from reading several files
+- a decision and the reason behind it, especially where the obvious choice is wrong
+Keep it specific and short. Delete anything that stops being true — a stale note is worse than none.
+
+---
+
+# This repository: app (the web client)
+
+The SvelteKit PWA every module renders into. `pnpm dev:mock` runs the whole interface against an
+in-memory API with demo data — no backend, no database.
+
+**Things worth knowing**
+- **`DESIGN.md` is the authority.** It is derived from the product's own design file: exact tokens,
+  sizes and per-view anatomy. Match it rather than inventing.
+- Use the tokens that exist. `--kern-paper`, `--kern-hover` and friends were invented once and silently
+  resolved to nothing; the real names are in `@kernhq/ui/styles/tokens.css`.
+- The design system's base styles sit in `@layer base` so a Tailwind utility can override them.
+  Unlayered CSS beats layered CSS, so an unlayered `a { color }` silently wins over `class="text-…"`.
+- Check a component's actual props before using it — several differ from the obvious guess (`Field`
+  takes `id` and passes it to its children snippet; `Tabs` items use `value`, not `id`; `Card` is a
+  block, so wrap flex layouts in your own element).
+- **Kill stale dev servers before debugging.** A second process on :5173 served old code twice in one
+  day and made correct fixes look broken. `lsof -ti:5173` should print exactly one pid.
+- Query keys are `[module, entity, …scope]` so a realtime `change` event invalidates precisely what it
+  touched. Keep new queries in that shape.
+- Every user-facing string goes through Paraglide (`messages/*.json`), and the layout must survive
+  `dir="rtl"` — use logical properties, never `left`/`right`.
