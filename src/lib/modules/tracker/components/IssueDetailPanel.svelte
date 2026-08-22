@@ -640,6 +640,8 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
               value={issue.custom?.[f.field.key] ?? null}
               editable={canEdit}
               required={f.required}
+              {workspaceId}
+              issueId={issue.id}
               onchange={(value) => patch.mutate({ custom: { [f.field!.key]: value } })}
             />
           </dd>
@@ -722,6 +724,8 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
               value={issue.custom?.[f.field!.key] ?? null}
               editable={canEdit}
               required={f.required}
+              {workspaceId}
+              issueId={issue.id}
               onchange={(value) => patch.mutate({ custom: { [f.field!.key]: value } })}
             />
           </dd>

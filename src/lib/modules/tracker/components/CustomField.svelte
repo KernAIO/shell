@@ -1,8 +1,10 @@
 <script lang="ts">
 import type { FieldDef } from '@kernhq/module-tracker/client'
-import { Checkbox, DropdownMenu, type MenuItem } from '@kernhq/ui'
+import { Checkbox, DropdownMenu, IconButton, type MenuItem } from '@kernhq/ui'
 import * as m from '$msg'
 import { getTrackerCatalogue } from '../context.svelte'
+import IssueInline from './IssueInline.svelte'
+import IssuePicker from './IssuePicker.svelte'
 
 /**
  * One custom field, rendered and edited according to its type.
@@ -19,9 +21,16 @@ interface Props {
   value: unknown
   editable: boolean
   required?: boolean
+  /** needed by the relation picker, which searches the workspace's issues */
+  workspaceId: string
+  /** the issue being edited, so a relation never offers to link it to itself */
+  issueId?: string | null
   onchange: (value: unknown) => void
 }
-let { field, value, editable, required = false, onchange }: Props = $props()
+let { field, value, editable, required = false, workspaceId, issueId = null, onchange }: Props = $props()
+
+/** Open only while somebody is choosing, so the row stays a row the rest of the time. */
+let picking = $state(false)
 
 const cat = getTrackerCatalogue()
 
@@ -176,17 +185,48 @@ const dateValue = $derived(field.type === 'datetime' && asText ? asText.slice(0,
       {String(value)}
     {/if}
   </span>
-{:else}
-  <!-- `relation` has no picker yet. Say so rather than render a control that does nothing. -->
-  <span class="val static" title={m.tracker_field_not_editable()}>
-    {#if asArray.length === 0}
-      <span class="muted">{m.tracker_field_empty()}</span>
-    {:else}
-      {asArray.join(', ')}
+{:else if field.type === 'relation'}
+  <div class="rel">
+    {#if asArray.length}
+      <ul class="links">
+        {#each asArray as id (id)}
+          <li>
+            <IssueInline {id} />
+            {#if editable}
+              <IconButton
+                icon="x"
+                size={22}
+                label={m.tracker_relation_unlink()}
+                onclick={() => commit(asArray.filter((v) => v !== id))}
+              />
+            {/if}
+          </li>
+        {/each}
+      </ul>
     {/if}
-  </span>
+    {#if editable}
+      {#if picking}
+        <IssuePicker
+          {workspaceId}
+          exclude={[...asArray, ...(issueId ? [issueId] : [])]}
+          placeholder={m.tracker_relation_link()}
+          onpick={(issue) => {
+            // `relationMultiple: false` means one link, so a new pick replaces rather than appends.
+            commit(field.config.relationMultiple === false ? [issue.id] : [...asArray, issue.id])
+            picking = false
+          }}
+          oncancel={() => (picking = false)}
+        />
+      {:else if field.config.relationMultiple !== false || asArray.length === 0}
+        <button type="button" class="link-btn" onclick={() => (picking = true)}>
+          {m.tracker_relation_link()}
+        </button>
+      {/if}
+    {:else if !asArray.length}
+      <span class="muted">{m.tracker_field_empty()}</span>
+    {/if}
+  </div>
 {/if}
-
 <style>
 .val-input,
 .date {
@@ -229,6 +269,40 @@ const dateValue = $derived(field.type === 'datetime' && asText ? asText.slice(0,
 }
 .muted {
   color: var(--kern-ink-350);
+}
+.rel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.links {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.links li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.link-btn {
+  align-self: flex-start;
+  padding: 2px 6px;
+  margin-inline-start: -6px;
+  border: 0;
+  border-radius: var(--kern-radius-sm);
+  background: none;
+  color: var(--kern-ink-350);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.link-btn:hover {
+  background: var(--kern-surface-active);
+  color: var(--kern-ink);
 }
 .val {
   display: inline-flex;

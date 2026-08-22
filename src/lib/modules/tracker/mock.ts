@@ -413,6 +413,48 @@ function resolveMockLayout(typeId: string, projectId: string | null): ResolvedLa
   }
 }
 
+const EXTRA_FIELDS: FieldDef[] = [
+  {
+    id: uid(786),
+    workspaceId: WORKSPACE,
+    projectId: null,
+    key: 'caused_by',
+    name: 'Caused by',
+    description: 'The change that introduced this',
+    type: 'relation',
+    options: [],
+    defaultValue: null,
+    config: { relationMultiple: true },
+    searchable: false,
+    required: false,
+    showInCards: false,
+    order: 2,
+    archivedAt: null,
+    createdAt: iso(80 * DAY),
+    updatedAt: iso(80 * DAY),
+  },
+  {
+    id: uid(787),
+    workspaceId: WORKSPACE,
+    projectId: null,
+    key: 'days_open',
+    name: 'Days open',
+    description: 'Calculated from the dates',
+    type: 'formula',
+    options: [],
+    defaultValue: null,
+    config: { formula: 'daysBetween({startDate}, {dueDate})', formulaResult: 'number' },
+    searchable: false,
+    required: false,
+    showInCards: false,
+    order: 3,
+    archivedAt: null,
+    createdAt: iso(80 * DAY),
+    updatedAt: iso(80 * DAY),
+  },
+]
+fields.push(...EXTRA_FIELDS)
+
 // ---------------------------------------------------------------------------------------------
 // issues
 // ---------------------------------------------------------------------------------------------

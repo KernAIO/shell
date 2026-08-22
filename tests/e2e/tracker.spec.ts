@@ -310,3 +310,23 @@ test('a board can be grouped by a custom field', async ({ page }) => {
   await expect(board.locator('[data-column]')).toHaveCount(4)
   await expect(board).toContainText('S2')
 })
+
+test('a relation field links to another issue, and a formula is calculated', async ({ page }) => {
+  await page.goto('/northstar/tracker?issue=KRN-6')
+  const panel = page.getByRole('dialog')
+  await expect(panel).toBeVisible()
+
+  // a relation offers a picker rather than a control that does nothing
+  await expect(panel.locator('dl.props')).toContainText('Caused by')
+  await panel.getByRole('button', { name: 'Link an issue' }).click()
+  await panel.getByTestId('issue-picker').fill('Typing indicators')
+  await page.getByRole('option', { name: /Typing indicators/ }).click()
+  await expect(panel.getByText('RTM-3')).toBeVisible()
+
+  // and it can be taken off again
+  await panel.getByRole('button', { name: 'Remove this link' }).click()
+  await expect(panel.getByText('RTM-3')).toHaveCount(0)
+
+  // a formula is shown, and never offered as something to type into
+  await expect(panel.locator('dl.props')).toContainText('Days open')
+})
