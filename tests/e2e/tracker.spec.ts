@@ -384,3 +384,27 @@ test('something raised from outside can be accepted or declined', async ({ page 
   await expect(triage).toBeHidden()
   await expect(panel.getByTestId('status-picker')).not.toContainText('Triage')
 })
+
+test('a project can be given components, versions and labels', async ({ page }) => {
+  // All three had a server and no screen, so a project could only ever use what its template seeded.
+  await page.goto('/northstar/settings/tracker/planning')
+  await expect(page.getByRole('heading', { name: 'Components, versions and labels' })).toBeVisible()
+
+  const components = page.getByTestId('planning-components')
+  await components.getByTestId('planning-add').fill('Realtime gateway')
+  await components.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(components.locator('[data-item="Realtime gateway"]')).toBeVisible()
+
+  // a version can be marked released, and unmarked again
+  const versions = page.getByTestId('planning-versions')
+  await versions.getByTestId('planning-add').fill('1.2')
+  await versions.getByRole('button', { name: 'Add', exact: true }).click()
+  await versions.getByRole('button', { name: 'Mark released' }).click()
+  await expect(versions.getByText('Released', { exact: true })).toBeVisible()
+
+  // removing names its consequence rather than asking through window.confirm
+  await components.getByRole('button', { name: 'Remove Realtime gateway' }).click()
+  await expect(page.getByText(/comes off every issue/)).toBeVisible()
+  await components.getByRole('button', { name: 'Delete' }).click()
+  await expect(components.locator('[data-item="Realtime gateway"]')).toHaveCount(0)
+})

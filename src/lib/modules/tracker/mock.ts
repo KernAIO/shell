@@ -2,6 +2,7 @@ import type { UserId, WorkspaceId } from '@kernhq/contracts'
 import {
   type Attachment,
   type Comment,
+  type Component,
   type Cycle,
   type FieldDef,
   type GroupBy,
@@ -23,6 +24,7 @@ import {
   rankBetween,
   rankSequence,
   type StatusInfo,
+  type Version,
   type View,
   type WorkItemType,
 } from '@kernhq/module-tracker/client'
@@ -800,10 +802,6 @@ function matches(issue: Issue, expr: KqlExpr | null): boolean {
 /** Every workspace-scoped procedure carries the workspace; the mock has one, so it only checks shape. */
 type Ws = { workspaceId: string }
 
-const notImplemented = (name: string) => () => {
-  throw new Error(`[mock] tracker.${name} is not implemented`)
-}
-
 const RICH = (text: string) => ({
   type: 'doc' as const,
   content: [{ type: 'paragraph', content: [{ type: 'text', text }] }],
@@ -816,6 +814,8 @@ export function createMockTrackerApi() {
     attachments: [] as Attachment[],
     relations: [] as RelationView[],
     views: [] as View[],
+    components: [] as Component[],
+    versions: [] as Version[],
     links: [] as Link[],
     approvals: [] as IssueApproval[],
     history: [] as IssueHistoryEntry[],
@@ -1003,7 +1003,113 @@ export function createMockTrackerApi() {
         return clone(type)
       },
     },
-    labels: { list: async (_input: Ws) => clone(labels) },
+    labels: {
+      list: async ({ projectId }: Ws & { projectId?: string }) =>
+        clone(labels.filter((l) => !projectId || !l.projectId || l.projectId === projectId)),
+      create: async ({ projectId, name }: Ws & { projectId?: string; name: string }) => {
+        const label: Label = {
+          id: uid(2100 + labels.length),
+          workspaceId: WORKSPACE,
+          projectId: projectId ?? null,
+          name,
+          color: null,
+          description: null,
+          groupName: null,
+          issueCount: 0,
+          archivedAt: null,
+          createdAt: new Date().toISOString(),
+        }
+        labels.push(label)
+        return clone(label)
+      },
+      update: async ({ id, patch }: Ws & { id: string; patch: Partial<Label> }) => {
+        const label = labels.find((l) => l.id === id)
+        if (!label) throw new Error(`[mock] unknown label ${id}`)
+        Object.assign(label, patch)
+        return clone(label)
+      },
+      delete: async ({ id }: Ws & { id: string }) => {
+        const index = labels.findIndex((l) => l.id === id)
+        if (index >= 0) labels.splice(index, 1)
+        // and off every issue that had it, the way the server does
+        for (const issue of state.issues) issue.labelIds = issue.labelIds.filter((l) => l !== id)
+        return { ok: true as const }
+      },
+    },
+
+    components: {
+      list: async ({ projectId }: Ws & { projectId: string }) =>
+        clone(state.components.filter((c) => c.projectId === projectId)),
+      create: async ({ projectId, name }: Ws & { projectId: string; name: string }) => {
+        const now = new Date().toISOString()
+        const component: Component = {
+          id: uid(2200 + state.components.length),
+          workspaceId: WORKSPACE,
+          projectId,
+          name,
+          description: null,
+          leadId: null,
+          defaultAssignee: 'none',
+          issueCount: 0,
+          createdAt: now,
+          updatedAt: now,
+        }
+        state.components.push(component)
+        return clone(component)
+      },
+      update: async ({ id, patch }: Ws & { id: string; patch: Partial<Component> }) => {
+        const component = state.components.find((c) => c.id === id)
+        if (!component) throw new Error(`[mock] unknown component ${id}`)
+        Object.assign(component, patch, { updatedAt: new Date().toISOString() })
+        return clone(component)
+      },
+      delete: async ({ id }: Ws & { id: string }) => {
+        state.components = state.components.filter((c) => c.id !== id)
+        return { ok: true as const }
+      },
+    },
+
+    versions: {
+      list: async ({ projectId }: Ws & { projectId: string }) =>
+        clone(state.versions.filter((v) => v.projectId === projectId)),
+      create: async ({ projectId, name }: Ws & { projectId: string; name: string }) => {
+        const now = new Date().toISOString()
+        const version: Version = {
+          id: uid(2300 + state.versions.length),
+          workspaceId: WORKSPACE,
+          projectId,
+          name,
+          description: null,
+          status: 'unreleased',
+          startDate: null,
+          releaseDate: null,
+          releasedAt: null,
+          stats: { total: 0, done: 0 },
+          order: state.versions.length,
+          createdAt: now,
+          updatedAt: now,
+        }
+        state.versions.push(version)
+        return clone(version)
+      },
+      update: async ({ id, patch }: Ws & { id: string; patch: Partial<Version> }) => {
+        const version = state.versions.find((v) => v.id === id)
+        if (!version) throw new Error(`[mock] unknown version ${id}`)
+        Object.assign(version, patch, { updatedAt: new Date().toISOString() })
+        return clone(version)
+      },
+      delete: async ({ id }: Ws & { id: string }) => {
+        state.versions = state.versions.filter((v) => v.id !== id)
+        return { ok: true as const }
+      },
+      release: async ({ id, released }: Ws & { id: string; released: boolean }) => {
+        const version = state.versions.find((v) => v.id === id)
+        if (!version) throw new Error(`[mock] unknown version ${id}`)
+        version.status = released ? 'released' : 'unreleased'
+        version.releasedAt = released ? new Date().toISOString() : null
+        return clone(version)
+      },
+    },
     fields: {
       list: async (_input: Ws) => clone(fields),
       create: async (input: Ws & { key: string; name: string; type: FieldDef['type'] }) => {

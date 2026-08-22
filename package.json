@@ -31,7 +31,7 @@
     "@kernhq/module-chat": "^0.2.1",
     "@kernhq/module-tracker": "^0.7.0",
     "@kernhq/sdk": "^0.1.0",
-    "@kernhq/ui": "^0.1.0",
+    "@kernhq/ui": "^0.1.2",
     "@lucide/svelte": "^1.33.0",
     "@tanstack/svelte-query": "^6.1.0",
     "better-auth": "^1.7.1",

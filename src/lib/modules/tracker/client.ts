@@ -142,6 +142,17 @@ export const trackerClientModule = defineClientModule({
       component: () => import('../../../routes/(app)/[ws]/settings/tracker/fields/+page.svelte'),
     },
     {
+      id: 'planning',
+      get label() {
+        return m.tracker_settings_planning()
+      },
+      icon: 'diamond',
+      scope: 'workspace',
+      permission: TRACKER_PERMISSIONS.projectManage,
+      order: 30,
+      component: () => import('../../../routes/(app)/[ws]/settings/tracker/planning/+page.svelte'),
+    },
+    {
       id: 'types',
       get label() {
         return m.tracker_settings_types()
