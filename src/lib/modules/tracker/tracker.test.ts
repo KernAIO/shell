@@ -188,6 +188,29 @@ describe('filters', () => {
   it('is empty when nothing is chosen, which matches everything', () => {
     expect(composeKql('all', emptyFilters(), '')).toBe('')
   })
+
+  it('brackets a typed "or" so it cannot swallow the preset — whatever its case', () => {
+    for (const typed of ['priority = urgent or priority = high', 'priority = urgent OR priority = high']) {
+      const kql = composeKql('assigned', emptyFilters(), typed)
+      expect(kql).toBe(`assignee = currentUser() and (${typed})`)
+      const parsed = parseKql(kql)
+      expect(parsed.ok).toBe(true)
+      // the whole query is an `and`: without the brackets the top level would be `or`
+      expect(parsed.ast?.where?.kind).toBe('and')
+    }
+  })
+
+  it('leaves an "or" inside a value alone — it is text, not an operator', () => {
+    expect(composeKql('assigned', emptyFilters(), 'title ~ "editor or reviewer"')).toBe(
+      'assignee = currentUser() and title ~ "editor or reviewer"',
+    )
+  })
+
+  it('does not bracket a lone part, so a plain query stays readable', () => {
+    expect(composeKql('all', emptyFilters(), 'priority = urgent or priority = high')).toBe(
+      'priority = urgent or priority = high',
+    )
+  })
 })
 
 describe('rich text', () => {

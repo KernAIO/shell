@@ -1,4 +1,4 @@
-import type { Priority } from '@kernhq/module-tracker/client'
+import { type Priority, parseKql } from '@kernhq/module-tracker/client'
 
 /**
  * The visual filter, and how it becomes KQL.
@@ -71,10 +71,23 @@ export function presetKql(preset: Preset): string {
   }
 }
 
+/**
+ * A part has to be bracketed before it is joined with `and`, or its `or` swallows the parts around
+ * it: `assignee = currentUser() and priority = urgent or priority = high` means "mine and urgent, or
+ * anyone's high", which quietly shows other people's issues. Asking the parser is the only reliable
+ * test — `OR` is a keyword whatever its case, and the word may equally appear inside a quoted value
+ * ("editor or reviewer"), where it means nothing. A part we cannot parse is bracketed anyway: the
+ * server rejects it either way, and this keeps the failure the user's typo rather than ours.
+ */
+const needsBrackets = (part: string): boolean => {
+  const parsed = parseKql(part)
+  if (!parsed.ok || !parsed.ast) return true
+  return parsed.ast.where?.kind === 'or'
+}
+
 /** Everything the list is narrowed by, as one query the server can answer. */
 export function composeKql(preset: Preset, filters: TrackerFilters, manual: string): string {
-  return [presetKql(preset), filtersToKql(filters), manual.trim()]
-    .filter((part) => part.length > 0)
-    .map((part) => (part.includes(' or ') ? `(${part})` : part))
-    .join(' and ')
+  const parts = [presetKql(preset), filtersToKql(filters), manual.trim()].filter((part) => part.length > 0)
+  if (parts.length < 2) return parts[0] ?? ''
+  return parts.map((part) => (needsBrackets(part) ? `(${part})` : part)).join(' and ')
 }

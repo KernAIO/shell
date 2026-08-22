@@ -478,7 +478,11 @@ export function createMockApi() {
           workspaceId,
           userId,
           patch,
-        }: { workspaceId: string; userId: string; patch: Record<string, unknown> }) => {
+        }: {
+          workspaceId: string
+          userId: string
+          patch: Record<string, unknown>
+        }) => {
           const member = state.members.find((mem) => mem.userId === userId)
           if (member) Object.assign(member, patch)
           const p = people.find((x) => x.id === userId) ?? people[0]!

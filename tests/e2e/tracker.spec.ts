@@ -59,7 +59,15 @@ test('keyboard: j/k move, x selects, c creates', async ({ page }) => {
   await expect(page.getByRole('status').filter({ hasText: 'selected' })).toBeVisible()
 
   await page.keyboard.press('c')
-  await expect(page.getByTestId('new-issue-title')).toBeFocused()
+  const title = page.getByTestId('new-issue-title')
+  await expect(title).toBeFocused()
+
+  // a space belongs in the title. When the close button holds focus instead, it activates it and
+  // throws the draft away — which is exactly what used to happen.
+  await page.keyboard.type('needs a space')
+  await expect(title).toHaveValue('needs a space')
+  await expect(page.getByRole('dialog')).toBeVisible()
+
   await page.keyboard.press('Escape')
 })
 
