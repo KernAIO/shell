@@ -2,9 +2,10 @@
   "name": "@kernalo/app",
   "version": "0.1.0",
   "private": true,
-  "description": "Kern web app — SvelteKit PWA shell hosting every module's client",
+  "description": "Kern web app \u2014 SvelteKit PWA shell hosting every module's client",
   "license": "AGPL-3.0-only",
   "type": "module",
+  "packageManager": "pnpm@10.30.3",
   "engines": {
     "node": ">=24"
   },
