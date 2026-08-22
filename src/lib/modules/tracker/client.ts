@@ -113,6 +113,17 @@ export const trackerClientModule = defineClientModule({
     },
   ],
 
+  slots: [
+    {
+      slot: 'sidebar.widget',
+      id: 'tracker.views',
+      order: 10,
+      component: () => import('./components/SidebarViews.svelte'),
+      // only while you are in the tracker: the sidebar belongs to the module you are looking at
+      when: (ctx) => ((ctx as { pathname?: string }).pathname ?? '').includes('/tracker'),
+    },
+  ],
+
   /**
    * Where the tracker is configured. The shell builds the settings nav from these — label, icon and
    * permission — while the route itself is conventional (`/settings/<module>/<id>`), so a module

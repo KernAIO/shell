@@ -330,3 +330,41 @@ test('a relation field links to another issue, and a formula is calculated', asy
   // a formula is shown, and never offered as something to type into
   await expect(panel.locator('dl.props')).toContainText('Days open')
 })
+
+test('a query can be saved as a view, pinned, reopened and deleted', async ({ page }) => {
+  await openTracker(page)
+
+  // build something worth keeping
+  await page.getByTestId('group-by').click()
+  await page.getByRole('menu').getByRole('menuitemcheckbox', { name: 'Priority' }).click()
+  const query = page.getByTestId('kql-input')
+  await query.fill('status != done')
+  await query.press('Enter')
+
+  await page.getByTestId('save-view').click()
+  // the dialog shows what is being saved, so nobody has to remember what they typed
+  await expect(page.getByTestId('view-preview')).toContainText('status != done')
+  await page.getByTestId('view-name').fill('Open by priority')
+  await page.getByTestId('view-save').click()
+  await expect(page.getByText('“Open by priority” saved')).toBeVisible()
+
+  // it appears in the sidebar, where the module's own navigation lives
+  const view = page.locator('[data-view-name="Open by priority"]')
+  await expect(view).toBeVisible()
+
+  // opening it restores the query and the grouping it was saved with
+  await page.getByTestId('group-by').click()
+  await page.getByRole('menu').getByRole('menuitemcheckbox', { name: 'Status' }).click()
+  await view.click()
+  await expect(page).toHaveURL(/q=status\+%21%3D\+done|q=status\+!%3D\+done/)
+  await expect(page.getByTestId('group-by')).toContainText('Priority')
+
+  // pinning moves it to the top group, and deleting takes it out of the sidebar
+  await page.getByRole('button', { name: 'Actions for Open by priority' }).click()
+  await page.getByRole('menu').getByRole('menuitem', { name: 'Pin to the sidebar' }).click()
+  await expect(page.getByText('Pinned')).toBeVisible()
+
+  await page.getByRole('button', { name: 'Actions for Open by priority' }).click()
+  await page.getByRole('menu').getByRole('menuitem', { name: 'Delete' }).click()
+  await expect(page.locator('[data-view-name="Open by priority"]')).toHaveCount(0)
+})

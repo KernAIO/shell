@@ -815,6 +815,7 @@ export function createMockTrackerApi() {
     comments: [] as Comment[],
     attachments: [] as Attachment[],
     relations: [] as RelationView[],
+    views: [] as View[],
     links: [] as Link[],
     approvals: [] as IssueApproval[],
     history: [] as IssueHistoryEntry[],
@@ -1059,8 +1060,52 @@ export function createMockTrackerApi() {
         clone(cycles.filter((c) => !projectId || c.projectId === projectId)),
     },
     views: {
-      list: async (_input: Ws): Promise<View[]> => [],
-      create: notImplemented('views.create'),
+      list: async (_input: Ws): Promise<View[]> => clone(state.views),
+      get: async ({ id }: Ws & { id: string }) => {
+        const view = state.views.find((v) => v.id === id)
+        if (!view) throw new Error(`[mock] unknown view ${id}`)
+        return clone(view)
+      },
+      create: async (input: Ws & Partial<View> & { name: string }) => {
+        const now = new Date().toISOString()
+        const view: View = {
+          id: uid(2000 + state.views.length),
+          workspaceId: WORKSPACE,
+          projectId: null,
+          name: input.name,
+          description: null,
+          icon: null,
+          kql: input.kql ?? '',
+          layout: input.layout ?? 'list',
+          display: { groupBy: 'status', ...(input.display ?? {}) } as View['display'],
+          filters: {} as View['filters'],
+          visibility: input.visibility ?? 'private',
+          ownerId: ME,
+          pinned: false,
+          builtin: false,
+          order: state.views.length,
+          createdAt: now,
+          updatedAt: now,
+        }
+        state.views.push(view)
+        return clone(view)
+      },
+      update: async ({ id, patch }: Ws & { id: string; patch: Partial<View> }) => {
+        const view = state.views.find((v) => v.id === id)
+        if (!view) throw new Error(`[mock] unknown view ${id}`)
+        Object.assign(view, patch, { updatedAt: new Date().toISOString() })
+        return clone(view)
+      },
+      delete: async ({ id }: Ws & { id: string }) => {
+        state.views = state.views.filter((v) => v.id !== id)
+        return { ok: true as const }
+      },
+      pin: async ({ id, pinned }: Ws & { id: string; pinned: boolean }) => {
+        const view = state.views.find((v) => v.id === id)
+        if (!view) throw new Error(`[mock] unknown view ${id}`)
+        view.pinned = pinned
+        return clone(view)
+      },
     },
 
     kql: {

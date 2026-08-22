@@ -36,6 +36,7 @@ import IssueListView from './components/IssueListView.svelte'
 import KqlInput from './components/KqlInput.svelte'
 import NewIssueDialog from './components/NewIssueDialog.svelte'
 import NewProjectDialog from './components/NewProjectDialog.svelte'
+import SaveViewDialog from './components/SaveViewDialog.svelte'
 import { setTrackerCatalogue, TrackerCatalogue } from './context.svelte'
 import { composeKql, emptyFilters, filterCount, PRESETS, type Preset, type TrackerFilters } from './filters'
 import { GROUP_CYCLE, groupByLabel, presetLabel } from './labels'
@@ -69,6 +70,7 @@ const openIssueKey = $derived(params.get('issue'))
 const newRequested = $derived(params.get('new') === '1')
 
 let newProjectOpen = $state(false)
+let savingView = $state(false)
 /**
  * Creating a project was unreachable: the server has had `projects.create` since the module
  * existed and nothing in the interface called it, so every project came from seed data.
@@ -434,6 +436,12 @@ $effect(() => {
       {/snippet}
     </DropdownMenu>
 
+    {#if canCreate}
+      <ToolbarButton onclick={() => (savingView = true)} data-testid="save-view">
+        {m.tracker_view_save()}
+      </ToolbarButton>
+    {/if}
+
     {#if filterCount(filters) > 0}
       <ToolbarButton active onClear={() => (filters = emptyFilters())}>
         {m.tracker_filter_count({ count: filterCount(filters) })}
@@ -512,6 +520,15 @@ $effect(() => {
       <button type="button" onclick={() => (selection = [])}>{m.close()}</button>
     </div>
   {/if}
+
+  <SaveViewDialog
+    open={savingView}
+    {workspaceId}
+    kql={manualKql}
+    layout={layout === 'board' ? 'board' : 'list'}
+    {groupBy}
+    onclose={() => (savingView = false)}
+  />
 
   <NewProjectDialog
     open={newProjectOpen}
