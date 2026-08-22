@@ -1,6 +1,6 @@
 # Kern web app
 
-The SvelteKit PWA that every Kern module renders into. Part of [Kern](https://github.com/KernALO/kern).
+The SvelteKit PWA that every Kern module renders into. Part of [Kern](https://github.com/KernAIO/kern).
 
 ## Running it
 
@@ -37,7 +37,7 @@ ones it uses.
 ## Design
 
 The interface follows [`DESIGN.md`](./DESIGN.md) — the "Ink / paper" system implemented in
-`@kernalo/ui`. Light and dark are both first-class, as are right-to-left languages: layout uses
+`@kernaio/ui`. Light and dark are both first-class, as are right-to-left languages: layout uses
 logical properties throughout, and Persian and Arabic ship with the app.
 
 ## Checks

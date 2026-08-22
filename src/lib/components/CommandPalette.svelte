@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Command, type CommandItem } from '@kernalo/ui'
+import { Command, type CommandItem } from '@kernaio/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { getApi } from '$lib/api/client'

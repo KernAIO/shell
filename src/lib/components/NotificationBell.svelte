@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Badge, EmptyState, IconButton, Popover } from '@kernalo/ui'
+import { Badge, EmptyState, IconButton, Popover } from '@kernaio/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { getApi } from '$lib/api/client'

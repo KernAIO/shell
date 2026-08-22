@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Icon } from '@kernalo/ui'
+import { Icon } from '@kernaio/ui'
 import { realtime } from '$lib/realtime.svelte'
 import * as m from '$msg'
 

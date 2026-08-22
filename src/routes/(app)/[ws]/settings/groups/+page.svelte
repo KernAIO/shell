@@ -10,7 +10,7 @@ import {
   Skeleton,
   Textarea,
   toast,
-} from '@kernalo/ui'
+} from '@kernaio/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'

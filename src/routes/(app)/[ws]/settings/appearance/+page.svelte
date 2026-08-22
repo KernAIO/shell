@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Icon, Select } from '@kernalo/ui'
+import { Icon, Select } from '@kernaio/ui'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsRow from '$lib/components/settings/SettingsRow.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'

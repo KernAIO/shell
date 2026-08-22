@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, Checkbox, Select, Skeleton, toast } from '@kernalo/ui'
+import { Button, Checkbox, Select, Skeleton, toast } from '@kernaio/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { getApi } from '$lib/api/client'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'

@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Avatar, Badge, EmptyState, Select, Skeleton } from '@kernalo/ui'
+import { Avatar, Badge, EmptyState, Select, Skeleton } from '@kernaio/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'

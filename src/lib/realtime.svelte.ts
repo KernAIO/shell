@@ -1,5 +1,5 @@
-import { channel, type ServerMessage } from '@kernalo/contracts'
-import { RealtimeClient } from '@kernalo/sdk'
+import { channel, type ServerMessage } from '@kernaio/contracts'
+import { RealtimeClient } from '@kernaio/sdk'
 import type { QueryClient } from '@tanstack/svelte-query'
 import { browser } from '$app/environment'
 import { env } from '$env/dynamic/public'

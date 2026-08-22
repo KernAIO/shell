@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, Card, Field, Input, Separator } from '@kernalo/ui'
+import { Button, Card, Field, Input, Separator } from '@kernaio/ui'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { auth, authDisabled, socialProviders } from '$lib/auth/client'

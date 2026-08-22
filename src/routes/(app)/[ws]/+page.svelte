@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, Card, EmptyState, Page, PageHeader, Skeleton, StatTile } from '@kernalo/ui'
+import { Button, Card, EmptyState, Page, PageHeader, Skeleton, StatTile } from '@kernaio/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'

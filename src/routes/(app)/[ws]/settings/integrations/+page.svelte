@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Badge, Button, Icon } from '@kernalo/ui'
+import { Badge, Button, Icon } from '@kernaio/ui'
 import { page } from '$app/state'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'

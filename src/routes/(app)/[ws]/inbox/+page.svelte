@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Avatar, Badge, Button, EmptyState, Page, PageHeader, Skeleton, Tabs, toast } from '@kernalo/ui'
+import { Avatar, Badge, Button, EmptyState, Page, PageHeader, Skeleton, Tabs, toast } from '@kernaio/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'

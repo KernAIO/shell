@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, Card, IconButton } from '@kernalo/ui'
+import { Button, Card, IconButton } from '@kernaio/ui'
 import * as m from '$msg'
 
 /**
