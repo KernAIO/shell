@@ -69,3 +69,41 @@ export function commandsFor(ctx: NavContext) {
 // wiring the shell needs: navigation, commands, presenters and routes all follow from the manifest.
 registerModule(trackerClientModule)
 registerModule(chatClientModule)
+
+export interface ModuleSettingsLink {
+  moduleId: string
+  moduleName: string
+  id: string
+  label: string
+  icon?: string
+  permission?: string
+  order: number
+}
+
+/**
+ * Where each enabled module is configured.
+ *
+ * A module declares its settings pages; the route is conventional
+ * (`/<workspace>/settings/<module>/<id>`), so the shell can offer them without a module having to
+ * mount pages of its own. Filtered by permission, like every other navigation: somebody who cannot
+ * manage fields does not see the entry rather than meeting a page that refuses them.
+ */
+export function settingsLinksFor(ctx: NavContext): ModuleSettingsLink[] {
+  return modules
+    .filter((m) => ctx.enabled.has(m.id))
+    .flatMap((m) =>
+      (m.settingsPages ?? [])
+        .filter((p) => p.scope === 'workspace')
+        .map((p) => ({
+          moduleId: m.id,
+          moduleName: m.name,
+          id: p.id,
+          label: p.label,
+          icon: p.icon,
+          permission: p.permission,
+          order: p.order ?? 100,
+        })),
+    )
+    .filter((link) => !link.permission || ctx.can(link.permission))
+    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
+}

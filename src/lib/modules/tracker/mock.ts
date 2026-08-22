@@ -897,9 +897,60 @@ export function createMockTrackerApi() {
       list: async (_input: Ws) => clone(types),
       layout: async ({ id, projectId }: Ws & { id: string; projectId?: string | null }) =>
         clone(resolveMockLayout(id, projectId ?? null)),
+      update: async ({ id, patch }: Ws & { id: string; patch: Partial<WorkItemType> }) => {
+        const type = types.find((t) => t.id === id)
+        if (!type) throw new Error(`[mock] unknown type ${id}`)
+        Object.assign(type, patch, { updatedAt: new Date().toISOString() })
+        return clone(type)
+      },
     },
     labels: { list: async (_input: Ws) => clone(labels) },
-    fields: { list: async (_input: Ws) => clone(fields) },
+    fields: {
+      list: async (_input: Ws) => clone(fields),
+      create: async (input: Ws & { key: string; name: string; type: FieldDef['type'] }) => {
+        if (fields.some((f) => f.key === input.key))
+          // Same rule as the database: the key is where the value lives, so it is unique per
+          // workspace whatever the project scope.
+          throw new Error(`[mock] the key "${input.key}" is already used`)
+        const now = new Date().toISOString()
+        const field: FieldDef = {
+          id: uid(1800 + fields.length),
+          workspaceId: WORKSPACE,
+          projectId: null,
+          key: input.key,
+          name: input.name,
+          description: null,
+          type: input.type,
+          options: [],
+          defaultValue: null,
+          config: {},
+          searchable: false,
+          required: false,
+          showInCards: false,
+          order: fields.length,
+          archivedAt: null,
+          createdAt: now,
+          updatedAt: now,
+          ...(input as Partial<FieldDef>),
+        }
+        fields.push(field)
+        return clone(field)
+      },
+      update: async ({ id, patch }: Ws & { id: string; patch: Partial<FieldDef> }) => {
+        const field = fields.find((f) => f.id === id)
+        if (!field) throw new Error(`[mock] unknown field ${id}`)
+        Object.assign(field, patch, { updatedAt: new Date().toISOString() })
+        return clone(field)
+      },
+      delete: async ({ id }: Ws & { id: string }) => {
+        const field = fields.find((f) => f.id === id)
+        const index = fields.findIndex((f) => f.id === id)
+        if (index >= 0) fields.splice(index, 1)
+        // Deleting a field strips its value from every issue, the way the server does.
+        if (field) for (const issue of state.issues) delete issue.custom[field.key]
+        return { ok: true as const }
+      },
+    },
     workflows: { statuses: async (_input: Ws) => clone(statuses) },
     milestones: {
       list: async ({ projectId }: Ws & { projectId?: string }) =>

@@ -1,10 +1,16 @@
 <script lang="ts">
 import { Avatar, Icon, SectionLabel } from '@kernhq/ui'
+import { createQuery } from '@tanstack/svelte-query'
 import { page } from '$app/state'
+import { getApi } from '$lib/api/client'
+import { settingsLinksFor } from '$lib/modules/registry'
+import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 
 let { children } = $props()
+
+const api = getApi()
 
 const slug = $derived(page.params.ws!)
 const workspace = $derived(session.workspaces.find((w) => w.slug === slug))
@@ -39,6 +45,28 @@ const workspaceLinks = $derived(
   ).filter((l) => !l.permission || session.can(l.permission)),
 )
 
+/**
+ * Settings contributed by the modules this workspace has on. The href is conventional, so a module
+ * declaring a page is enough — see `settingsLinksFor`.
+ */
+// Same query key as the app shell's, so this shares its result rather than fetching again.
+const modulesQuery = createQuery(() => ({
+  queryKey: keys.modules(workspace?.id ?? ''),
+  queryFn: () => api.workspaces.modules.list({ workspaceId: workspace!.id }),
+  enabled: Boolean(workspace),
+}))
+
+const moduleLinks = $derived(
+  settingsLinksFor({
+    enabled: new Set((modulesQuery.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
+    can: (permission: string) => session.can(permission),
+  }).map((link) => ({
+    path: `/${link.moduleId}/${link.id}`,
+    label: link.label,
+    icon: link.icon ?? 'puzzle',
+  })),
+)
+
 const accountLinks: NavLink[] = [
   { path: '/profile', label: m.settings_profile(), icon: 'user' },
   { path: '/security', label: m.settings_security(), icon: 'key-round' },
@@ -66,6 +94,28 @@ const accountLinks: NavLink[] = [
       <SectionLabel label={m.settings_workspace_section()} />
       <ul class="mb-4 mt-1 grid gap-0.5">
         {#each workspaceLinks as link (link.path)}
+          <li>
+            <a
+              href={href(link.path)}
+              aria-current={isActive(link.path) ? 'page' : undefined}
+              class="flex h-[34px] items-center gap-2.5 rounded-[9px] px-2.5 text-[13px] transition-colors {isActive(
+                link.path,
+              )
+                ? 'bg-[var(--kern-ink-900)] font-medium text-[var(--kern-ink-inverse)]'
+                : 'text-[var(--kern-ink-700)] hover:bg-[var(--kern-surface-hover)]'}"
+            >
+              <Icon name={link.icon} size={15} class="shrink-0 opacity-90" />
+              <span class="truncate">{link.label}</span>
+            </a>
+          </li>
+        {/each}
+      </ul>
+    {/if}
+
+    {#if moduleLinks.length}
+      <SectionLabel label={m.settings_modules_section()} />
+      <ul class="mb-4 mt-1 grid gap-0.5">
+        {#each moduleLinks as link (link.path)}
           <li>
             <a
               href={href(link.path)}

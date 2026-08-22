@@ -216,3 +216,53 @@ test('closing an issue that needs sign-off parks it until somebody approves', as
   await expect(approvals).toBeHidden()
   await expect(panel.getByTestId('status-picker')).toContainText('Done')
 })
+
+test('an admin creates a field, puts it on a type, and sees it on an issue', async ({ page }) => {
+  // This is the whole point of the customisation work: no database console anywhere in it.
+  await page.goto('/northstar/settings/tracker/fields')
+  await expect(page.getByRole('heading', { name: 'Custom fields' })).toBeVisible()
+
+  await page.getByTestId('new-field').click()
+  await page.getByTestId('field-name').fill('Escalated by')
+  // the key follows the name until somebody types their own
+  await expect(page.getByTestId('field-key')).toHaveValue('escalated_by')
+  await page.getByTestId('field-save').click()
+
+  const row = page.locator('[data-field-key="escalated_by"]')
+  await expect(row).toBeVisible()
+
+  // Navigate in the app rather than reloading: the demo backend lives in the page, so a fresh load
+  // would throw away the field that was just created.
+  await page.getByRole('link', { name: 'Work item types' }).click()
+  await page.locator('[data-type-key="bug"]').click()
+  await expect(page.getByTestId('zone-main')).toBeVisible()
+
+  // Moved without dragging: every arrangement a drag can produce is reachable from this menu,
+  // which is also the only route somebody using a keyboard has.
+  const field = page.locator('[data-field-id="cf.escalated_by"]')
+  await expect(field).toBeVisible()
+  await field.getByRole('button', { name: 'Move Escalated by' }).click()
+  await page.getByRole('menu').getByRole('menuitem', { name: 'Move to Main' }).click()
+  await expect(page.getByTestId('zone-main')).toContainText('Escalated by')
+
+  await page.getByTestId('save-layout').click()
+  await expect(page.getByText('Layout saved')).toBeVisible()
+
+  // and the issue panel reflects it: a field created minutes ago is on the issue
+  await page.getByRole('link', { name: 'Issues', exact: true }).first().click()
+  await page.getByTestId('issue-row').first().click()
+  // it went to the main column, so that is where the issue shows it
+  await expect(page.getByRole('dialog').getByTestId('main-fields')).toContainText('Escalated by')
+})
+
+test('a field cannot be deleted without being told what it takes with it', async ({ page }) => {
+  await page.goto('/northstar/settings/tracker/fields')
+  const row = page.locator('[data-field-key="customer"]')
+  await expect(row).toBeVisible()
+
+  await row.locator('..').getByTestId('field-delete').click()
+  // no window.confirm: the consequence is named on screen
+  await expect(page.getByText(/value on every issue/)).toBeVisible()
+  await page.getByTestId('field-delete-confirm').click()
+  await expect(page.locator('[data-field-key="customer"]')).toHaveCount(0)
+})

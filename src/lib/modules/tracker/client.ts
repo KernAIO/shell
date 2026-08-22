@@ -113,6 +113,36 @@ export const trackerClientModule = defineClientModule({
     },
   ],
 
+  /**
+   * Where the tracker is configured. The shell builds the settings nav from these — label, icon and
+   * permission — while the route itself is conventional (`/settings/<module>/<id>`), so a module
+   * does not have to mount pages dynamically to be configurable.
+   */
+  settingsPages: [
+    {
+      id: 'fields',
+      get label() {
+        return m.tracker_settings_fields()
+      },
+      icon: 'tag',
+      scope: 'workspace',
+      permission: TRACKER_PERMISSIONS.fieldManage,
+      order: 10,
+      component: () => import('../../../routes/(app)/[ws]/settings/tracker/fields/+page.svelte'),
+    },
+    {
+      id: 'types',
+      get label() {
+        return m.tracker_settings_types()
+      },
+      icon: 'layout-grid',
+      scope: 'workspace',
+      permission: TRACKER_PERMISSIONS.typeManage,
+      order: 20,
+      component: () => import('../../../routes/(app)/[ws]/settings/tracker/types/+page.svelte'),
+    },
+  ],
+
   presenters: [
     {
       type: 'issue',

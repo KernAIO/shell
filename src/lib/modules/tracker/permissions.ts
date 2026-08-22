@@ -17,6 +17,10 @@ export const TRACKER_PERMISSIONS = {
   comment: 'tracker.issue.comment',
   bulkEdit: 'tracker.issue.bulk_edit',
   archive: 'tracker.issue.archive',
+  /** the settings screens: fields have their own key, types share the workflow one */
+  fieldManage: 'tracker.field.manage',
+  typeManage: 'tracker.workflow.manage',
+  workflowManage: 'tracker.workflow.manage',
 } as const
 
 export type TrackerPermission = keyof typeof TRACKER_PERMISSIONS

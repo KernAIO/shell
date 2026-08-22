@@ -8,7 +8,7 @@ const isNotFound = $derived(page.status === 404)
 
 <div class="grid min-h-dvh place-items-center p-8">
   <EmptyState
-    icon={isNotFound ? 'compass' : 'alert-triangle'}
+    icon={isNotFound ? 'compass' : 'triangle-alert'}
     title={isNotFound ? m.not_found_title() : m.error_page_title()}
     description={isNotFound ? m.not_found_body() : (page.error?.message ?? m.error_generic())}
   >

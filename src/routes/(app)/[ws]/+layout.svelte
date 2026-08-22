@@ -120,7 +120,7 @@ const userMenu: MenuItem[] = $derived([
   {
     id: 'appearance',
     label: m.settings_appearance(),
-    icon: 'sun-moon',
+    icon: 'palette',
     onSelect: () => goto(wsHref('/settings/appearance')),
   },
   {

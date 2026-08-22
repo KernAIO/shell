@@ -15,12 +15,13 @@
     "build": "pnpm i18n && vite build",
     "preview": "vite preview --port 5173",
     "start": "node build",
-    "lint": "biome check .",
+    "lint": "biome check . && node scripts/check-icons.mjs",
     "i18n": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide",
     "typecheck": "pnpm i18n && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "icons": "node scripts/gen-icons.mjs"
+    "icons": "node scripts/gen-icons.mjs",
+    "check:icons": "node scripts/check-icons.mjs"
   },
   "dependencies": {
     "@better-auth/passkey": "^1.7.1",

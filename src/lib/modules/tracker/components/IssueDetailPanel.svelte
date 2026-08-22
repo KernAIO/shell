@@ -138,6 +138,12 @@ const layoutQuery = createQuery(() => ({
  * data we have.
  */
 const sidebarFields = $derived(layoutQuery.data?.sidebar ?? FALLBACK_SIDEBAR)
+/**
+ * Custom fields the type puts in the main column. `title` and `description` are system fields with
+ * their own places, so only custom ones need rendering here — without this, moving a field to Main
+ * in settings would make it disappear from the issue entirely.
+ */
+const mainFields = $derived((layoutQuery.data?.main ?? []).filter((f) => f.kind === 'custom' && f.field))
 
 const commentsQuery = createQuery(() => ({
   queryKey: trackerKeys.comments(workspaceId, issueId ?? ''),
@@ -706,6 +712,23 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
       </section>
     {/if}
 
+    {#if mainFields.length}
+      <dl class="props main" data-testid="main-fields">
+        {#each mainFields as f (f.fieldId)}
+          <dt>{f.label}</dt>
+          <dd>
+            <CustomField
+              field={f.field!}
+              value={issue.custom?.[f.field!.key] ?? null}
+              editable={canEdit}
+              required={f.required}
+              onchange={(value) => patch.mutate({ custom: { [f.field!.key]: value } })}
+            />
+          </dd>
+        {/each}
+      </dl>
+    {/if}
+
     <section class="desc">
       {#if editingDescription}
         <textarea
@@ -851,6 +874,9 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
     letter-spacing: -0.02em;
     color: var(--kern-ink-900);
     text-wrap: pretty;
+  }
+  .props.main {
+    margin-top: 14px;
   }
   .props {
     display: grid;
