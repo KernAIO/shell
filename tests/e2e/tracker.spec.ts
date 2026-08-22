@@ -266,3 +266,25 @@ test('a field cannot be deleted without being told what it takes with it', async
   await page.getByTestId('field-delete-confirm').click()
   await expect(page.locator('[data-field-key="customer"]')).toHaveCount(0)
 })
+
+test('a project can be created, and it starts from a shape you choose', async ({ page }) => {
+  // `projects.create` has existed since the module did and nothing in the interface called it, so
+  // every project came from seed data.
+  await openTracker(page)
+  await page.getByTestId('new-project').click()
+
+  await page.getByTestId('project-name').fill('Customer Success')
+  // the key is suggested from the name and stays editable
+  await expect(page.getByTestId('project-key')).toHaveValue('CS')
+  await page.getByTestId('project-key').fill('CSX')
+
+  // the four shapes are offered, and each says what it is for
+  const choices = page.getByTestId('template-choices')
+  await expect(choices.getByRole('button')).toHaveCount(4)
+  await expect(choices).toContainText('Tickets with a customer')
+  await choices.locator('[data-template="support"]').click()
+  await expect(choices.locator('[data-template="support"]')).toHaveAttribute('aria-pressed', 'true')
+
+  await page.getByTestId('project-create').click()
+  await expect(page.getByText('CSX is ready')).toBeVisible()
+})

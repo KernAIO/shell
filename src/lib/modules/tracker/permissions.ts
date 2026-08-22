@@ -21,6 +21,7 @@ export const TRACKER_PERMISSIONS = {
   fieldManage: 'tracker.field.manage',
   typeManage: 'tracker.workflow.manage',
   workflowManage: 'tracker.workflow.manage',
+  projectManage: 'tracker.project.manage',
 } as const
 
 export type TrackerPermission = keyof typeof TRACKER_PERMISSIONS

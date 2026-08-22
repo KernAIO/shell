@@ -889,8 +889,61 @@ export function createMockTrackerApi() {
         clone(projects.find((p) => p.id === projectId) ?? (projects[0] as Project)),
       getByKey: async ({ key }: Ws & { key: string }) =>
         clone(projects.find((p) => p.key === key) ?? (projects[0] as Project)),
-      create: notImplemented('projects.create'),
-      update: notImplemented('projects.update'),
+      create: async (
+        input: Ws & { name: string; key: string; description?: string | null; template?: string },
+      ) => {
+        if (projects.some((p) => p.key === input.key.toUpperCase()))
+          throw new Error(`[mock] the key "${input.key}" is already used`)
+        const now = new Date().toISOString()
+        const project: Project = {
+          ...(projects[0] as Project),
+          id: uid(1900 + projects.length),
+          key: input.key.toUpperCase(),
+          name: input.name,
+          description: input.description ?? null,
+          issueCounter: 0,
+          createdAt: now,
+          updatedAt: now,
+        }
+        projects.push(project)
+        state.counters.set(project.id, 0)
+        return clone(project)
+      },
+      update: async ({ projectId, patch }: Ws & { projectId: string; patch: Partial<Project> }) => {
+        const project = projects.find((p) => p.id === projectId)
+        if (!project) throw new Error(`[mock] unknown project ${projectId}`)
+        Object.assign(project, patch, { updatedAt: new Date().toISOString() })
+        return clone(project)
+      },
+      templates: {
+        // The four the tracker ships with. The mock does not apply them — it has no schema to seed —
+        // but the chooser is what this exists for, and it must offer what the server offers.
+        list: async (_input: Ws) =>
+          [
+            { key: 'software', name: 'Software', description: 'Epics, stories, bugs, and a review step.' },
+            {
+              key: 'support',
+              name: 'Support desk',
+              description: 'Tickets with a customer, an impact and a clock.',
+            },
+            {
+              key: 'marketing',
+              name: 'Marketing',
+              description: 'Campaigns, assets and requests, with a publish date.',
+            },
+            { key: 'simple', name: 'Simple task list', description: 'Tasks. Nothing to learn first.' },
+          ].map((t) => ({
+            id: t.key,
+            workspaceId: null,
+            key: t.key,
+            name: t.name,
+            description: t.description,
+            icon: null,
+            body: { version: 1, workflows: [], fields: [], types: [], labels: [], views: [] },
+            builtin: true,
+            createdAt: iso(0),
+          })),
+      },
     },
 
     types: {

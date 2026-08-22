@@ -31,6 +31,7 @@ import IssueDetailPanel from './components/IssueDetailPanel.svelte'
 import IssueListView from './components/IssueListView.svelte'
 import KqlInput from './components/KqlInput.svelte'
 import NewIssueDialog from './components/NewIssueDialog.svelte'
+import NewProjectDialog from './components/NewProjectDialog.svelte'
 import { setTrackerCatalogue, TrackerCatalogue } from './context.svelte'
 import { composeKql, emptyFilters, filterCount, PRESETS, type Preset, type TrackerFilters } from './filters'
 import { GROUP_CYCLE, groupByLabel, presetLabel } from './labels'
@@ -62,6 +63,13 @@ const manualKql = $derived(params.get('q') ?? '')
 const openIssueKey = $derived(params.get('issue'))
 /** `?new=1` lets the command palette and any deep link open the create dialog. */
 const newRequested = $derived(params.get('new') === '1')
+
+let newProjectOpen = $state(false)
+/**
+ * Creating a project was unreachable: the server has had `projects.create` since the module
+ * existed and nothing in the interface called it, so every project came from seed data.
+ */
+const canCreateProject = $derived(canTracker('projectManage'))
 
 function setParams(next: Record<string, string | null>) {
   const url = new URL(page.url)
@@ -317,7 +325,15 @@ $effect(() => {
     title={m.tracker_title()}
     {subtitle}
     measure={cycleProgress}
-  />
+  >
+    {#snippet actions()}
+      {#if canCreateProject}
+        <Button size="sm" variant="secondary" onclick={() => (newProjectOpen = true)} data-testid="new-project">
+          {m.tracker_project_new()}
+        </Button>
+      {/if}
+    {/snippet}
+  </PageHeader>
 
   <Toolbar>
     <ViewToggle
@@ -415,6 +431,13 @@ $effect(() => {
       <button type="button" onclick={() => (selection = [])}>{m.close()}</button>
     </div>
   {/if}
+
+  <NewProjectDialog
+    open={newProjectOpen}
+    {workspaceId}
+    onclose={() => (newProjectOpen = false)}
+    oncreated={(key) => toast.success(m.tracker_project_created({ key }))}
+  />
 
   <IssueDetailPanel
     {workspaceId}
