@@ -9,29 +9,54 @@ import StatusIcon from './StatusIcon.svelte'
 /**
  * The board (DESIGN.md 3.3).
  *
- * One column per workflow status, each headed by a 2px rule that starts as a stub of the status
- * colour and fades to a hairline. Cards are dragged between columns with svelte-dnd-action; dropping
- * one reports both the column it landed in and the neighbours it landed between, so the page can
- * apply the status transition and the new rank in one go.
+ * One column per value of whatever the board is grouped by — a workflow status by default, or a
+ * custom field's options — each headed by a 2px rule that starts as a stub of the column's colour
+ * and fades to a hairline. Cards are dragged between columns with svelte-dnd-action; dropping one
+ * reports the column it landed in and the neighbours it landed between, so the page can apply
+ * whatever that column means and the new rank in one go.
+ *
+ * The board does not know what a column *is*: the page says how to read a card's column and what a
+ * drop means. That is what lets the same board group by status and by Severity without a second
+ * implementation.
  *
  * A WIP limit is shown as `used/limit` and turns red when a column is over it. It warns rather than
  * refuses: a hard block just makes people rename columns.
  */
+export interface BoardColumnInfo {
+  id: string
+  name: string
+  /** the colour of the header rule; a status derives one, a field option carries its own */
+  color: string
+  /** present only for a status column, which draws its glyph */
+  status?: StatusInfo
+}
+
 interface Props {
   issues: Issue[]
-  columns: StatusInfo[]
+  columns: BoardColumnInfo[]
+  /** which column a card belongs in — the page decides, because it knows the grouping */
+  columnOf: (issue: Issue) => string[]
   wipLimits?: Record<string, number | undefined>
   /** false when the viewer may not move work between statuses; cards stay readable, just not draggable */
   draggable?: boolean
   onopen: (issue: Issue) => void
-  onmove: (issue: Issue, toStatusId: string, afterId: string | null, beforeId: string | null) => void
-  oncreate?: (statusId: string) => void
+  onmove: (issue: Issue, toColumnId: string, afterId: string | null, beforeId: string | null) => void
+  oncreate?: (columnId: string) => void
 }
-let { issues, columns, wipLimits = {}, draggable = true, onopen, onmove, oncreate }: Props = $props()
+let {
+  issues,
+  columns,
+  columnOf,
+  wipLimits = {},
+  draggable = true,
+  onopen,
+  onmove,
+  oncreate,
+}: Props = $props()
 
 const FLIP = 160
 
-type Lane = { status: StatusInfo; items: Issue[] }
+type Lane = { column: BoardColumnInfo; items: Issue[] }
 
 /**
  * `$state.raw` matters here: the drag library tracks items by identity, and a deep-reactive proxy
@@ -41,16 +66,16 @@ let lanes = $state.raw<Lane[]>([])
 let dragging = $state(false)
 
 const replaceLane = (index: number, items: Issue[]) => {
-  lanes = lanes.map((lane, i) => (i === index ? { status: lane.status, items } : lane))
+  lanes = lanes.map((lane, i) => (i === index ? { column: lane.column, items } : lane))
 }
 
 // mirror the query into local lists the drag library can reorder, but leave them alone mid-drag
 $effect(() => {
   if (dragging) return
   const sorted = [...issues].sort(byRank)
-  lanes = columns.map((status) => ({
-    status,
-    items: sorted.filter((issue) => issue.statusId === status.id),
+  lanes = columns.map((column) => ({
+    column,
+    items: sorted.filter((issue) => columnOf(issue).includes(column.id)),
   }))
 })
 
@@ -73,26 +98,31 @@ function finalize(index: number, event: CustomEvent<{ items: Issue[]; info: { id
   const moved = items[at]
   // the drop reports on both the source and the target lane; only the target holds the card
   if (!moved) return
-  onmove(moved, lane.status.id, items[at - 1]?.id ?? null, items[at + 1]?.id ?? null)
+  onmove(moved, lane.column.id, items[at - 1]?.id ?? null, items[at + 1]?.id ?? null)
 }
 
-const laneRule = (status: StatusInfo) =>
-  `linear-gradient(to var(--kern-lane-dir, right), ${statusStyle(status.category, status.id, status.name).color} 0 34px, var(--kern-border) 34px)`
+const laneRule = (column: BoardColumnInfo) =>
+  `linear-gradient(to var(--kern-lane-dir, right), ${column.color} 0 34px, var(--kern-border) 34px)`
 </script>
 
 <div class="kboard" data-testid="board">
-  {#each lanes as lane, index (lane.status.id)}
-    {@const limit = wipLimits[lane.status.id]}
+  {#each lanes as lane, index (lane.column.id)}
+    {@const limit = wipLimits[lane.column.id]}
     {@const over = limit !== undefined && lane.items.length > limit}
-    <section class="col">
+    <section class="col" data-column={lane.column.id}>
       <header class="head">
-        <StatusIcon
-          category={lane.status.category}
-          statusId={lane.status.id}
-          name={lane.status.name}
-          size={15}
-        />
-        <h2 class="name">{lane.status.name}</h2>
+        {#if lane.column.status}
+          <StatusIcon
+            category={lane.column.status.category}
+            statusId={lane.column.status.id}
+            name={lane.column.status.name}
+            size={15}
+          />
+        {:else}
+          <!-- A field's value has no glyph of its own, so the column's colour is the whole cue. -->
+          <span class="swatch" style:background={lane.column.color}></span>
+        {/if}
+        <h2 class="name">{lane.column.name}</h2>
         <span class="count" class:over title={over ? m.tracker_wip_exceeded() : undefined}>
           {limit === undefined ? lane.items.length : `${lane.items.length}/${limit}`}
         </span>
@@ -102,13 +132,13 @@ const laneRule = (status: StatusInfo) =>
             type="button"
             class="add"
             aria-label={m.tracker_new_issue()}
-            onclick={() => oncreate(lane.status.id)}
+            onclick={() => oncreate(lane.column.id)}
           >
             <Icon name="plus" size={13} strokeWidth={1.9} />
           </button>
         {/if}
       </header>
-      <div class="rule" style:background={laneRule(lane.status)}></div>
+      <div class="rule" style:background={laneRule(lane.column)}></div>
 
       <!-- svelte-ignore a11y_no_static_element_interactions -->
       <div
@@ -187,6 +217,12 @@ const laneRule = (status: StatusInfo) =>
   .add:hover {
     background: var(--kern-surface-hover);
     color: var(--kern-ink-900);
+  }
+  .swatch {
+    width: 9px;
+    height: 9px;
+    border-radius: 3px;
+    flex: none;
   }
   .rule {
     height: 2px;

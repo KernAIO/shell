@@ -64,10 +64,19 @@ export function priorityLabel(priority: Priority): string {
  */
 export function describeGroup(
   key: GroupKey,
-  groupBy: GroupBy,
+  /** a built-in group key or `cf.<key>` */
+  groupBy: string,
   cat: TrackerCatalogue,
 ): { label: string; badge?: GroupBadge } {
   if (groupBy === 'none') return { label: m.tracker_all_issues() }
+
+  // A custom field's value is stored as an option id, so the heading has to ask the field what it
+  // is called — otherwise a column reads `opt_7f3a` instead of `Sev 1`.
+  const custom = /^cf\.(.+)$/.exec(groupBy)
+  if (custom) {
+    if (key === null) return { label: m.tracker_group_none() }
+    return { label: cat.customValueLabel(custom[1]!, key) }
+  }
 
   if (key === null) {
     switch (groupBy) {
@@ -84,7 +93,7 @@ export function describeGroup(
     }
   }
 
-  switch (groupBy) {
+  switch (groupBy as GroupBy) {
     case 'status': {
       const status = cat.status(key)
       return {

@@ -1,5 +1,6 @@
 import type {
   Cycle,
+  FieldDef,
   Label,
   Milestone,
   Project,
@@ -30,6 +31,8 @@ export class TrackerCatalogue {
   cycles = $state<Cycle[]>([])
   milestones = $state<Milestone[]>([])
   people = $state<Person[]>([])
+  /** The workspace's custom fields, so cards and group headings can read a value's label. */
+  fields = $state<FieldDef[]>([])
 
   #projects = $derived(new Map(this.projects.map((p) => [p.id, p])))
   #statuses = $derived(new Map(this.statuses.map((s) => [s.id, s])))
@@ -38,6 +41,7 @@ export class TrackerCatalogue {
   #cycles = $derived(new Map(this.cycles.map((c) => [c.id, c])))
   #milestones = $derived(new Map(this.milestones.map((ms) => [ms.id, ms])))
   #people = $derived(new Map(this.people.map((p) => [p.id, p])))
+  #fields = $derived(new Map(this.fields.map((f) => [f.key, f])))
 
   project = (id: string | null | undefined) => (id ? this.#projects.get(id) : undefined)
   status = (id: string | null | undefined) => (id ? this.#statuses.get(id) : undefined)
@@ -46,6 +50,22 @@ export class TrackerCatalogue {
   cycle = (id: string | null | undefined) => (id ? this.#cycles.get(id) : undefined)
   milestone = (id: string | null | undefined) => (id ? this.#milestones.get(id) : undefined)
   person = (id: string | null | undefined) => (id ? this.#people.get(id) : undefined)
+  field = (key: string | null | undefined) => (key ? this.#fields.get(key) : undefined)
+
+  /**
+   * What a value of a custom field is called.
+   *
+   * A `select` stores an option id, so a group heading that showed the raw value would read
+   * `opt_7f3a` instead of `Sev 1`.
+   */
+  customValueLabel = (fieldKey: string, value: string): string => {
+    const field = this.#fields.get(fieldKey)
+    if (!field) return value
+    const option = field.options.find((o) => o.id === value)
+    if (option) return option.label
+    if (field.type === 'user' || field.type === 'multiuser') return this.person(value)?.name ?? value
+    return value
+  }
 
   /** The active cycle drives the sprint progress bar in the header. */
   activeCycle = $derived(this.cycles.find((c) => c.status === 'active') ?? null)

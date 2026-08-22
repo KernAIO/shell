@@ -16,7 +16,8 @@ import IssueRow from './IssueRow.svelte'
  */
 interface Props {
   issues: Issue[]
-  groupBy: GroupBy
+  /** a built-in group key or `cf.<key>` */
+  groupBy: string
   selection: Set<string>
   loading?: boolean
   onopen: (issue: Issue) => void

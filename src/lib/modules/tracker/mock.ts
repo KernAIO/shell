@@ -545,7 +545,10 @@ function buildIssues(): Issue[] {
       completedAt: done ? iso((i % 7) * DAY) : null,
       cancelledAt: cancelled ? iso(5 * DAY) : null,
       resolution: done ? 'fixed' : cancelled ? 'wontfix' : null,
-      custom: typeKey === 'bug' ? { severity: i % 4 === 0 ? 'S1' : 'S3' } : {},
+      // A `select` stores an option *id*, not its label. Storing the label made the list look
+      // right by accident and left the board — which builds its columns from the option ids —
+      // with nothing in any of them.
+      custom: typeKey === 'bug' ? { severity: i % 4 === 0 ? uid(781) : uid(783) } : {},
       watcherIds: i % 4 === 0 ? [ME] : [],
       subscriberCount: assignees.length + 1,
       commentCount: 0,

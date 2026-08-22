@@ -2,13 +2,17 @@
 import {
   customKqlField,
   type GroupBy,
+  groupKeysOf,
   type Issue,
   type KqlField,
   SYSTEM_FIELDS,
+  statusStyle,
 } from '@kernhq/module-tracker/client'
 import {
   Button,
+  DropdownMenu,
   EmptyState,
+  type MenuItem,
   PageHeader,
   Skeleton,
   Tabs,
@@ -57,7 +61,7 @@ const workspaceId = $derived(workspace?.id ?? '')
 
 const params = $derived(page.url.searchParams)
 const layout = $derived(params.get('view') === 'board' ? 'board' : 'list')
-const groupBy = $derived((params.get('group') ?? 'status') as GroupBy)
+const groupBy = $derived(params.get('group') ?? 'status')
 const preset = $derived((params.get('preset') ?? 'all') as Preset)
 const manualKql = $derived(params.get('q') ?? '')
 const openIssueKey = $derived(params.get('issue'))
@@ -83,6 +87,7 @@ function setParams(next: Record<string, string | null>) {
 // what this person may do here; the server checks again, this only keeps the interface honest
 const canCreate = $derived(canTracker('create'))
 const canTransition = $derived(canTracker('transition'))
+const canEdit = $derived(canTracker('edit'))
 const canBulkEdit = $derived(canTracker('bulkEdit'))
 
 let filters = $state<TrackerFilters>(emptyFilters())
@@ -160,6 +165,9 @@ $effect(() => {
   catalogue.labels = labelsQuery.data ?? []
 })
 $effect(() => {
+  catalogue.fields = fieldsQuery.data ?? []
+})
+$effect(() => {
   catalogue.cycles = cyclesQuery.data ?? []
 })
 $effect(() => {
@@ -220,17 +228,33 @@ const subtitle = $derived(
 const moveIssue = createMutation(() => ({
   mutationFn: async (input: {
     issue: Issue
-    toStatusId: string
+    toColumnId: string
     afterId: string | null
     beforeId: string | null
   }) => {
-    if (input.issue.statusId !== input.toStatusId) {
+    // What a drop *means* depends on the grouping: into a status column it is a transition, into a
+    // custom field's column it sets that field. The board reports the column and stays out of it.
+    if (boardField) {
+      const key = boardField.key
+      const current = input.issue.custom?.[key]
+      const many = boardField.type === 'multiselect' || boardField.type === 'multiuser'
+      const next = many
+        ? [...new Set([...(Array.isArray(current) ? (current as string[]) : []), input.toColumnId])]
+        : input.toColumnId
+      if (JSON.stringify(current ?? null) !== JSON.stringify(next))
+        await tracker.issues.update({
+          workspaceId,
+          issueId: input.issue.id,
+          patch: { custom: { [key]: next } },
+        })
+    } else if (input.issue.statusId !== input.toColumnId) {
+      const toStatusId = input.toColumnId
       const available = await tracker.issues.transitions.available({
         workspaceId,
         issueId: input.issue.id,
       })
-      const target = available.find((t) => t.toStatusId === input.toStatusId && t.allowed)
-      if (!target) throw new Error(m.tracker_transition_blocked({ status: input.toStatusId }))
+      const target = available.find((t) => t.toStatusId === toStatusId && t.allowed)
+      if (!target) throw new Error(m.tracker_transition_blocked({ status: toStatusId }))
       await tracker.issues.transitions.apply({
         workspaceId,
         issueId: input.issue.id,
@@ -279,10 +303,63 @@ function startCreate(defaults: { projectId?: string; statusId?: string } = {}) {
   creating = true
 }
 
-function cycleGroupBy() {
-  const next = GROUP_CYCLE[(GROUP_CYCLE.indexOf(groupBy) + 1) % GROUP_CYCLE.length] ?? 'status'
-  setParams({ group: next === 'status' ? null : next })
-}
+/** Only fields with a bounded set of values make sensible columns. */
+const GROUPABLE_TYPES = new Set(['select', 'multiselect', 'label', 'user', 'multiuser', 'checkbox'])
+const groupableFields = $derived((fieldsQuery.data ?? []).filter((f) => GROUPABLE_TYPES.has(f.type)))
+
+/**
+ * What a board or list can be grouped by: the built-in keys, then the workspace's custom fields.
+ *
+ * A menu rather than the cycle button this replaced — the set is open-ended now, and cycling
+ * through a workspace's twelve fields to reach the thirteenth is not a control.
+ */
+const groupMenu = $derived<MenuItem[]>([
+  ...GROUP_CYCLE.map((key) => ({
+    type: 'checkbox' as const,
+    id: key,
+    label: groupByLabel(key),
+    checked: groupBy === key,
+    onCheckedChange: () => setParams({ group: key === 'status' ? null : key }),
+  })),
+  ...(groupableFields.length ? [{ type: 'separator' as const, id: 'custom' } as MenuItem] : []),
+  ...groupableFields.map((field) => ({
+    type: 'checkbox' as const,
+    id: `cf.${field.key}`,
+    label: field.name,
+    checked: groupBy === `cf.${field.key}`,
+    onCheckedChange: () => setParams({ group: `cf.${field.key}` }),
+  })),
+])
+
+/** The custom field the board is grouped by, if any. */
+const boardField = $derived.by(() => {
+  const custom = /^cf\.(.+)$/.exec(groupBy)
+  return custom ? (catalogue.field(custom[1]) ?? null) : null
+})
+
+/**
+ * The board's columns. A status board takes the workflow's statuses; a field board takes the
+ * field's options, so the columns are exactly the values somebody may choose.
+ */
+const boardColumns = $derived.by(() =>
+  boardField
+    ? boardField.options
+        .filter((o) => !o.archived)
+        .map((o) => ({ id: o.id, name: o.label, color: o.color ?? 'var(--kern-ink-330)' }))
+    : catalogue.statuses.map((status) => ({
+        id: status.id,
+        name: status.name,
+        color: statusStyle(status.category, status.id, status.name).color,
+        status,
+      })),
+)
+
+/** The heading for the current grouping, whether it is built in or a field somebody added. */
+const currentGroupLabel = $derived.by(() => {
+  const custom = /^cf\.(.+)$/.exec(groupBy)
+  if (!custom) return groupByLabel(groupBy as GroupBy)
+  return catalogue.field(custom[1])?.name ?? groupBy
+})
 
 const isTyping = (target: EventTarget | null) => {
   const el = target as HTMLElement | null
@@ -348,11 +425,14 @@ $effect(() => {
 
     <FilterMenu {filters} onchange={(next) => (filters = next)} />
 
-    {#if layout === 'list'}
-      <ToolbarButton prefix={m.tracker_group_by()} onclick={cycleGroupBy} data-testid="group-by">
-        {groupByLabel(groupBy)}
-      </ToolbarButton>
-    {/if}
+    <!-- Both views group now, so the control is not the list's alone. -->
+    <DropdownMenu items={groupMenu} align="start">
+        {#snippet trigger(props)}
+          <ToolbarButton {...props} prefix={m.tracker_group_by()} data-testid="group-by">
+            {currentGroupLabel}
+          </ToolbarButton>
+      {/snippet}
+    </DropdownMenu>
 
     {#if filterCount(filters) > 0}
       <ToolbarButton active onClear={() => (filters = emptyFilters())}>
@@ -396,13 +476,14 @@ $effect(() => {
     {:else if layout === 'board'}
       <BoardView
         {issues}
-        columns={catalogue.statuses}
-        wipLimits={{ in_progress: 5, in_review: 3 }}
-        draggable={canTransition}
+        columns={boardColumns}
+        columnOf={(issue) => groupKeysOf(issue, groupBy).filter((k): k is string => k !== null)}
+        wipLimits={boardField ? {} : { in_progress: 5, in_review: 3 }}
+        draggable={boardField ? canEdit : canTransition}
         onopen={open}
-        onmove={(issue, toStatusId, afterId, beforeId) =>
-          moveIssue.mutate({ issue, toStatusId, afterId, beforeId })}
-        oncreate={canCreate ? (statusId) => startCreate({ statusId }) : undefined}
+        onmove={(issue, toColumnId, afterId, beforeId) =>
+          moveIssue.mutate({ issue, toColumnId, afterId, beforeId })}
+        oncreate={canCreate && !boardField ? (statusId) => startCreate({ statusId }) : undefined}
       />
     {:else}
       <IssueListView

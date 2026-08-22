@@ -288,3 +288,25 @@ test('a project can be created, and it starts from a shape you choose', async ({
   await page.getByTestId('project-create').click()
   await expect(page.getByText('CSX is ready')).toBeVisible()
 })
+
+test('a board can be grouped by a custom field', async ({ page }) => {
+  await openTracker(page)
+
+  // the group control offers the workspace's custom fields beside the built-in keys
+  await page.getByTestId('group-by').click()
+  const menu = page.getByRole('menu')
+  await expect(menu.getByRole('menuitemcheckbox', { name: 'Status' })).toBeVisible()
+  await menu.getByRole('menuitemcheckbox', { name: 'Severity' }).click()
+  await expect(page).toHaveURL(/group=cf\.severity/)
+
+  // the list heads each group with the option's label, not the id it stores
+  await expect(page.getByRole('button', { name: /^S1/ }).first()).toBeVisible()
+  await expect(page.getByRole('button', { name: /^S3/ }).first()).toBeVisible()
+
+  // and the board takes a column per option, including the ones nothing is in yet
+  await page.getByRole('radio', { name: 'Board' }).click()
+  const board = page.getByTestId('board')
+  await expect(board).toBeVisible()
+  await expect(board.locator('[data-column]')).toHaveCount(4)
+  await expect(board).toContainText('S2')
+})
