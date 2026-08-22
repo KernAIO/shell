@@ -10,10 +10,13 @@ import {
   type KqlExpr,
   type KqlValue,
   type Label,
+  type Link,
   type Milestone,
   type Priority,
   type Project,
   parseKql,
+  type RelationType,
+  type RelationView,
   type ResolvedField,
   type ResolvedLayout,
   rankBetween,
@@ -608,7 +611,10 @@ function fieldValue(issue: Issue, name: string): Scalar | Scalar[] {
     case 'milestone':
       return issue.milestoneId
     case 'parent':
-      return issue.parentId
+      // The server resolves an issue key to its id before comparing (`parent = "KRN-12"`), so the
+      // mock answers with the key as well as the id — otherwise a query that works against the
+      // real backend silently matches nothing here.
+      return issue.parentId ? [issue.parentId, keyOfIssue(issue.parentId)] : null
     case 'created':
       return issue.createdAt
     case 'updated':
@@ -693,6 +699,12 @@ function compare(actual: Scalar | Scalar[], expected: Scalar): number {
   return String(a) < String(expected) ? -1 : String(a) > String(expected) ? 1 : 0
 }
 
+/** The key of an issue by id, for KQL comparisons that name an issue the way people do. */
+function keyOfIssue(id: string): string {
+  return issueKeyById.get(id) ?? id
+}
+const issueKeyById = new Map<string, string>()
+
 function matches(issue: Issue, expr: KqlExpr | null): boolean {
   if (!expr) return true
   switch (expr.kind) {
@@ -756,11 +768,14 @@ export function createMockTrackerApi() {
     issues: buildIssues(),
     comments: [] as Comment[],
     attachments: [] as Attachment[],
+    relations: [] as RelationView[],
+    links: [] as Link[],
     history: [] as IssueHistoryEntry[],
     counters: new Map<string, number>(),
   }
   for (const issue of state.issues) {
     state.counters.set(issue.projectId, Math.max(state.counters.get(issue.projectId) ?? 0, issue.number))
+    issueKeyById.set(issue.id, issue.key)
   }
 
   const seedComment = (issueIndex: number, authorIdx: number, text: string, minutesAgo: number) => {
@@ -1252,6 +1267,67 @@ export function createMockTrackerApi() {
           return { ok: true as const }
         },
       },
+      relations: {
+        list: async ({ issueId }: Ws & { issueId: string }) =>
+          clone(state.relations.filter((r) => relationOwner.get(r.id) === issueId)),
+        create: async ({
+          issueId,
+          type,
+          targetIssueId,
+        }: Ws & { issueId: string; type: RelationType; targetIssueId: string }) => {
+          const target = find(targetIssueId)
+          const source = find(issueId)
+          const id = uid(1500 + state.relations.length)
+          const inverseId = uid(1500 + state.relations.length + 1)
+          const at = new Date().toISOString()
+          // Both directions, the way the server writes them: an issue that blocks another is
+          // blocked-by from the other side, and each end lists its own view.
+          state.relations.push({ id, type, issue: summaryOf(target), createdAt: at })
+          relationOwner.set(id, issueId)
+          state.relations.push({
+            id: inverseId,
+            type: RELATION_INVERSE[type],
+            issue: summaryOf(source),
+            createdAt: at,
+          })
+          relationOwner.set(inverseId, targetIssueId)
+          inverseOf.set(id, inverseId)
+          inverseOf.set(inverseId, id)
+          return clone(state.relations.filter((r) => relationOwner.get(r.id) === issueId))
+        },
+        delete: async ({ relationId }: Ws & { relationId: string }) => {
+          const partner = inverseOf.get(relationId)
+          state.relations = state.relations.filter((r) => r.id !== relationId && r.id !== partner)
+          return { ok: true as const }
+        },
+      },
+      links: {
+        list: async ({ issueId }: Ws & { issueId: string }) =>
+          clone(state.links.filter((l) => l.issueId === issueId)),
+        add: async ({
+          issueId,
+          url,
+          title,
+          kind,
+        }: Ws & { issueId: string; url: string; title?: string; kind?: string }) => {
+          const link: Link = {
+            id: uid(1600 + state.links.length),
+            workspaceId: WORKSPACE,
+            issueId,
+            url,
+            title: title ?? null,
+            kind: kind ?? 'generic',
+            createdBy: ME,
+            createdAt: new Date().toISOString(),
+          }
+          state.links.push(link)
+          return clone(link)
+        },
+        remove: async ({ linkId }: Ws & { linkId: string }) => {
+          state.links = state.links.filter((l) => l.id !== linkId)
+          return { ok: true as const }
+        },
+      },
       attachments: {
         list: async ({ issueId }: Ws & { issueId: string }) =>
           clone(state.attachments.filter((a) => a.issueId === issueId)),
@@ -1291,6 +1367,45 @@ export function createMockTrackerApi() {
       },
     },
   }
+}
+
+/**
+ * The other side of each relation. The real server owns this mapping and returns both views; the
+ * mock has to write both halves itself, and the client entry exports types only, so it is repeated
+ * here rather than imported from the contract.
+ */
+const RELATION_INVERSE: Record<RelationType, RelationType> = {
+  blocks: 'blocked_by',
+  blocked_by: 'blocks',
+  relates: 'relates',
+  duplicates: 'duplicated_by',
+  duplicated_by: 'duplicates',
+  clones: 'cloned_by',
+  cloned_by: 'clones',
+}
+
+/** Which issue each relation view belongs to, and which view is its other half. */
+const relationOwner = new Map<string, string>()
+const inverseOf = new Map<string, string>()
+
+/** The subset of an issue a relation shows. */
+function summaryOf(issue: Issue): RelationView['issue'] {
+  return {
+    id: issue.id,
+    workspaceId: issue.workspaceId,
+    projectId: issue.projectId,
+    key: issue.key,
+    number: issue.number,
+    typeId: issue.typeId,
+    title: issue.title,
+    statusId: issue.statusId,
+    statusCategory: issue.statusCategory,
+    priority: issue.priority,
+    assigneeIds: issue.assigneeIds,
+    labelIds: issue.labelIds,
+    cycleId: issue.cycleId,
+    parentId: issue.parentId,
+  } as RelationView['issue']
 }
 
 /** The mock uploader keeps bytes in memory and names them by id; show something readable. */

@@ -157,3 +157,39 @@ test('a comment carries a real mention, and can be edited, replied to and delete
   await comment.getByRole('button', { name: 'Delete' }).click()
   await expect(panel.locator('article')).toHaveCount(0)
 })
+
+test('an issue connects to children, other issues and pages elsewhere', async ({ page }) => {
+  await page.goto('/northstar/tracker?issue=KRN-12')
+  const panel = page.getByRole('dialog')
+  await expect(panel).toBeVisible()
+
+  // a sub-issue: pick another issue and it becomes a child
+  await panel.getByRole('button', { name: 'Add a sub-issue' }).click()
+  const picker = panel.getByTestId('issue-picker')
+  await picker.fill('Audit log')
+  await page.getByRole('option', { name: /Audit log/ }).click()
+  await expect(panel.getByRole('button', { name: /KRN-6/ })).toBeVisible()
+
+  // a relation, which the server writes in both directions
+  await panel.getByRole('button', { name: 'Add a related issue' }).click()
+  await page.getByRole('menu').getByRole('menuitem', { name: 'Blocks' }).click()
+  await panel.getByTestId('issue-picker').fill('Typing indicators')
+  await page.getByRole('option', { name: /Typing indicators/ }).click()
+  await expect(panel.getByText('Blocks', { exact: true })).toBeVisible()
+  await expect(panel.getByRole('button', { name: /RTM-3/ })).toBeVisible()
+
+  // the other end of that relation says the opposite
+  await panel.getByRole('button', { name: /RTM-3/ }).click()
+  await expect(page).toHaveURL(/issue=RTM-3/)
+  await expect(panel.getByText('Blocked by', { exact: true })).toBeVisible()
+  await expect(panel.getByRole('button', { name: /KRN-12/ })).toBeVisible()
+
+  // an external link, which only accepts an http address
+  await panel.getByRole('button', { name: 'Add a link' }).click()
+  const url = panel.getByTestId('link-url')
+  await url.fill('not-a-url')
+  await expect(panel.getByRole('button', { name: 'Add', exact: true })).toBeDisabled()
+  await url.fill('https://example.test/spec')
+  await panel.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(panel.getByRole('link', { name: 'https://example.test/spec' })).toBeVisible()
+})

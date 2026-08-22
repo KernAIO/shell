@@ -24,6 +24,11 @@ export const trackerKeys = {
   comments: (workspaceId: string, issueId: string) => ['tracker', 'comment', workspaceId, issueId] as const,
   attachments: (workspaceId: string, issueId: string) =>
     ['tracker', 'attachment', workspaceId, issueId] as const,
+  relations: (workspaceId: string, issueId: string) => ['tracker', 'relation', workspaceId, issueId] as const,
+  links: (workspaceId: string, issueId: string) => ['tracker', 'link', workspaceId, issueId] as const,
+  /** an issue's sub-issues — an issue query, but keyed to the parent it hangs off */
+  children: (workspaceId: string, issueId: string) =>
+    ['tracker', 'issue', workspaceId, 'children', issueId] as const,
   history: (workspaceId: string, issueId: string) => ['tracker', 'history', workspaceId, issueId] as const,
   transitions: (workspaceId: string, issueId: string) =>
     ['tracker', 'transition', workspaceId, issueId] as const,

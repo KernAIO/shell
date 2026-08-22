@@ -35,6 +35,7 @@ import CommentComposer from './CommentComposer.svelte'
 import CommentThread from './CommentThread.svelte'
 import CustomField from './CustomField.svelte'
 import DueDate from './DueDate.svelte'
+import IssueConnections from './IssueConnections.svelte'
 import PriorityGlyph from './PriorityGlyph.svelte'
 import StatusIcon from './StatusIcon.svelte'
 
@@ -50,8 +51,10 @@ interface Props {
   /** the issue key from the URL, so a panel can be linked to and reopened after a reload */
   issueKey: string | null
   onclose: () => void
+  /** follow a connection to another issue — the page owns the URL, not this panel */
+  onopenissue: (key: string) => void
 }
-let { workspaceId, issueKey, onclose }: Props = $props()
+let { workspaceId, issueKey, onclose, onopenissue }: Props = $props()
 
 /** The built-in properties, in the order the panel showed them before layouts existed. */
 const FALLBACK_SIDEBAR: ResolvedField[] = [
@@ -627,6 +630,13 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
         {/if}
       {/each}
     </dl>
+
+    <IssueConnections
+      {workspaceId}
+      {issue}
+      {canEdit}
+      onopen={onopenissue}
+    />
 
     {#if issueAttachments.length || canEdit}
       <section class="attachments">

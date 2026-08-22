@@ -416,7 +416,12 @@ $effect(() => {
     </div>
   {/if}
 
-  <IssueDetailPanel {workspaceId} issueKey={openIssueKey} onclose={() => setParams({ issue: null })} />
+  <IssueDetailPanel
+    {workspaceId}
+    issueKey={openIssueKey}
+    onclose={() => setParams({ issue: null })}
+    onopenissue={(key) => setParams({ issue: key })}
+  />
 </div>
 
 <NewIssueDialog
