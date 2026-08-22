@@ -368,3 +368,19 @@ test('a query can be saved as a view, pinned, reopened and deleted', async ({ pa
   await page.getByRole('menu').getByRole('menuitem', { name: 'Delete' }).click()
   await expect(page.locator('[data-view-name="Open by priority"]')).toHaveCount(0)
 })
+
+test('something raised from outside can be accepted or declined', async ({ page }) => {
+  // KRN-7 is in triage in the demo data: it arrived from outside the team.
+  await page.goto('/northstar/tracker?issue=KRN-7')
+  const panel = page.getByRole('dialog')
+  await expect(panel).toBeVisible()
+
+  const triage = panel.getByTestId('triage')
+  await expect(triage).toBeVisible()
+  await expect(triage).toContainText('has not been accepted yet')
+
+  // accepting moves it into the workflow rather than leaving somebody to set a status by hand
+  await panel.getByTestId('triage-accept').click()
+  await expect(triage).toBeHidden()
+  await expect(panel.getByTestId('status-picker')).not.toContainText('Triage')
+})

@@ -169,6 +169,7 @@ const cycle = $derived(cat.cycle(issue?.cycleId))
 const watching = $derived(Boolean(issue && session.user && issue.watcherIds.includes(session.user.id)))
 
 // the server enforces these too; here they decide whether a control is offered at all
+const canTriage = $derived(canTracker('triageManage'))
 const canEdit = $derived(canTracker('edit'))
 const canTransition = $derived(canTracker('transition'))
 const canComment = $derived(canTracker('comment'))
@@ -267,6 +268,30 @@ const deleteComment = createMutation(() => ({
   onSuccess: refreshComments,
   onError: (error: Error) => toast.error(error.message),
 }))
+
+/**
+ * Triage: what to do with something that arrived from outside.
+ *
+ * The three actions have existed on the server since intake did and nothing offered them, so an
+ * issue raised by email or through the public form sat in triage with no way out but editing its
+ * status by hand — which skips the workflow's initial status and the decline comment entirely.
+ */
+const triage = createMutation(() => ({
+  mutationFn: (input: { action: 'accept' | 'decline' | 'snooze'; until?: string }) => {
+    const issueId = issue?.id as string
+    if (input.action === 'accept') return api.triage.accept({ workspaceId, issueId })
+    if (input.action === 'decline') return api.triage.decline({ workspaceId, issueId })
+    return api.triage.snooze({ workspaceId, issueId, until: input.until as string })
+  },
+  onSuccess: () => {
+    invalidate()
+    void queryClient.invalidateQueries({ queryKey: trackerKeys.history(workspaceId, issue?.id ?? '') })
+  },
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+/** A week is the interval somebody means by "not now"; anything finer belongs on a date picker. */
+const nextWeek = () => new Date(Date.now() + 7 * 86_400_000).toISOString()
 
 const removeAttachment = createMutation(() => ({
   mutationFn: (attachmentId: string) => api.issues.attachments.remove({ workspaceId, attachmentId }),
@@ -714,6 +739,43 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
       </section>
     {/if}
 
+    {#if issue.triage && canTriage}
+      <section class="triage" data-testid="triage">
+        <div class="thead">
+          <Icon name="inbox" size={14} strokeWidth={1.8} />
+          <span>{m.tracker_triage_waiting()}</span>
+        </div>
+        <p class="tnote">{m.tracker_triage_hint()}</p>
+        <div class="row">
+          <Button
+            size="sm"
+            disabled={triage.isPending}
+            onclick={() => triage.mutate({ action: 'accept' })}
+            data-testid="triage-accept"
+          >
+            {m.tracker_triage_accept()}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={triage.isPending}
+            onclick={() => triage.mutate({ action: 'snooze', until: nextWeek() })}
+          >
+            {m.tracker_triage_snooze()}
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={triage.isPending}
+            onclick={() => triage.mutate({ action: 'decline' })}
+            data-testid="triage-decline"
+          >
+            {m.tracker_triage_decline()}
+          </Button>
+        </div>
+      </section>
+    {/if}
+
     {#if mainFields.length}
       <dl class="props main" data-testid="main-fields">
         {#each mainFields as f (f.fieldId)}
@@ -817,6 +879,29 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
 </Sheet>
 
 <style>
+  .triage {
+    margin-top: 14px;
+    padding: 10px 12px;
+    border: 1px solid var(--kern-warning);
+    border-radius: var(--kern-radius-sm);
+    background: var(--kern-warning-tint, var(--kern-shell));
+  }
+  .thead {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .tnote {
+    margin: 3px 0 8px;
+    font-size: 12px;
+    color: var(--kern-ink-450, var(--kern-ink-400));
+  }
+  .triage .row {
+    display: flex;
+    gap: 6px;
+  }
   .attachments {
     margin-top: 16px;
   }

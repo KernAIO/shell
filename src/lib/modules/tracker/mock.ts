@@ -1059,6 +1059,40 @@ export function createMockTrackerApi() {
       list: async ({ projectId }: Ws & { projectId?: string }) =>
         clone(cycles.filter((c) => !projectId || c.projectId === projectId)),
     },
+    triage: {
+      accept: async ({ issueId }: Ws & { issueId: string }) => {
+        const issue = find(issueId)
+        // Out of triage into the workflow's first real status, the way the server does it.
+        const target = statuses.find((s) => s.category !== 'triage')
+        if (target) {
+          issue.statusId = target.id
+          issue.statusCategory = target.category
+        }
+        issue.triage = false
+        issue.snoozedUntil = null
+        touch(issue)
+        return clone(issue)
+      },
+      decline: async ({ issueId }: Ws & { issueId: string }) => {
+        const issue = find(issueId)
+        const cancelled = statuses.find((s) => s.category === 'cancelled')
+        if (cancelled) {
+          issue.statusId = cancelled.id
+          issue.statusCategory = cancelled.category
+        }
+        issue.triage = false
+        issue.cancelledAt = new Date().toISOString()
+        touch(issue)
+        return clone(issue)
+      },
+      snooze: async ({ issueId, until }: Ws & { issueId: string; until: string }) => {
+        const issue = find(issueId)
+        issue.snoozedUntil = until
+        touch(issue)
+        return clone(issue)
+      },
+    },
+
     views: {
       list: async (_input: Ws): Promise<View[]> => clone(state.views),
       get: async ({ id }: Ws & { id: string }) => {
