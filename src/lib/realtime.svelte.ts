@@ -25,6 +25,8 @@ class Realtime {
   #client: RealtimeClient | null = null
   #queryClient: QueryClient | null = null
   #subscribed = new Set<string>()
+  /** modules that want the raw stream (chat keeps its own state rather than a query cache) */
+  #taps = new Set<(msg: ServerMessage) => void>()
 
   connect(queryClient: QueryClient, getToken: () => string | null) {
     if (!browser || this.#client) return
@@ -59,6 +61,33 @@ class Realtime {
     return () => this.#client?.unsubscribe(name)
   }
 
+  /**
+   * Watch the raw message stream.
+   *
+   * Most of the interface only needs "something changed, refetch it", which is what `#handle` does.
+   * Chat is different: it holds the transcript itself, applies messages, typing and presence to it
+   * directly, and would tear if it refetched instead. Returns an unsubscribe for `$effect` cleanup.
+   */
+  tap(fn: (msg: ServerMessage) => void): () => void {
+    this.#taps.add(fn)
+    return () => this.#taps.delete(fn)
+  }
+
+  /** Subscribe to a channel by its raw name (`chat:<id>`), for modules that name their own. */
+  subscribeRaw(...channels: string[]) {
+    for (const name of channels) this.#subscribed.add(name)
+    this.#client?.subscribe(...channels)
+  }
+
+  unsubscribeRaw(...channels: string[]) {
+    for (const name of channels) this.#subscribed.delete(name)
+    this.#client?.unsubscribe(...channels)
+  }
+
+  sendTyping(workspaceId: string, channelId: string, threadId?: string) {
+    this.#client?.typing(workspaceId, channelId, threadId)
+  }
+
   setPresence(status: 'online' | 'away' | 'dnd' | 'offline') {
     this.#client?.presence(status)
   }
@@ -71,6 +100,14 @@ class Realtime {
   }
 
   #handle(msg: ServerMessage) {
+    // taps see everything first: a module that owns its own state applies the message itself
+    for (const tap of this.#taps) {
+      try {
+        tap(msg)
+      } catch {
+        /* one module's failure must not stop the others from seeing the stream */
+      }
+    }
     const qc = this.#queryClient
     if (!qc) return
     switch (msg.t) {

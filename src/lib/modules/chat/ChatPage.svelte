@@ -1,0 +1,147 @@
+<script lang="ts">
+import type { Message } from '@kernhq/module-chat/client'
+import { EmptyState, Skeleton } from '@kernhq/ui'
+import { goto } from '$app/navigation'
+import { page } from '$app/state'
+import { realtime } from '$lib/realtime.svelte'
+import { session } from '$lib/state/session.svelte'
+import * as m from '$msg'
+import BrowseChannelsDialog from './components/BrowseChannelsDialog.svelte'
+import Composer from './components/Composer.svelte'
+import ConversationHeader from './components/ConversationHeader.svelte'
+import MessageList from './components/MessageList.svelte'
+import ThreadPanel from './components/ThreadPanel.svelte'
+import { composerTarget, kindOf } from './labels'
+import { getChatStore } from './store.svelte'
+
+/**
+ * The conversation: header, transcript, composer — and a thread beside it when one is open.
+ *
+ * The list of conversations is not here. It lives in the application sidebar, because the sidebar
+ * belongs to whichever module you are in (DESIGN.md 2.3), and both read the same store.
+ *
+ * Which conversation is open, and which thread, live in the URL: a conversation can be linked to,
+ * opened in a second tab, and survives a reload — the same rule the issues view follows.
+ */
+
+const workspaceSlug = $derived(page.params.ws ?? '')
+const workspace = $derived(session.workspaces.find((w) => w.slug === workspaceSlug))
+const store = $derived(getChatStore(workspace?.id ?? '', session.user?.id ?? ''))
+
+const activeId = $derived(page.url.searchParams.get('c'))
+const threadId = $derived(page.url.searchParams.get('t'))
+const browseOpen = $derived(page.url.searchParams.get('browse') === '1')
+
+const channel = $derived(activeId && store ? store.channel(activeId) : undefined)
+
+// hand every realtime message to the store, which owns the transcript
+$effect(() => {
+  const s = store
+  if (!s) return
+  if (!s.channelsLoaded) void s.loadChannels()
+  return realtime.tap((msg) => {
+    s.handle(msg)
+  })
+})
+
+// open whatever the URL points at, and mark it read once it is on screen
+$effect(() => {
+  const s = store
+  if (!s || !activeId) return
+  void s.openChannel(activeId).then(() => s.markRead(activeId))
+})
+
+$effect(() => {
+  const s = store
+  if (!s || !threadId) return
+  void s.openThread(threadId)
+})
+
+const setParams = (mutate: (params: URLSearchParams) => void) => {
+  const url = new URL(page.url)
+  mutate(url.searchParams)
+  void goto(`${url.pathname}${url.search}`, { keepFocus: true, noScroll: true })
+}
+
+const openThread = (messageId: string) => setParams((p) => p.set('t', messageId))
+const closeThread = () => setParams((p) => p.delete('t'))
+const selectChannel = (channelId: string) =>
+  setParams((p) => {
+    p.set('c', channelId)
+    p.delete('t')
+  })
+
+/** Editing reuses the composer: the message text goes back in the box. */
+let editing = $state<Message | null>(null)
+const edit = (message: Message) => {
+  editing = message
+}
+</script>
+
+<svelte:head><title>{m.chat_title()} · Kern</title></svelte:head>
+
+<div class="chat" class:with-thread={!!threadId && !!channel}>
+  <section class="conversation">
+    {#if !store}
+      <div class="center"><Skeleton width="220px" height="14px" /></div>
+    {:else if !channel}
+      <div class="center">
+        <EmptyState
+          icon="message-circle"
+          title={m.chat_pick_conversation()}
+          description={m.chat_pick_conversation_hint()}
+        />
+      </div>
+    {:else}
+      <ConversationHeader {store} {channel} onshowpins={() => {}} />
+      <MessageList {store} channelId={channel.id} onreply={openThread} onedit={edit} />
+      <Composer
+        {store}
+        channelId={channel.id}
+        target={composerTarget(store.channelLabel(channel), kindOf(channel))}
+      />
+    {/if}
+  </section>
+
+  {#if store && threadId && channel}
+    <ThreadPanel {store} rootId={threadId} channelId={channel.id} onclose={closeThread} onedit={edit} />
+  {/if}
+</div>
+
+{#if store}
+  <BrowseChannelsDialog open={browseOpen} {store} onopen={selectChannel} />
+{/if}
+
+<style>
+  .chat {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+  }
+  .chat.with-thread {
+    grid-template-columns: minmax(420px, 1fr) auto;
+  }
+  .conversation {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    background: var(--kern-surface);
+  }
+  .center {
+    display: grid;
+    place-items: center;
+    height: 100%;
+  }
+
+  /* a thread beside a narrow conversation squeezes both; below this it takes the whole column */
+  @media (max-width: 1100px) {
+    .chat.with-thread {
+      grid-template-columns: minmax(0, 1fr);
+    }
+    .chat.with-thread .conversation {
+      display: none;
+    }
+  }
+</style>

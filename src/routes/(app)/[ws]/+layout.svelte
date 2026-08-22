@@ -25,7 +25,7 @@ import { authDisabled, signOut } from '$lib/auth/client'
 import CommandPalette from '$lib/components/CommandPalette.svelte'
 import InstallPrompt from '$lib/components/InstallPrompt.svelte'
 import OfflineBanner from '$lib/components/OfflineBanner.svelte'
-import { navigationFor } from '$lib/modules/registry'
+import { navigationFor, slotsFor } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { realtime } from '$lib/realtime.svelte'
 import { session } from '$lib/state/session.svelte'
@@ -89,6 +89,20 @@ const enabledModules = $derived(
   new Set((modules.data ?? []).filter((entry) => entry.state.enabled).map((entry) => entry.manifest.id)),
 )
 const moduleNav = $derived(navigationFor({ enabled: enabledModules, can: (p) => session.can(p) }))
+
+/**
+ * What the active module puts in the sidebar.
+ *
+ * The sidebar belongs to whichever module you are in: the tracker leaves it as navigation, chat
+ * fills it with conversations. A module that contributes nothing here simply gets the default.
+ */
+const sidebarWidgets = $derived(
+  slotsFor('sidebar.widget', {
+    enabled: enabledModules,
+    can: (p) => session.can(p),
+    pathname: page.url.pathname,
+  }),
+)
 
 const badgeFor = (id: string) => realtime.badges[id]?.unread ?? workspaceById(id)?.unread ?? 0
 const workspaceById = (id: string) => me.data?.workspaces.find((w) => w.id === id)
@@ -248,6 +262,13 @@ const userMenu: MenuItem[] = $derived([
             {/each}
           </SidebarGroup>
         {/if}
+
+        {#each sidebarWidgets as widget (widget.id)}
+          {#await widget.component() then mod}
+            {@const Widget = mod.default}
+            <Widget {...widget.props ?? {}} />
+          {/await}
+        {/each}
 
         {#snippet footer()}
           <DropdownMenu items={userMenu} align="start" side="top">

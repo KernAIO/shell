@@ -76,6 +76,13 @@ in-memory API with demo data — no backend, no database.
   block, so wrap flex layouts in your own element).
 - **Kill stale dev servers before debugging.** A second process on :5173 served old code twice in one
   day and made correct fixes look broken. `lsof -ti:5173` should print exactly one pid.
+- **The sidebar belongs to the module you are in** (DESIGN.md 2.3). A module fills it by contributing
+  a `sidebar.widget` slot, which the shell renders under the nav groups — that is how chat puts its
+  conversations there instead of adding a third column. Slots are the only way a module reaches into
+  a part of the shell it does not own.
+- A module whose state is shared between the sidebar and the content area holds it in one place keyed
+  by workspace (`modules/chat/store.svelte.ts`), never a module-level singleton: a transcript must not
+  survive into another workspace.
 - Query keys are `[module, entity, …scope]` so a realtime `change` event invalidates precisely what it
   touched. Keep new queries in that shape.
 - Every user-facing string goes through Paraglide (`messages/*.json`), and the layout must survive
