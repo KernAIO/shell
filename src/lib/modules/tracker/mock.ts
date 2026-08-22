@@ -1247,6 +1247,46 @@ export function createMockTrackerApi() {
       },
     },
 
+    intake: {
+      // A single well-known token, so the demo form has a link that works.
+      form: async ({ token }: { token: string }) => {
+        if (token !== 'demo-intake-token') throw new Error('[mock] unknown intake token')
+        const project = projects[0] as Project
+        return clone({
+          projectId: project.id,
+          projectName: project.name,
+          token,
+          title: `Contact ${project.name}`,
+          description: 'Tell us what went wrong and we will pick it up.',
+          fields: [
+            { key: 'name', label: 'Your name', type: 'text' as const, required: false },
+            { key: 'email', label: 'Email', type: 'email' as const, required: true },
+            { key: 'title', label: 'Summary', type: 'text' as const, required: true },
+            { key: 'description', label: 'Details', type: 'textarea' as const, required: false },
+            {
+              key: 'cf.severity',
+              label: 'Severity',
+              description: 'How badly this hurts in production',
+              type: 'select' as const,
+              required: false,
+              options: fields
+                .find((f) => f.key === 'severity')!
+                .options.map((o) => ({ value: o.id, label: o.label })),
+            },
+          ],
+          allowAttachments: false,
+        })
+      },
+      submit: async (input: { token: string; title: string; website?: string }) => {
+        if (input.website) throw new Error('[mock] rejected')
+        if (input.token !== 'demo-intake-token') throw new Error('[mock] unknown intake token')
+        const project = projects[0] as Project
+        const number = (state.counters.get(project.id) ?? 0) + 1
+        state.counters.set(project.id, number)
+        return { ok: true as const, issueKey: `${project.key}-${number}` }
+      },
+    },
+
     reports: {
       burndown: async ({ cycleId }: Ws & { cycleId: string }) => {
         const cycle = cycles.find((c) => c.id === cycleId) ?? cycles[0]

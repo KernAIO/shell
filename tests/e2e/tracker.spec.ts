@@ -453,3 +453,35 @@ test('reports answer how the work is going', async ({ page }) => {
   // the numbers are given as a table too, for anyone the picture does not reach
   await expect(page.getByRole('table', { name: /Created and resolved/ })).toBeAttached()
 })
+
+test('a stranger can send a request, with no account and no navigation', async ({ page }) => {
+  // Public: outside the app, no session, no workspace. The token is the only thing identifying
+  // the project, which is what makes the link shareable and withdrawing it enough to close the form.
+  await page.goto('/request/demo-intake-token')
+  await expect(page.getByRole('heading', { name: /Contact/ })).toBeVisible()
+
+  // there is nothing to sign in to and nowhere else to go
+  await expect(page.getByRole('navigation')).toHaveCount(0)
+
+  // the questions come from the project's layout, not from a hardcoded list
+  await expect(page.getByText('Severity')).toBeVisible()
+
+  // required questions gate the send
+  const send = page.getByTestId('intake-submit')
+  await expect(send).toBeDisabled()
+  await page.getByTestId('intake-email').fill('someone@example.test')
+  await page.getByTestId('intake-title').fill('The export is broken')
+  await expect(send).toBeEnabled()
+
+  await send.click()
+  // and it comes back with something to quote, rather than just disappearing
+  const done = page.getByTestId('intake-done')
+  await expect(done).toBeVisible()
+  await expect(done).toContainText(/KRN-\d+/)
+})
+
+test('a bad intake link says so rather than asking anyone to sign in', async ({ page }) => {
+  await page.goto('/request/not-a-real-token')
+  await expect(page.getByText('This form is not available')).toBeVisible()
+  await expect(page).not.toHaveURL(/login|signin/)
+})
