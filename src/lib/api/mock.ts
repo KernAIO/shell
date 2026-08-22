@@ -131,7 +131,7 @@ const notifications: MockNotification[] = [
     title: 'Dan mentioned you in #platform',
     body: 'can you take a look at the migration plan before standup?',
     object: { module: 'chat', type: 'channel', id: id(30) },
-    url: '/chat/' + id(30),
+    url: `/chat/${id(30)}`,
     actor: { id: people[1]!.id, name: people[1]!.name, avatarUrl: null },
     data: {},
     groupKey: id(30),
@@ -249,7 +249,10 @@ export function createMockApi() {
   }
   const enabledFor = (workspaceId: string) => {
     let set = state.enabled.get(workspaceId)
-    if (!set) state.enabled.set(workspaceId, (set = new Set(['core', 'chat', 'tracker'])))
+    if (!set) {
+      set = new Set(['core', 'chat', 'tracker'])
+      state.enabled.set(workspaceId, set)
+    }
     return set
   }
   const summary = (w: (typeof workspaces)[number]) => {
@@ -581,7 +584,7 @@ export function createMockApi() {
           object: { module: 'chat', type: 'channel', id: id(30) },
           title: '#platform',
           snippet: 'Team channel',
-          url: '/chat/' + id(30),
+          url: `/chat/${id(30)}`,
           icon: 'message-square',
           score: 0.6,
           updatedAt: iso(11 * 60_000),

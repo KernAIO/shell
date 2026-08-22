@@ -17,13 +17,19 @@ const providers = socialProviders()
 
 async function submit(e: SubmitEvent) {
   e.preventDefault()
-  if (password !== confirm) return void (error = m.auth_password_mismatch())
+  if (password !== confirm) {
+    error = m.auth_password_mismatch()
+    return
+  }
   if (authDisabled()) return void goto(next)
   busy = true
   error = null
   const res = await auth.signUp.email({ name, email, password })
   busy = false
-  if (res.error) return void (error = res.error.message ?? m.error_generic())
+  if (res.error) {
+    error = res.error.message ?? m.error_generic()
+    return
+  }
   await goto(next)
 }
 </script>

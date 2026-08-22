@@ -66,7 +66,8 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: ({ url }) => url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com',
+            urlPattern: ({ url }) =>
+              url.origin === 'https://fonts.googleapis.com' || url.origin === 'https://fonts.gstatic.com',
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'kern-fonts',

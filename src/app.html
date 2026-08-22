@@ -19,11 +19,15 @@
     <link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
     <script>
       // apply the persisted theme before first paint to avoid a flash
+      var storedTheme = null
+      var prefersDark = false
       try {
-        var t = localStorage.getItem('kern.theme')
-        var dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
-        if (dark) document.documentElement.dataset.theme = 'dark'
+        storedTheme = localStorage.getItem('kern.theme')
+        prefersDark = matchMedia('(prefers-color-scheme: dark)').matches
       } catch (_) {}
+      if (storedTheme === 'dark' || (storedTheme !== 'light' && prefersDark)) {
+        document.documentElement.dataset.theme = 'dark'
+      }
     </script>
     %sveltekit.head%
   </head>

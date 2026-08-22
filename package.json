@@ -5,7 +5,9 @@
   "description": "Kern web app — SvelteKit PWA shell hosting every module's client",
   "license": "AGPL-3.0-only",
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "vite dev --port 5173",
     "dev:mock": "PUBLIC_API_MOCK=1 vite dev --port 5173",

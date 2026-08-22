@@ -32,11 +32,17 @@ async function signIn(e: SubmitEvent) {
 }
 
 async function sendMagicLink() {
-  if (!email) return void (error = m.auth_invalid_credentials())
+  if (!email) {
+    error = m.auth_invalid_credentials()
+    return
+  }
   busy = true
   const res = await auth.signIn.magicLink({ email, callbackURL: next })
   busy = false
-  if (res.error) return void (error = res.error.message ?? m.error_generic())
+  if (res.error) {
+    error = res.error.message ?? m.error_generic()
+    return
+  }
   magicSent = true
   toast.success(m.auth_magic_link_sent({ email }))
 }
