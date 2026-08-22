@@ -229,9 +229,9 @@ const notifications: MockNotification[] = [
 ]
 
 const members = [
-  { userId: people[0]!.id, role: 'owner' as const, title: 'Founder' },
-  { userId: people[1]!.id, role: 'admin' as const, title: 'Engineering lead' },
-  { userId: people[2]!.id, role: 'member' as const, title: 'Design' },
+  { userId: people[0]!.id, role: 'owner', title: 'Founder' as string | null, status: 'active' },
+  { userId: people[1]!.id, role: 'admin', title: 'Engineering lead' as string | null, status: 'active' },
+  { userId: people[2]!.id, role: 'member', title: 'Design' as string | null, status: 'active' },
 ]
 
 const moduleManifests = [
@@ -463,19 +463,42 @@ export function createMockApi() {
               id: id(200 + i),
               workspaceId,
               userId: m.userId,
-              role: m.role,
+              role: m.role as 'owner' | 'admin' | 'member' | 'guest',
               roleIds: [],
               groupIds: [],
               title: m.title,
-              status: 'active' as const,
+              status: m.status as 'active' | 'invited' | 'suspended',
               joinedAt: iso((30 - i * 8) * 864e5),
               user: { id: p.id, name: p.name, email: p.email, username: p.username, avatarUrl: null },
             }
           }),
           nextCursor: null,
         }),
-        update: notImplemented('workspaces.members.update'),
-        remove: async () => ({ ok: true as const }),
+        update: async ({
+          workspaceId,
+          userId,
+          patch,
+        }: { workspaceId: string; userId: string; patch: Record<string, unknown> }) => {
+          const member = state.members.find((mem) => mem.userId === userId)
+          if (member) Object.assign(member, patch)
+          const p = people.find((x) => x.id === userId) ?? people[0]!
+          return {
+            id: id(200),
+            workspaceId,
+            userId,
+            role: (member?.role ?? 'member') as 'owner' | 'admin' | 'member' | 'guest',
+            roleIds: [],
+            groupIds: [],
+            title: member?.title ?? null,
+            status: (member?.status ?? 'active') as 'active' | 'invited' | 'suspended',
+            joinedAt: iso(30 * 864e5),
+            user: { id: p.id, name: p.name, email: p.email, username: p.username, avatarUrl: null },
+          }
+        },
+        remove: async ({ userId }: { userId: string }) => {
+          state.members = state.members.filter((mem) => mem.userId !== userId)
+          return { ok: true as const }
+        },
         leave: async () => ({ ok: true as const }),
       },
 
