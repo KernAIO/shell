@@ -13,19 +13,38 @@ import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
-const registryPath = join(root, 'node_modules/@kernhq/ui/src/lib/icons/registry.ts')
 
-let registrySource
-try {
-  registrySource = readFileSync(registryPath, 'utf8')
-} catch {
-  console.error(`Cannot read the icon registry at ${registryPath}. Is @kernhq/ui installed?`)
+/**
+ * Where the names live depends on how `@kernhq/ui` is installed.
+ *
+ * The package publishes `dist` only, so CI reads the compiled registry; the umbrella workspace
+ * links the source, and a freshly cloned checkout may not have built it yet. Importing the module
+ * instead is not an option: it pulls in Svelte components, which plain node cannot load.
+ */
+const CANDIDATES = [
+  'node_modules/@kernhq/ui/dist/icons/registry.js',
+  'node_modules/@kernhq/ui/src/lib/icons/registry.ts',
+]
+
+let registrySource = null
+let registryPath = null
+for (const candidate of CANDIDATES) {
+  try {
+    registrySource = readFileSync(join(root, candidate), 'utf8')
+    registryPath = candidate
+    break
+  } catch {
+    // try the next one
+  }
+}
+if (!registrySource) {
+  console.error(`Cannot find the icon registry. Looked in:\n  ${CANDIDATES.join('\n  ')}`)
   process.exit(1)
 }
 
-const known = new Set([...registrySource.matchAll(/^\s{2}'?([a-z0-9-]+)'?:/gm)].map((match) => match[1]))
+const known = new Set([...registrySource.matchAll(/^\s+'?([a-z0-9-]+)'?:\s/gm)].map((match) => match[1]))
 if (known.size < 20) {
-  console.error(`Only ${known.size} icons found in the registry — the format has probably changed.`)
+  console.error(`Only ${known.size} icons found in ${registryPath} — its format has changed.`)
   process.exit(1)
 }
 
