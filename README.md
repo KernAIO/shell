@@ -1,51 +1,80 @@
-# Kern web app
+# app
 
-The SvelteKit PWA that every Kern module renders into. Part of [Kern](https://github.com/KernAIO/kern).
+**Every screen people actually use.**
 
-## Running it
+The web application for [Kern](https://github.com/KernAIO/kern). It installs like an app, works in
+four languages including right-to-left ones, and follows the system's light or dark setting.
 
-```bash
-pnpm dev:mock   # http://localhost:5173 against an in-memory API — no backend needed
-pnpm dev        # against the real services (core on :4000, chat on :4100, collab on :4300)
-```
+Each Kern module contributes its own screens, navigation and command-palette actions here. The shell
+composes whatever a workspace has switched on and knows nothing about any particular feature.
 
-`dev` proxies `/api`, `/ws` and `/collab` to the services, so session cookies work same-origin exactly
-as they do behind Caddy in production. `dev:mock` swaps in a fake API with demo data
-(`src/lib/api/mock.ts`): the whole interface — workspaces, inbox, members, modules — is browsable and
-testable without Postgres, and the end-to-end tests run against it.
+## Run it
 
-## How it is put together
+Goal: open Kern's interface on your own machine.
 
-| | |
-|---|---|
-| `src/lib/api` | the API client, and the mock that stands in for it |
-| `src/lib/auth` | Better Auth client and the providers this instance offers |
-| `src/lib/state` | session, theme — small runes classes shared through the tree |
-| `src/lib/realtime.svelte.ts` | the WebSocket bridge: server events invalidate exactly the queries they touch |
-| `src/lib/modules` | the client-side module registry that feeds navigation, the palette and slots |
-| `src/routes/(auth)` | sign-in, sign-up, magic link, password reset, invitations |
-| `src/routes/(app)/[ws]` | the workspace shell: rail, sidebar, home, inbox, settings |
+You need:
 
-Data flows through TanStack Query with keys shaped `[module, entity, …scope]`. The realtime gateway
-sends `{module, entity, id}` when something changes, so a single event invalidates just the affected
-queries rather than forcing a refetch of everything.
+- Node 24 and pnpm 10.
 
-Modules are composed at build time and switched on per workspace at runtime: `workspaces.modules.list`
-decides what appears in the rail, so an instance can ship every module while a workspace only sees the
-ones it uses.
+### Run it against demo data
 
-## Design
-
-The interface follows [`DESIGN.md`](./DESIGN.md) — the "Ink / paper" system implemented in
-`@kernhq/ui`. Light and dark are both first-class, as are right-to-left languages: layout uses
-logical properties throughout, and Persian and Arabic ship with the app.
-
-## Checks
+This is the fastest way to see the whole interface. It needs no database, no services and no setup.
 
 ```bash
-pnpm typecheck   # svelte-check
-pnpm lint
-pnpm test        # unit
-pnpm test:e2e    # Playwright, against mock mode
-pnpm build       # adapter-node → `node build`
+pnpm install
+pnpm dev:mock
 ```
+
+**Expected result:** the app is at http://localhost:5173, already signed in, with a workspace full of
+issues and conversations.
+
+### Run it against real services
+
+If you want the app talking to a real backend, start everything from the
+[umbrella repository](https://github.com/KernAIO/kern):
+
+```bash
+pnpm setup
+pnpm infra
+pnpm dev
+```
+
+**Expected result:** the app is at http://localhost:5173 and calls core on port 4000.
+
+## Test it
+
+```bash
+pnpm test       # unit tests
+pnpm test:e2e   # the interface, driven in a real browser against demo data
+```
+
+**Expected result:** both report all tests passed.
+
+## Things worth knowing
+
+- **`DESIGN.md` is the authority.** It is taken from the product's own design file: exact colours,
+  sizes and the anatomy of every view. Match it rather than inventing.
+- **Use the design tokens that exist.** They are listed in `@kernhq/ui`. A token nobody defined
+  resolves to nothing, and the result looks almost right, which is worse than looking broken.
+- **The sidebar belongs to whichever module you are in.** A module fills it by contributing a
+  `sidebar.widget` slot — that is how chat puts conversations there.
+- **Every string goes through the message catalogue** in `messages/`. No English is written into a
+  component.
+- **The layout must survive `dir="rtl"`.** Use logical CSS properties. Never `left` or `right`.
+
+### If a change does not appear
+
+**Problem:** you edited a component, and the browser still shows the old one.
+
+**Cause:** a second dev server is running and serving stale code.
+
+**Solution:**
+
+1. Run `lsof -ti:5173`.
+2. If it prints more than one process id, stop all of them.
+3. Run `pnpm dev:mock` again.
+
+## Contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md), [DESIGN.md](DESIGN.md) and [CLAUDE.md](CLAUDE.md).
+Licence: [AGPL-3.0](LICENSE).
