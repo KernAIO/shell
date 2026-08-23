@@ -258,6 +258,7 @@
   "inbox_mark_unread_only_read": "Mark as read",
   "inbox_marked_read": "{count} marked read",
   "inbox_open_object": "Open",
+  "inbox_scope": "Showing",
   "inbox_select_hint": "Select a notification to read it",
   "inbox_tab_all": "All",
   "inbox_tab_unread": "Unread",

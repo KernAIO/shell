@@ -91,6 +91,28 @@ const enabledModules = $derived(
 const moduleNav = $derived(navigationFor({ enabled: enabledModules, can: (p) => session.can(p) }))
 
 /**
+ * Which section the rail is on, so the sidebar can show that section's own navigation.
+ *
+ * Derived from the path rather than held as state: the rail, the palette, a link and the back
+ * button all arrive the same way, and none of them has to tell the sidebar anything.
+ */
+const section = $derived.by(() => {
+  const rest = page.url.pathname.slice(wsHref().length)
+  if (rest === '' || rest === '/') return 'home'
+  if (rest.startsWith('/inbox')) return 'inbox'
+  return 'module'
+})
+const inboxFilter = $derived(page.url.searchParams.get('filter'))
+const inboxScope = $derived(page.url.searchParams.get('scope'))
+
+/** What "my work" means, in the tracker's own presets, so these are real queries and not labels. */
+const MY_WORK = [
+  { preset: 'assigned', icon: 'circle-user', label: () => m.tracker_preset_assigned() },
+  { preset: 'created', icon: 'square-pen', label: () => m.tracker_preset_created() },
+  { preset: 'subscribed', icon: 'eye', label: () => m.tracker_preset_subscribed() },
+] as const
+
+/**
  * What the active module puts in the sidebar.
  *
  * The sidebar belongs to whichever module you are in: the tracker leaves it as navigation, chat
@@ -241,33 +263,66 @@ const userMenu: MenuItem[] = $derived([
           {/if}
         {/snippet}
 
-        <SidebarGroup title={m.nav_workspace()}>
-          <SidebarItem
-            label={m.nav_home()}
-            icon="home"
-            href={wsHref()}
-            active={page.url.pathname === wsHref()}
-          />
-          <SidebarItem
-            label={m.nav_inbox()}
-            icon="inbox"
-            href={wsHref('/inbox')}
-            active={isActive(wsHref('/inbox'))}
-            badge={badgeFor(workspace.id) || null}
-            glow={badgeFor(workspace.id) > 0}
-          />
-        </SidebarGroup>
+        <!--
+          DESIGN.md 2.2/2.3: the rail switches sections, the sidebar holds the section you are in.
+          These two columns used to say the same thing — My work, Inbox, Issues and Chat appeared as
+          icons in the rail and again as rows here, on every section, so the sidebar spent its width
+          repeating the switcher instead of showing what you had switched to.
 
-        {#if moduleNav.length}
-          <SidebarGroup title={m.nav_modules()}>
-            {#each moduleNav as item (item.id)}
+          Every section fills it with its own: the modules through `sidebar.widget`, and the two the
+          shell owns below. They read the query string rather than a page's state, which is why the
+          shell can drive a page it does not own — and why a filtered inbox can be linked to.
+        -->
+        {#if section === 'home'}
+          <SidebarGroup title={m.nav_home()}>
+            <SidebarItem
+              label={m.nav_inbox()}
+              icon="inbox"
+              href={wsHref('/inbox')}
+              badge={badgeFor(workspace.id) || null}
+              glow={badgeFor(workspace.id) > 0}
+            />
+            {#each MY_WORK as item (item.preset)}
               <SidebarItem
-                label={item.label}
+                label={item.label()}
                 icon={item.icon}
-                href={wsHref(item.href)}
-                active={isActive(wsHref(item.href))}
+                href={wsHref(`/tracker?preset=${item.preset}`)}
+                active={page.url.searchParams.get('preset') === item.preset}
               />
             {/each}
+          </SidebarGroup>
+        {/if}
+
+        {#if section === 'inbox'}
+          <SidebarGroup title={m.nav_inbox()}>
+            <SidebarItem
+              label={m.inbox_tab_unread()}
+              icon="inbox"
+              href={wsHref('/inbox')}
+              active={inboxFilter !== 'all'}
+              badge={badgeFor(workspace.id) || null}
+              glow={badgeFor(workspace.id) > 0}
+            />
+            <SidebarItem
+              label={m.inbox_tab_all()}
+              icon="list"
+              href={wsHref('/inbox?filter=all')}
+              active={inboxFilter === 'all'}
+            />
+          </SidebarGroup>
+          <SidebarGroup title={m.inbox_scope()}>
+            <SidebarItem
+              label={workspace.name}
+              icon="building"
+              href={wsHref(inboxFilter === 'all' ? '/inbox?filter=all' : '/inbox')}
+              active={inboxScope !== 'all'}
+            />
+            <SidebarItem
+              label={m.inbox_all_workspaces()}
+              icon="globe"
+              href={wsHref(`/inbox?scope=all${inboxFilter === 'all' ? '&filter=all' : ''}`)}
+              active={inboxScope === 'all'}
+            />
           </SidebarGroup>
         {/if}
 

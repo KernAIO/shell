@@ -258,6 +258,7 @@
   "inbox_mark_unread_only_read": "علامت‌گذاری به‌عنوان خوانده‌شده",
   "inbox_marked_read": "{count} مورد خوانده شد",
   "inbox_open_object": "باز کردن",
+  "inbox_scope": "نمایش از",
   "inbox_select_hint": "برای خواندن، یک اعلان را انتخاب کنید",
   "inbox_tab_all": "همه",
   "inbox_tab_unread": "خوانده‌نشده",

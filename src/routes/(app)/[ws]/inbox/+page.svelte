@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Avatar, Badge, Button, EmptyState, Page, PageHeader, Skeleton, Tabs, toast } from '@kernhq/ui'
+import { Avatar, Badge, Button, EmptyState, Page, PageHeader, Skeleton, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
@@ -18,8 +18,15 @@ const queryClient = useQueryClient()
 const slug = $derived(page.params.ws!)
 const workspace = $derived(session.workspaces.find((w) => w.slug === slug))
 
-let tab = $state<'unread' | 'all'>('unread')
-let scope = $state<'workspace' | 'all'>('workspace')
+/**
+ * Which notifications are showing lives in the URL, not in this component.
+ *
+ * The sidebar holds the inbox's own navigation now — the shell cannot reach into a page's state,
+ * and it does not have to: both read the same query string. It also means a filtered inbox can be
+ * linked to and survives a reload, the same rule the issue list and the conversation follow.
+ */
+const tab = $derived(page.url.searchParams.get('filter') === 'all' ? 'all' : 'unread')
+const scope = $derived(page.url.searchParams.get('scope') === 'all' ? 'all' : 'workspace')
 let selectedId = $state<string | null>(null)
 
 const scopeWorkspaceId = $derived(scope === 'workspace' ? workspace?.id : undefined)
@@ -79,9 +86,6 @@ const workspaceName = (id: string | null) => session.workspaces.find((w) => w.id
 <Page>
   <PageHeader title={m.inbox_title()} subtitle={scope === 'all' ? m.inbox_all_workspaces() : workspace?.name}>
     {#snippet actions()}
-      <Button variant="ghost" onclick={() => (scope = scope === 'all' ? 'workspace' : 'all')}>
-        {scope === 'all' ? (workspace?.name ?? '') : m.inbox_all_workspaces()}
-      </Button>
       <Button variant="secondary" size="sm" onclick={() => markAll.mutate()} loading={markAll.isPending}>
         {m.mark_all_read()}
       </Button>
@@ -90,17 +94,6 @@ const workspaceName = (id: string | null) => session.workspaces.find((w) => w.id
 
   <div class="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[380px_minmax(0,1fr)]">
     <section class="flex min-h-0 flex-col border-e border-[var(--kern-border)]">
-      <div class="border-b border-[var(--kern-border)] px-3 py-2">
-        <Tabs
-          items={[
-            { value: 'unread', label: m.inbox_tab_unread() },
-            { value: 'all', label: m.inbox_tab_all() },
-          ]}
-          value={tab}
-          onValueChange={(v) => (tab = v as 'unread' | 'all')}
-        />
-      </div>
-
       <div class="min-h-0 flex-1 overflow-y-auto">
         {#if notifications.isPending}
           <div class="grid gap-2 p-3">
