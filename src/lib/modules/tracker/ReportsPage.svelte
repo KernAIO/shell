@@ -6,9 +6,9 @@ import { page } from '$app/state'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 import { getTrackerApi } from './api'
-import BarChart from './charts/BarChart.svelte'
-import LineChart from './charts/LineChart.svelte'
-import StackedAreaChart from './charts/StackedAreaChart.svelte'
+import BarChart from '$lib/charts/BarChart.svelte'
+import LineChart from '$lib/charts/LineChart.svelte'
+import StackedAreaChart from '$lib/charts/StackedAreaChart.svelte'
 import { trackerKeys } from './query'
 
 /**
