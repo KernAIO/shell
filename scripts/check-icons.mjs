@@ -51,6 +51,15 @@ if (known.size < 20) {
 /** `icon="x"` and `icon: 'x'` are the two ways a name reaches `<Icon>`; `name=` is too generic. */
 const USES = [/icon="([a-z0-9-]+)"/g, /icon:\s*'([a-z0-9-]+)'/g, /<Icon\s+name="([a-z0-9-]+)"/g]
 
+/**
+ * A list of names offered as a choice — `const ICONS = ['bug', 'flag', …]` — reaches `<Icon>` too,
+ * through a variable, so none of the patterns above see it. A picker built from such a list is
+ * exactly where an unregistered name hides: it renders as one blank square among eleven good ones.
+ * Any const whose name ends in ICONS is read as a list of icon names.
+ */
+const ICON_LISTS = /const\s+\w*ICONS\b[^=]*=\s*\[([^\]]*)\]/g
+const QUOTED = /'([a-z0-9-]+)'/g
+
 async function* files(dir) {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     if (entry.name === 'node_modules' || entry.name.startsWith('.')) continue
@@ -65,6 +74,9 @@ for await (const file of files(join(root, 'src'))) {
   const source = readFileSync(file, 'utf8')
   for (const pattern of USES)
     for (const [, name] of source.matchAll(pattern))
+      if (!known.has(name)) problems.push(`${file.slice(root.length + 1)}: ${name}`)
+  for (const [, body] of source.matchAll(ICON_LISTS))
+    for (const [, name] of body.matchAll(QUOTED))
       if (!known.has(name)) problems.push(`${file.slice(root.length + 1)}: ${name}`)
 }
 

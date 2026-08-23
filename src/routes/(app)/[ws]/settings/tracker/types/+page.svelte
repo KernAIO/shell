@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { FieldLayoutItem, WorkItemType } from '@kernhq/module-tracker/client'
-import { Badge, Button, Icon, Select, Spinner, toast } from '@kernhq/ui'
+import { Badge, Button, Checkbox, Icon, Spinner, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
@@ -9,6 +9,7 @@ import { getTrackerApi } from '$lib/modules/tracker/api'
 import { canTracker } from '$lib/modules/tracker/permissions'
 import { trackerKeys } from '$lib/modules/tracker/query'
 import LayoutEditor from '$lib/modules/tracker/settings/LayoutEditor.svelte'
+import TypeEditor from '$lib/modules/tracker/settings/TypeEditor.svelte'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 
@@ -17,6 +18,10 @@ import * as m from '$msg'
  *
  * This is where the layout that `types.layout` resolves is actually written. Everything else in the
  * tracker reads it: the issue panel, the create dialog, and the cards.
+ *
+ * A workspace can also add its own types here. Until it could, the per-type customisation this page
+ * exists for only reached the four types a template happened to seed — a support desk could arrange
+ * "Bug" but never have an "Incident".
  */
 const api = getTrackerApi()
 const queryClient = useQueryClient()
@@ -28,10 +33,14 @@ const canManage = $derived(canTracker('typeManage'))
 let selectedId = $state<string | null>(null)
 /** The arrangement in progress. `null` means "unchanged", which is what disables Save. */
 let draft = $state<FieldLayoutItem[] | null>(null)
+/** The type being created or edited: `undefined` is closed, `null` is a new one. */
+let editorFor = $state<WorkItemType | null | undefined>(undefined)
+let archivingId = $state<string | null>(null)
+let showArchived = $state(false)
 
 const typesQuery = createQuery(() => ({
-  queryKey: trackerKeys.types(workspaceId),
-  queryFn: () => api.types.list({ workspaceId, includeArchived: false }),
+  queryKey: [...trackerKeys.types(workspaceId), showArchived],
+  queryFn: () => api.types.list({ workspaceId, includeArchived: showArchived }),
   enabled: Boolean(workspaceId),
 }))
 const types = $derived(typesQuery.data ?? [])
@@ -59,6 +68,36 @@ const save = createMutation(() => ({
   onError: (error: Error) => toast.error(error.message),
 }))
 
+const refreshTypes = () => queryClient.invalidateQueries({ queryKey: ['tracker', 'type', workspaceId] })
+
+const saveType = createMutation(() => ({
+  mutationFn: (input: Record<string, unknown>) =>
+    editorFor
+      ? api.types.update({ workspaceId, id: editorFor.id, patch: input })
+      : api.types.create({ workspaceId, ...input } as never),
+  onSuccess: (saved: WorkItemType) => {
+    editorFor = undefined
+    selectedId = saved.id
+    draft = null
+    void refreshTypes()
+    toast.success(m.tracker_type_saved())
+  },
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+/**
+ * Archived, never deleted. Issues keep pointing at their type, so removing one would leave work
+ * with no answer to "what is this" — archiving takes it off every menu and leaves the past intact.
+ */
+const archiveType = createMutation(() => ({
+  mutationFn: (input: { id: string; archived: boolean }) => api.types.archive({ workspaceId, ...input }),
+  onSuccess: () => {
+    archivingId = null
+    void refreshTypes()
+  },
+  onError: (error: Error) => toast.error(error.message),
+}))
+
 /** Switching type abandons an unsaved arrangement rather than carrying it onto another type. */
 const select = (type: WorkItemType) => {
   selectedId = type.id
@@ -80,11 +119,10 @@ const select = (type: WorkItemType) => {
     <SettingsSection flush>
       <ul class="types" data-testid="type-list">
         {#each types as type (type.id)}
-          <li>
+          <li class:archived={type.archivedAt} class:on={selected?.id === type.id}>
             <button
               type="button"
               class="trow"
-              class:on={selected?.id === type.id}
               onclick={() => select(type)}
               data-testid="type-row"
               data-type-key={type.key}
@@ -93,11 +131,66 @@ const select = (type: WorkItemType) => {
               <span class="tname">{type.name}</span>
               <span class="tkey">{type.key}</span>
               {#if type.isDefault}<Badge>{m.tracker_type_default()}</Badge>{/if}
+              {#if type.archivedAt}<Badge tone="grey">{m.tracker_type_archived()}</Badge>{/if}
               {#if type.fieldLayout.length}<Badge tone="info">{m.tracker_type_customised()}</Badge>{/if}
             </button>
+            {#if canManage}
+              <div class="tactions">
+                <Button size="sm" variant="ghost" onclick={() => (editorFor = type)} data-testid="type-edit">
+                  {m.edit()}
+                </Button>
+                {#if type.archivedAt}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onclick={() => archiveType.mutate({ id: type.id, archived: false })}
+                  >
+                    {m.tracker_type_restore()}
+                  </Button>
+                {:else}
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    disabled={type.isDefault}
+                    onclick={() => (archivingId = type.id)}
+                    data-testid="type-archive"
+                  >
+                    {m.archive()}
+                  </Button>
+                {/if}
+              </div>
+            {/if}
           </li>
+          {#if archivingId === type.id}
+            <li class="confirm">
+              <div role="alertdialog" aria-label={m.tracker_type_archive_body({ name: type.name })}>
+                <span>{m.tracker_type_archive_body({ name: type.name })}</span>
+                <Button
+                  size="sm"
+                  onclick={() => archiveType.mutate({ id: type.id, archived: true })}
+                  data-testid="type-archive-confirm"
+                >
+                  {m.archive()}
+                </Button>
+                <Button size="sm" variant="ghost" onclick={() => (archivingId = null)}>
+                  {m.cancel()}
+                </Button>
+              </div>
+            </li>
+          {/if}
         {/each}
       </ul>
+
+      {#snippet footer()}
+        <Checkbox
+          checked={showArchived}
+          label={m.tracker_type_show_archived()}
+          onCheckedChange={(on: boolean) => (showArchived = on)}
+        />
+        <Button size="sm" disabled={!canManage} onclick={() => (editorFor = null)} data-testid="type-new">
+          {m.tracker_type_new()}
+        </Button>
+      {/snippet}
     </SettingsSection>
 
     {#if selected}
@@ -134,6 +227,14 @@ const select = (type: WorkItemType) => {
   {/if}
 </SettingsPage>
 
+<TypeEditor
+  open={editorFor !== undefined}
+  type={editorFor ?? null}
+  busy={saveType.isPending}
+  onclose={() => (editorFor = undefined)}
+  onsave={(input) => saveType.mutate(input)}
+/>
+
 <style>
 .state {
   display: grid;
@@ -148,7 +249,26 @@ const select = (type: WorkItemType) => {
   padding: 0;
 }
 .types li {
+  display: flex;
+  align-items: center;
   border-bottom: 1px solid var(--kern-border-hairline);
+}
+.types li.archived .tname {
+  color: var(--kern-ink-400);
+}
+.tactions {
+  display: flex;
+  gap: 2px;
+  padding-inline-end: 12px;
+}
+.confirm {
+  padding: 8px 18px;
+  font-size: 12.5px;
+}
+.confirm div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 .types li:last-child {
   border-bottom: 0;
@@ -169,7 +289,7 @@ const select = (type: WorkItemType) => {
 .trow:hover {
   background: var(--kern-surface-hover);
 }
-.trow.on {
+.types li.on {
   background: var(--kern-surface-active);
 }
 .tname {

@@ -409,6 +409,38 @@ test('a project can be given components, versions and labels', async ({ page }) 
   await expect(components.locator('[data-item="Realtime gateway"]')).toHaveCount(0)
 })
 
+test('a workspace can add a work item type of its own, and retire one', async ({ page }) => {
+  // The per-type customisation this page exists for could only ever reach the types a template
+  // seeded: `types.create` and `types.archive` had a server and no control anywhere.
+  await page.goto('/northstar/settings/tracker/types')
+  await page.getByTestId('type-new').click()
+
+  // the key follows the name until it is touched, because it is a machine name and not a sentence
+  await page.getByTestId('type-name').fill('Incident')
+  await expect(page.getByTestId('type-key')).toHaveValue('incident')
+  await page.getByTestId('type-save').click()
+
+  const incident = page.locator('[data-testid="type-row"][data-type-key="incident"]')
+  await expect(incident).toBeVisible()
+
+  // archiving says what it does — the type leaves the menus, the work keeps it
+  const row = page.locator('li').filter({ has: incident })
+  await row.getByTestId('type-archive').click()
+  await expect(page.getByText(/comes off every menu/)).toBeVisible()
+  await page.getByTestId('type-archive-confirm').click()
+  await expect(incident).toHaveCount(0)
+
+  // and it is still there to be found, rather than gone
+  await page.getByLabel('Show archived').check()
+  await expect(incident).toBeVisible()
+
+  // the default type is the one thing that cannot be archived: something has to catch new work
+  const task = page.locator('li').filter({
+    has: page.locator('[data-testid="type-row"][data-type-key="task"]'),
+  })
+  await expect(task.getByTestId('type-archive')).toBeDisabled()
+})
+
 test('a cycle runs, and closing it says where unfinished work goes', async ({ page }) => {
   // Cycles had a full server — create, start, complete, roll over — and no screen anywhere, so the
   // sprint progress bar in the issue header had nothing to measure.

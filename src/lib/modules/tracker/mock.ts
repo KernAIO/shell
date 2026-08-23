@@ -1083,13 +1083,34 @@ export function createMockTrackerApi() {
     },
 
     types: {
-      list: async (_input: Ws) => clone(types),
+      list: async ({ includeArchived }: Ws & { includeArchived?: boolean }) =>
+        clone(types.filter((t) => includeArchived || !t.archivedAt)),
       layout: async ({ id, projectId }: Ws & { id: string; projectId?: string | null }) =>
         clone(resolveMockLayout(id, projectId ?? null)),
+      create: async ({ key, name, ...rest }: Ws & { key: string; name: string } & Partial<WorkItemType>) => {
+        if (types.some((t) => t.key === key)) throw new Error(`[mock] type ${key} already exists`)
+        const type: WorkItemType = {
+          ...workItemType(724 + types.length, key, name, 'square-check-big', 0),
+          ...rest,
+        }
+        // Only one type is the default, here as on the server.
+        if (type.isDefault) for (const other of types) other.isDefault = false
+        types.push(type)
+        return clone(type)
+      },
       update: async ({ id, patch }: Ws & { id: string; patch: Partial<WorkItemType> }) => {
         const type = types.find((t) => t.id === id)
         if (!type) throw new Error(`[mock] unknown type ${id}`)
+        if (patch.isDefault) for (const other of types) other.isDefault = false
         Object.assign(type, patch, { updatedAt: new Date().toISOString() })
+        return clone(type)
+      },
+      archive: async ({ id, archived }: Ws & { id: string; archived?: boolean }) => {
+        const type = types.find((t) => t.id === id)
+        if (!type) throw new Error(`[mock] unknown type ${id}`)
+        if (type.isDefault && archived !== false)
+          throw new Error('[mock] the default type cannot be archived')
+        type.archivedAt = archived === false ? null : new Date().toISOString()
         return clone(type)
       },
     },
