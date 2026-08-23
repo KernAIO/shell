@@ -374,14 +374,22 @@ export const trackerClientModule = defineClientModule({
     },
   ],
 
-  slots: [
+  sidebar: [
     {
-      slot: 'sidebar.widget',
-      id: 'tracker.sidebar',
-      order: 10,
+      id: 'tracker',
+      match: ['tracker'],
+      permission: TRACKER_PERMISSIONS.view,
+      controls: () => import('./components/TrackerControls.svelte'),
       component: () => import('./components/TrackerSidebar.svelte'),
-      // only while you are in the tracker: the sidebar belongs to the module you are looking at
-      when: (ctx) => ((ctx as { pathname?: string }).pathname ?? '').includes('/tracker'),
+    },
+    {
+      // The three "my work" rows used to live in the application layout, where a workspace with the
+      // tracker switched off still saw them.
+      id: 'tracker.home',
+      match: [''],
+      order: 20,
+      permission: TRACKER_PERMISSIONS.view,
+      component: () => import('./components/HomeLinks.svelte'),
     },
   ],
 

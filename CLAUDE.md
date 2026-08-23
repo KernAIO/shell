@@ -266,3 +266,13 @@ in-memory API with demo data — no backend, no database.
   hydration, and the page reports nothing: a blocked inline script is silent unless you are watching
   the console. `frame-ancestors` is not in `svelte.config.js` on purpose — it is ignored in a
   `<meta>` tag, so it is a real header in `selfhost/Caddyfile` instead.
+- **The sidebar belongs to the module whose section you are in, and it says so in types now.** A
+  module declares `sidebar: [{ match, controls?, component }]`; `match` names path *segments*, not a
+  substring, because gating on `pathname.includes('/chat')` also fires for a workspace whose slug is
+  `chat`. The shell renders whoever claims the segment and nothing of its own — the inbox rows are
+  core's, the "my work" presets are the tracker's. `segmentOf` lives in its own file with no imports
+  precisely so a test can load it; `registry.ts` reaches the module clients, which import `$msg`.
+- **Filter a stored dashboard layout, then compact it.** Dropping the widgets of a module that was
+  switched off is right, but dropping them *in place* leaves holes where the cards were and the
+  board reads as broken rather than tidy. The stored layout is left untouched, so turning the module
+  back on restores the arrangement it had.

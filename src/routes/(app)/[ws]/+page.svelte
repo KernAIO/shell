@@ -8,7 +8,7 @@ import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
 import NotificationBell from '$lib/components/NotificationBell.svelte'
 import Dashboard, { type BoardItem } from '$lib/dashboard/Dashboard.svelte'
-import { SIZE_SPAN } from '$lib/dashboard/grid'
+import { compact, SIZE_SPAN } from '$lib/dashboard/grid'
 import { DEFAULT_PRESET_ID, expandPreset, PRESETS } from '$lib/dashboard/presets'
 import WidgetPicker from '$lib/dashboard/WidgetPicker.svelte'
 import WidgetSettingsSheet from '$lib/dashboard/WidgetSettingsSheet.svelte'
@@ -116,6 +116,23 @@ function change(next: BoardItem[]) {
   items = next
   dirty = true
 }
+
+/**
+ * What is actually drawn: the widgets this workspace still has, closed up.
+ *
+ * A saved layout can name a widget whose module has since been switched off. Dropping it is right —
+ * every trace of a disabled module should go — but dropping it *in place* leaves a hole where the
+ * card was, and a dashboard full of gaps looks broken rather than tidy. Compacting is what makes
+ * turning a module off read as "that is gone" instead of "something is missing".
+ *
+ * The stored layout is left alone: turning the module back on restores the arrangement it had.
+ */
+const visible = $derived.by(() => {
+  const kept = items.filter((item) => known(item.widget))
+  if (kept.length === items.length) return items
+  const packed = compact(kept)
+  return packed.map((p) => ({ ...(kept.find((k) => k.i === p.i) as BoardItem), ...p }))
+})
 
 // ------------------------------------------------------------------ saving
 
@@ -269,7 +286,7 @@ const greeting = $derived.by(() => {
       </EmptyState>
     {:else}
       <Dashboard
-        {items}
+        items={visible}
         {widgets}
         {editing}
         {workspaceId}

@@ -17,6 +17,20 @@ export const coreClientModule = defineClientModule({
   name: 'Workspace',
   icon: 'house',
 
+  sidebar: [
+    {
+      id: 'core.home',
+      match: [''],
+      order: 10,
+      component: () => import('./components/HomeLinks.svelte'),
+    },
+    {
+      id: 'core.inbox',
+      match: ['inbox'],
+      component: () => import('./components/InboxSidebar.svelte'),
+    },
+  ],
+
   widgets: [
     {
       id: 'core.waiting-on-you',

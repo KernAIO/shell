@@ -28,7 +28,8 @@ import InstallPrompt from '$lib/components/InstallPrompt.svelte'
 import OfflineBanner from '$lib/components/OfflineBanner.svelte'
 import WorkspaceTabs from '$lib/components/WorkspaceTabs.svelte'
 import { formatCount } from '$lib/format'
-import { navigationFor, slotsFor } from '$lib/modules/registry'
+import ModuleSidebar from '$lib/modules/ModuleSidebar.svelte'
+import { navigationFor, segmentOf, sidebarsFor } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { realtime } from '$lib/realtime.svelte'
 import { prefs } from '$lib/state/prefs.svelte'
@@ -97,41 +98,14 @@ const enabledModules = $derived(
 )
 const moduleNav = $derived(navigationFor({ enabled: enabledModules, can: (p) => session.can(p) }))
 
+const segment = $derived(segmentOf(page.url.pathname, slug))
 /**
- * What the active module puts in the sidebar.
- *
- * The sidebar belongs to whichever module you are in: the tracker fills it with saved views, chat
- * with conversations.
+ * The sidebar belongs to the module whose section you are in (DESIGN.md 2.3). The shell asks which
+ * modules claim this path segment and hands them the column — including the home sidebar, where
+ * core contributes the inbox row and the tracker contributes its presets.
  */
-/**
- * Which section the rail is on, so the sidebar can show that section's own navigation.
- *
- * Derived from the path rather than held as state: the rail, the palette, a link and the back
- * button all arrive the same way, and none of them has to tell the sidebar anything.
- */
-const section = $derived.by(() => {
-  const rest = page.url.pathname.slice(wsHref().length)
-  if (rest === '' || rest === '/') return 'home'
-  if (rest.startsWith('/inbox')) return 'inbox'
-  return 'module'
-})
-const inboxFilter = $derived(page.url.searchParams.get('filter'))
-const inboxScope = $derived(page.url.searchParams.get('scope'))
-
-/** What "my work" means, in the tracker's own presets, so these are real queries and not labels. */
-const MY_WORK = [
-  { preset: 'assigned', icon: 'circle-user', label: () => m.tracker_preset_assigned() },
-  { preset: 'created', icon: 'square-pen', label: () => m.tracker_preset_created() },
-  { preset: 'subscribed', icon: 'eye', label: () => m.tracker_preset_subscribed() },
-] as const
-
-const sidebarWidgets = $derived(
-  slotsFor('sidebar.widget', {
-    enabled: enabledModules,
-    can: (p) => session.can(p),
-    pathname: page.url.pathname,
-  }),
-)
+const sidebars = $derived(sidebarsFor({ enabled: enabledModules, can: (p) => session.can(p), segment }))
+const sidebarControls = $derived(sidebars.filter((entry) => entry.controls))
 
 const badgeFor = (id: string) => realtime.badges[id]?.unread ?? workspaceById(id)?.unread ?? 0
 const workspaceById = (id: string) => me.data?.workspaces.find((w) => w.id === id)
@@ -334,7 +308,16 @@ const userMenu: MenuItem[] = $derived([
             sidebar therefore fills this row too, and the shell steps aside rather than stacking a
             second search box above the module's own.
           -->
-          {#if !sidebarWidgets.length}
+          {#if sidebarControls.length}
+            <ModuleSidebar
+              entries={sidebarControls}
+              which="controls"
+              workspaceId={workspace.id}
+              workspaceSlug={slug}
+              pathname={page.url.pathname}
+              {segment}
+            />
+          {:else}
             <SearchBox
               placeholder={m.search_placeholder()}
               readonly
@@ -346,73 +329,19 @@ const userMenu: MenuItem[] = $derived([
 
         <!--
           DESIGN.md 2.2/2.3: the rail switches sections, the sidebar holds the section you are in.
-          These two columns used to say the same thing — My work, Inbox, Issues and Chat appeared as
-          icons in the rail and again as rows here, on every section, so the sidebar spent its width
-          repeating the switcher instead of showing what you had switched to.
-
-          Every section fills it with its own: the modules through `sidebar.widget`, and the two the
-          shell owns below. They read the query string rather than a page's state, which is why the
-          shell can drive a page it does not own — and why a filtered inbox can be linked to.
+          None of it is the shell's any more — the inbox row and the inbox's filters belong to core,
+          the "my work" presets to the tracker, the conversation list to chat. The shell only asks
+          who claims this path segment. That is what stops a workspace with the tracker switched off
+          being shown three rows that link into it, which is what used to happen.
         -->
-        {#if section === 'home'}
-          <SidebarGroup title={m.nav_home()}>
-            <SidebarItem
-              label={m.nav_inbox()}
-              icon="inbox"
-              href={wsHref('/inbox')}
-              badge={countBadge(workspace.id)}
-              glow={badgeFor(workspace.id) > 0}
-            />
-            {#each MY_WORK as item (item.preset)}
-              <SidebarItem
-                label={item.label()}
-                icon={item.icon}
-                href={wsHref(`/tracker?preset=${item.preset}`)}
-                active={page.url.searchParams.get('preset') === item.preset}
-              />
-            {/each}
-          </SidebarGroup>
-        {/if}
-
-        {#if section === 'inbox'}
-          <SidebarGroup title={m.nav_inbox()}>
-            <SidebarItem
-              label={m.inbox_tab_unread()}
-              icon="inbox"
-              href={wsHref('/inbox')}
-              active={inboxFilter !== 'all'}
-              badge={countBadge(workspace.id)}
-              glow={badgeFor(workspace.id) > 0}
-            />
-            <SidebarItem
-              label={m.inbox_tab_all()}
-              icon="list"
-              href={wsHref('/inbox?filter=all')}
-              active={inboxFilter === 'all'}
-            />
-          </SidebarGroup>
-          <SidebarGroup title={m.inbox_scope()}>
-            <SidebarItem
-              label={workspace.name}
-              icon="building"
-              href={wsHref(inboxFilter === 'all' ? '/inbox?filter=all' : '/inbox')}
-              active={inboxScope !== 'all'}
-            />
-            <SidebarItem
-              label={m.inbox_all_workspaces()}
-              icon="globe"
-              href={wsHref(`/inbox?scope=all${inboxFilter === 'all' ? '&filter=all' : ''}`)}
-              active={inboxScope === 'all'}
-            />
-          </SidebarGroup>
-        {/if}
-
-        {#each sidebarWidgets as widget (widget.id)}
-          {#await widget.component() then mod}
-            {@const Widget = mod.default}
-            <Widget {...widget.props ?? {}} />
-          {/await}
-        {/each}
+        <ModuleSidebar
+          entries={sidebars}
+          which="component"
+          workspaceId={workspace.id}
+          workspaceSlug={slug}
+          pathname={page.url.pathname}
+          {segment}
+        />
 
         {#snippet footer()}
           <DropdownMenu items={userMenu} align="start" side="top">

@@ -126,14 +126,12 @@ export const chatClientModule = defineClientModule({
     },
   ],
 
-  slots: [
+  sidebar: [
     {
-      slot: 'sidebar.widget',
-      id: 'chat.conversations',
-      order: 10,
+      id: 'chat',
+      match: ['chat'],
+      permission: CHAT_PERMISSIONS.view,
       component: () => import('./components/SidebarConversations.svelte'),
-      // only while you are in chat: the sidebar belongs to the module you are looking at
-      when: (ctx) => ((ctx as { pathname?: string }).pathname ?? '').includes('/chat'),
     },
   ],
 

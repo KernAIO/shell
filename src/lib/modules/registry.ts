@@ -1,9 +1,12 @@
 import type {
   SvelteClientModule as ClientModule,
   ClientNavItem,
-  SlotName,
+  SvelteSidebarContribution,
   SvelteWidgetDefinition,
 } from '@kernhq/ui'
+
+export { segmentOf } from './segment'
+
 import { billingClientModule } from './billing/client'
 import { chatClientModule } from './chat/client'
 import { coreClientModule } from './core/client'
@@ -47,22 +50,28 @@ export function navigationFor(ctx: NavContext): Array<ClientNavItem & { moduleId
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
 }
 
+export interface SidebarEntry extends SvelteSidebarContribution {
+  moduleId: string
+}
+
 /**
- * Slot contributions from enabled modules.
+ * The sidebar for a path, from the modules that own it.
  *
- * A slot is how a module puts something inside a part of the shell it does not own — the sidebar's
- * nav area, a tab on an object panel, an action on a chat message. The shell renders whatever is
- * contributed and knows nothing about who contributed it, which is what lets a workspace switch a
- * module off and have every trace of it disappear.
+ * The rail switches modules and the sidebar holds the one you are in (DESIGN.md 2.3), so this asks
+ * which modules claim the first path segment and hands them the column. `''` is the home sidebar,
+ * where several modules each contribute a group.
+ *
+ * The segment is compared exactly. The previous version of this gated on
+ * `pathname.includes('/chat')`, which also fires for a workspace whose slug is `chat` — and for any
+ * route that merely contains the word.
  */
-export function slotsFor(slot: SlotName, ctx: NavContext & { pathname?: string }) {
+export function sidebarsFor(ctx: NavContext & { segment: string }): SidebarEntry[] {
   return modules
     .filter((mod) => ctx.enabled.has(mod.id))
-    .flatMap((mod) =>
-      (mod.slots ?? []).filter((s) => s.slot === slot).map((s) => ({ ...s, moduleId: mod.id })),
-    )
-    .filter((s) => !s.when || s.when({ pathname: ctx.pathname ?? '' } as never))
-    .sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
+    .flatMap((mod) => (mod.sidebar ?? []).map((s) => ({ ...s, moduleId: mod.id })))
+    .filter((s) => s.match.includes(ctx.segment))
+    .filter((s) => !s.permission || ctx.can(s.permission))
+    .sort((a, b) => (a.order ?? 100) - (b.order ?? 100) || a.id.localeCompare(b.id))
 }
 
 export interface WidgetEntry extends SvelteWidgetDefinition {
@@ -73,9 +82,9 @@ export interface WidgetEntry extends SvelteWidgetDefinition {
 /**
  * Every dashboard widget the person may place.
  *
- * Same filter as navigation and slots — an enabled module, and a permission they hold — which is
- * what makes a widget disappear from the picker *and* from a layout that already named it when a
- * workspace switches its module off, with no conditional on the dashboard itself.
+ * Same filter as navigation and the sidebar — an enabled module, and a permission they hold — which
+ * is what makes a widget disappear from the picker *and* from a layout that already named it when a
+ * workspace switches its module off, with no conditional on the dashboard.
  */
 export function widgetsFor(ctx: NavContext): WidgetEntry[] {
   return modules
@@ -86,11 +95,11 @@ export function widgetsFor(ctx: NavContext): WidgetEntry[] {
 }
 
 /**
- * One widget by id, for drawing a layout that was stored earlier.
+ * One widget by id, for drawing a layout stored earlier.
  *
- * Returning `undefined` is the normal case, not an error: a saved layout can name a widget from a
- * module that has since been switched off, uninstalled, or renamed between releases. The frame
- * draws "no longer available" with a way to remove it — never a blank card, and never a crash.
+ * Returning `undefined` is ordinary, not an error: a saved layout can name a widget from a module
+ * since switched off, uninstalled, or renamed between releases. The frame says so and offers to
+ * remove it — never a blank card, never a crash.
  */
 export function widgetById(id: string, ctx: NavContext): WidgetEntry | undefined {
   return widgetsFor(ctx).find((w) => w.id === id)
