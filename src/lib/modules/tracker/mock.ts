@@ -6,6 +6,7 @@ import {
   type Cycle,
   type FieldDef,
   type GroupBy,
+  type ImportJob,
   type Issue,
   type IssueApproval,
   type IssueHistoryEntry,
@@ -825,6 +826,7 @@ export function createMockTrackerApi() {
     worklogs: [] as Worklog[],
     issueTemplates: [] as IssueTemplate[],
     recurring: [] as RecurringIssue[],
+    imports: [] as ImportJob[],
     workflows: [
       {
         id: WORKFLOW_ID,
@@ -1378,6 +1380,56 @@ export function createMockTrackerApi() {
         const number = (state.counters.get(project.id) ?? 0) + 1
         state.counters.set(project.id, number)
         return { ok: true as const, issueKey: `${project.key}-${number}` }
+      },
+    },
+
+    imports: {
+      list: async ({ projectId }: Ws & { projectId: string }) =>
+        clone(state.imports.filter((j) => j.projectId === projectId)),
+      get: async ({ id }: Ws & { id: string }) => {
+        const job = state.imports.find((j) => j.id === id)
+        if (!job) throw new Error(`[mock] unknown import ${id}`)
+        // Advance a little on each poll, so the progress bar is something a person can watch
+        // rather than a number that appears finished before it started.
+        if (job.status === 'running') {
+          job.progress.processed = Math.min(job.progress.total, job.progress.processed + 4)
+          job.progress.created = Math.max(0, job.progress.processed - job.progress.failed)
+          if (job.progress.processed >= job.progress.total) {
+            job.status = 'completed'
+            job.finishedAt = new Date().toISOString()
+          }
+        }
+        return clone(job)
+      },
+      start: async ({ projectId, source, fileId, mapping }: Ws & Record<string, never>) => {
+        const now = new Date().toISOString()
+        const job: ImportJob = {
+          id: uid(2800 + state.imports.length),
+          workspaceId: WORKSPACE,
+          projectId: projectId as unknown as string,
+          source: (source ?? 'csv') as ImportJob['source'],
+          fileId: fileId as unknown as string,
+          mapping: (mapping ?? {}) as Record<string, unknown>,
+          status: 'running',
+          // A row that fails is part of what an import looks like; a demo where nothing ever
+          // fails teaches nobody what the errors list is for.
+          progress: { total: 12, processed: 0, created: 0, skipped: 0, failed: 1 },
+          errors: [{ row: 3, message: 'Row 3 has no title' }],
+          createdBy: ME,
+          startedAt: now,
+          finishedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        } as ImportJob
+        state.imports.push(job)
+        return clone(job)
+      },
+      cancel: async ({ id }: Ws & { id: string }) => {
+        const job = state.imports.find((j) => j.id === id)
+        if (!job) throw new Error(`[mock] unknown import ${id}`)
+        job.status = 'cancelled'
+        job.finishedAt = new Date().toISOString()
+        return clone(job)
       },
     },
 

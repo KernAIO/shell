@@ -541,3 +541,38 @@ test('an issue can be set to repeat, and the schedule says what it will do', asy
   await expect(list).toContainText('Paused')
   await expect(page.getByTestId('recurring-toggle')).toContainText('Resume')
 })
+
+test('a spreadsheet is mapped column by column before anything is imported', async ({ page }) => {
+  await page.goto('/northstar/settings/tracker/import')
+  await expect(page.getByRole('heading', { name: 'Import' })).toBeVisible()
+
+  // the file is read in the browser, so the mapping offers its real columns and real values
+  await page.getByTestId('import-file').setInputFiles({
+    name: 'issues.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from('Summary,Importance\n"Crash, then burn",high\nSlow search,low\n'),
+  })
+
+  const mapping = page.getByTestId('import-mapping')
+  await expect(mapping).toContainText('Summary')
+  await expect(mapping).toContainText('Importance')
+  // a quoted comma is one field, not two — the row keeps its shape
+  await expect(mapping).toContainText('Crash, then burn')
+
+  // nothing is mapped to begin with, and a title is required before anything can run
+  await expect(page.getByTestId('needs-title')).toBeVisible()
+  await expect(page.getByTestId('import-start')).toBeDisabled()
+
+  await mapping
+    .getByRole('row', { name: /Summary/ })
+    .getByRole('button')
+    .click()
+  await page.getByRole('option', { name: 'Title', exact: true }).click()
+  await expect(page.getByTestId('needs-title')).toHaveCount(0)
+
+  await page.getByTestId('import-start').click()
+  const job = page.getByTestId('import-job')
+  await expect(job).toBeVisible()
+  // a failing row is shown rather than buried in a count
+  await expect(page.getByText('Row 3 has no title')).toBeVisible()
+})
