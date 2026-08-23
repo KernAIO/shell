@@ -18,6 +18,15 @@ describe('parseDuration', () => {
     expect(parseDuration('  1H 30M ')).toBe(5400)
   })
 
+  it('reads the digits a Persian or Arabic keyboard produces', () => {
+    // The placeholder says `1h30m` in every locale because the units are not translated — but the
+    // digits in front of them are whatever the keyboard makes, and `\d` matches none of those.
+    expect(parseDuration('۲')).toBe(7200)
+    expect(parseDuration('۱h۳۰m')).toBe(5400)
+    expect(parseDuration('٩٠m')).toBe(5400)
+    expect(parseDuration('٢h ١٥m')).toBe(8100)
+  })
+
   it('refuses what is not an amount of time', () => {
     // Silently reading "half an hour" as nothing would log nothing and say it worked.
     expect(parseDuration('half an hour')).toBeNull()
