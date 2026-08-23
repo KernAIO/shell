@@ -27,6 +27,7 @@ import {
   type Timer,
   type Version,
   type View,
+  type Workflow,
   type WorkItemType,
   type Worklog,
 } from '@kernhq/module-tracker/client'
@@ -819,6 +820,74 @@ export function createMockTrackerApi() {
     components: [] as Component[],
     versions: [] as Version[],
     worklogs: [] as Worklog[],
+    workflows: [
+      {
+        id: WORKFLOW_ID,
+        workspaceId: WORKSPACE,
+        projectId: null,
+        name: 'Software',
+        description: 'The workflow every demo project uses',
+        definition: {
+          id: WORKFLOW_ID,
+          name: 'Software',
+          statuses: statuses.map((s, order) => ({
+            id: s.id,
+            name: s.name,
+            category: s.category,
+            order,
+            ...(s.id === 'backlog' ? { initial: true } : {}),
+          })),
+          // Every array present: the contract requires them, and a transition missing
+          // `validators` is not "no validators" to the type, it is an incomplete transition.
+          transitions: [
+            {
+              id: 'plan',
+              name: 'Plan',
+              from: ['backlog'],
+              to: 'todo',
+              conditions: [],
+              validators: [],
+              postFunctions: [],
+              hidden: false,
+            },
+            {
+              id: 'start',
+              name: 'Start',
+              from: ['backlog', 'todo'],
+              to: 'in_progress',
+              conditions: [],
+              validators: [],
+              postFunctions: [{ type: 'assign.to', config: { to: 'currentUser' } }],
+              hidden: false,
+            },
+            {
+              id: 'review',
+              name: 'Ready for review',
+              from: ['in_progress'],
+              to: 'in_review',
+              conditions: [],
+              validators: [{ type: 'comment.required' }],
+              postFunctions: [],
+              hidden: false,
+            },
+            {
+              id: 'complete',
+              name: 'Done',
+              from: ['in_progress', 'in_review'],
+              to: 'done',
+              conditions: [{ type: 'subtasks.allDone' }],
+              validators: [],
+              postFunctions: [{ type: 'resolution.set', config: { value: 'done' } }],
+              hidden: false,
+            },
+          ],
+        },
+        isDefault: true,
+        archivedAt: null,
+        createdAt: iso(120 * DAY),
+        updatedAt: iso(120 * DAY),
+      },
+    ] as Workflow[],
     timer: null as Timer | null,
     links: [] as Link[],
     approvals: [] as IssueApproval[],
@@ -1166,7 +1235,21 @@ export function createMockTrackerApi() {
         return { ok: true as const }
       },
     },
-    workflows: { statuses: async (_input: Ws) => clone(statuses) },
+    workflows: {
+      statuses: async (_input: Ws) => clone(statuses),
+      list: async (_input: Ws) => clone(state.workflows),
+      update: async ({ id, patch }: Ws & { id: string; patch: Partial<Workflow> }) => {
+        const workflow = state.workflows.find((w) => w.id === id)
+        if (!workflow) throw new Error(`[mock] unknown workflow ${id}`)
+        Object.assign(workflow, patch, { updatedAt: new Date().toISOString() })
+        // The board and every status label read from `statuses`, so a rename has to reach it.
+        for (const status of workflow.definition.statuses) {
+          const known = statuses.find((s) => s.id === status.id)
+          if (known) known.name = status.name
+        }
+        return clone(workflow)
+      },
+    },
     milestones: {
       list: async ({ projectId }: Ws & { projectId?: string }) =>
         clone(milestones.filter((m) => !projectId || m.projectId === projectId)),

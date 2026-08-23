@@ -500,3 +500,24 @@ test('a team can open a request link, and closing it closes the form', async ({ 
   await page.goto(href.trim())
   await expect(page.getByRole('heading', { name: /Contact/ })).toBeVisible()
 })
+
+test('a workflow says what each move requires, in words', async ({ page }) => {
+  // A workflow's rules decided who could close an issue and nobody could read them.
+  await page.goto('/northstar/settings/tracker/workflows')
+  await expect(page.getByRole('heading', { name: 'Workflows' })).toBeVisible()
+
+  const moves = page.getByTestId('workflow-transitions')
+  await expect(moves).toBeVisible()
+  // conditions, validators and post-functions as sentences rather than as JSON
+  await expect(moves).toContainText('Only when every sub-issue is done')
+  await expect(moves).toContainText('A comment is required')
+  await expect(moves).toContainText('Assigns it to whoever moved it')
+  await expect(moves).toContainText('Sets the resolution to “done”')
+
+  // a status can be renamed, and the rename reaches everywhere the status is shown
+  const statuses = page.getByTestId('workflow-statuses')
+  await statuses.locator('[data-status="in_review"]').fill('Reviewing')
+  await page.getByTestId('save-workflow').click()
+  await expect(page.getByText('Workflow saved')).toBeVisible()
+  await expect(moves).toContainText('Reviewing')
+})

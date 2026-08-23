@@ -159,6 +159,17 @@ export const trackerClientModule = defineClientModule({
       component: () => import('../../../routes/(app)/[ws]/settings/tracker/fields/+page.svelte'),
     },
     {
+      id: 'workflows',
+      get label() {
+        return m.tracker_settings_workflows()
+      },
+      icon: 'git-branch',
+      scope: 'workspace',
+      permission: TRACKER_PERMISSIONS.workflowManage,
+      order: 25,
+      component: () => import('../../../routes/(app)/[ws]/settings/tracker/workflows/+page.svelte'),
+    },
+    {
       id: 'planning',
       get label() {
         return m.tracker_settings_planning()
