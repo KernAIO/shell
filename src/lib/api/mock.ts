@@ -414,7 +414,7 @@ export function createMockApi() {
   const enabledFor = (workspaceId: string) => {
     let set = state.enabled.get(workspaceId)
     if (!set) {
-      set = new Set(['core', 'chat', 'tracker'])
+      set = new Set(['core', 'chat', 'tracker', 'mail'])
       state.enabled.set(workspaceId, set)
     }
     return set

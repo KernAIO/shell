@@ -1,5 +1,6 @@
 import type { SvelteClientModule as ClientModule, ClientNavItem, SlotName } from '@kernhq/ui'
 import { chatClientModule } from './chat/client'
+import { mailClientModule } from './mail/client'
 import { trackerClientModule } from './tracker/client'
 
 /**
@@ -69,6 +70,7 @@ export function commandsFor(ctx: NavContext) {
 // wiring the shell needs: navigation, commands, presenters and routes all follow from the manifest.
 registerModule(trackerClientModule)
 registerModule(chatClientModule)
+registerModule(mailClientModule)
 
 export interface ModuleSettingsLink {
   moduleId: string
