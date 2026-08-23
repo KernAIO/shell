@@ -521,3 +521,23 @@ test('a workflow says what each move requires, in words', async ({ page }) => {
   await expect(page.getByText('Workflow saved')).toBeVisible()
   await expect(moves).toContainText('Reviewing')
 })
+
+test('an issue can be set to repeat, and the schedule says what it will do', async ({ page }) => {
+  // Recurring issues had a server and no screen: nothing could be set to repeat at all.
+  await page.goto('/northstar/settings/tracker/repeating')
+  await expect(page.getByRole('heading', { name: 'Work that repeats' })).toBeVisible()
+
+  await page.getByTestId('recurring-name').fill('Weekly review')
+  await page.getByTestId('recurring-add').click()
+
+  const list = page.getByTestId('recurring-list')
+  await expect(list).toContainText('Weekly review')
+  // the rule reads as a sentence, because a schedule you cannot read is one you cannot check
+  await expect(list).toContainText('Every week at 09:00')
+  await expect(list).toContainText('0 made so far')
+
+  // pausing says what it will do rather than asking which way the switch means on
+  await page.getByTestId('recurring-toggle').click()
+  await expect(list).toContainText('Paused')
+  await expect(page.getByTestId('recurring-toggle')).toContainText('Resume')
+})

@@ -9,6 +9,7 @@ import {
   type Issue,
   type IssueApproval,
   type IssueHistoryEntry,
+  type IssueTemplate,
   type KqlExpr,
   type KqlValue,
   type Label,
@@ -17,6 +18,8 @@ import {
   type Priority,
   type Project,
   parseKql,
+  type RecurrenceRule,
+  type RecurringIssue,
   type RelationType,
   type RelationView,
   type ResolvedField,
@@ -820,6 +823,8 @@ export function createMockTrackerApi() {
     components: [] as Component[],
     versions: [] as Version[],
     worklogs: [] as Worklog[],
+    issueTemplates: [] as IssueTemplate[],
+    recurring: [] as RecurringIssue[],
     workflows: [
       {
         id: WORKFLOW_ID,
@@ -1821,6 +1826,70 @@ export function createMockTrackerApi() {
           issue.cancelledAt = target.category === 'cancelled' ? new Date().toISOString() : null
           touch(issue)
           return { issue: clone(issue), approval: null }
+        },
+      },
+
+      templates: {
+        list: async (_input: Ws & { projectId?: string }) => clone(state.issueTemplates),
+        create: async (input: Ws & { name: string; projectId?: string | null }) => {
+          const now = new Date().toISOString()
+          const template: IssueTemplate = {
+            id: uid(2600 + state.issueTemplates.length),
+            workspaceId: WORKSPACE,
+            projectId: input.projectId ?? null,
+            name: input.name,
+            description: null,
+            typeId: null,
+            defaults: {},
+            subItems: [],
+            createdBy: ME,
+            createdAt: now,
+            updatedAt: now,
+          }
+          state.issueTemplates.push(template)
+          return clone(template)
+        },
+        delete: async ({ id }: Ws & { id: string }) => {
+          state.issueTemplates = state.issueTemplates.filter((t) => t.id !== id)
+          return { ok: true as const }
+        },
+      },
+
+      recurring: {
+        list: async ({ projectId }: Ws & { projectId: string }) =>
+          clone(state.recurring.filter((r) => r.projectId === projectId)),
+        create: async (input: Ws & { projectId: string; name: string; rule: RecurrenceRule }) => {
+          const now = new Date().toISOString()
+          const entry: RecurringIssue = {
+            id: uid(2700 + state.recurring.length),
+            workspaceId: WORKSPACE,
+            projectId: input.projectId,
+            name: input.name,
+            rule: input.rule,
+            defaults: { title: input.name },
+            enabled: true,
+            // The real scheduler computes this; the mock says "tomorrow", which is enough for the
+            // row to show something a person can sanity-check.
+            nextRunAt: iso(-DAY),
+            lastRunAt: null,
+            lastIssueId: null,
+            runCount: 0,
+            createdBy: ME,
+            createdAt: now,
+            updatedAt: now,
+          }
+          state.recurring.push(entry)
+          return clone(entry)
+        },
+        update: async ({ id, patch }: Ws & { id: string; patch: Partial<RecurringIssue> }) => {
+          const entry = state.recurring.find((r) => r.id === id)
+          if (!entry) throw new Error(`[mock] unknown recurring issue ${id}`)
+          Object.assign(entry, patch, { updatedAt: new Date().toISOString() })
+          return clone(entry)
+        },
+        delete: async ({ id }: Ws & { id: string }) => {
+          state.recurring = state.recurring.filter((r) => r.id !== id)
+          return { ok: true as const }
         },
       },
 

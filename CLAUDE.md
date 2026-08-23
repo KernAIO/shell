@@ -122,6 +122,11 @@ in-memory API with demo data — no backend, no database.
 - **A `<T,>` generic does not survive the Svelte formatter.** Biome rewrites it and then disagrees
   with itself, so `pnpm lint` never settles. Use a `function` declaration, whose generic is
   unambiguous, or move the helper to a `.ts` file.
+- **A `.ts` module that imports `$msg` cannot be unit-tested.** SvelteKit applies the aliases from
+  `svelte.config.js` through its own plugin, which vitest does not run, so the import fails before
+  a single assertion. Declaring the alias under `test.alias` or `resolve.alias` did not fix it.
+  Where the logic is worth testing — a sentence built from a rule, a duration parsed from what
+  somebody typed — take the wording as a parameter and let the component pass `m.*` in.
 - **The message renderer's classes need styling by the consumer.** `renderDocToHtml` emits
   `.kern-chat-mention`, `.kern-chat-link`, `.kern-chat-code` and `.kern-chat-pre`; without CSS for
   them a mention reads as plain text.
