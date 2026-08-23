@@ -35,12 +35,7 @@ const REQUIRED = new Set(LOCALES)
 
 /**
  * Values that are legitimately identical to English: brand names, protocol names, and literals a
- * user types verbatim.
- *
- * This one is reported and never fails, because it is a heuristic rather than a rule. German shares
- * a great deal of vocabulary with English — Name, Status, Version, Person, Text, Filter, Import,
- * Dashboard — so sixty-five of its entries match English and every one of them is correct. Read the
- * list; do not act on the count.
+ * user types verbatim. Same in every locale, so keyed by message name.
  */
 const SAME_AS_ENGLISH_IS_FINE = new Set([
   'app_name',
@@ -52,7 +47,74 @@ const SAME_AS_ENGLISH_IS_FINE = new Set([
   'mail_provider_ses',
   'mail_provider_smtp',
   'tracker_kql_placeholder',
+  // `parseDuration` reads `h` and `m` and nothing else, so a translated placeholder would show a
+  // shape the field rejects. See src/lib/modules/tracker/time.ts.
+  'tracker_time_placeholder',
 ])
+
+/**
+ * Words a locale genuinely shares with English, listed by value rather than by key so that the next
+ * message saying "Status" does not have to be allowed again.
+ *
+ * Keyed by value because the fact being recorded is about the *word*: German writes Status, Name and
+ * Dashboard exactly as English does, and forty-two such words accounted for every one of its
+ * "still English" reports. Enumerating the keys instead would have meant sixty-eight entries that go
+ * stale the moment a screen is added — and a check nobody reads because it always prints sixty-eight
+ * warnings is a check that no longer catches the sixty-ninth.
+ */
+const SHARED_VOCABULARY = {
+  de: new Set([
+    // Interface nouns German writes the same way.
+    'Name',
+    'Status',
+    'System',
+    'Version',
+    'Person',
+    'Text',
+    'Filter',
+    'Filter \u00b7 {count}',
+    'Import',
+    'Updates',
+    'Navigation',
+    'Dashboard',
+    'Timer',
+    'Logo',
+    'Emoji',
+    'optional',
+    // Link is masculine and takes -s in the plural; lowercase "links" would mean "left".
+    'Link',
+    'Links',
+    'Label',
+    'Labels',
+    'URL',
+    // Agile vocabulary German teams use in English.
+    'Backlog',
+    'Board',
+    'Burndown',
+    'Velocity',
+    'Epic',
+    'Initiative',
+    'Workflows',
+    // Network and protocol terms.
+    'Domain',
+    'Host',
+    'Port',
+    'Region',
+    'Push',
+    'Passkeys',
+    'Webhooks',
+    'Online',
+    'Offline',
+    // Chat vocabulary, borrowed wholesale.
+    'Chat',
+    'Thread',
+    'Huddle',
+    // Settled in messages/GLOSSARY.md: German keeps Workspace.
+    'Workspace',
+    'Workspaces',
+  ]),
+  tr: new Set(['Backlog', 'Burndown', 'Emoji', 'Logo', 'URL']),
+}
 
 const strip = (o) => Object.fromEntries(Object.entries(o).filter(([k]) => !k.startsWith('$')))
 /**
@@ -115,9 +177,13 @@ for (const locale of LOCALES) {
   const mismatched = baseKeys
     .filter((k) => k in other)
     .filter((k) => String(placeholders(base[k])) !== String(placeholders(other[k])))
+  const shared = SHARED_VOCABULARY[locale] ?? new Set()
   const untranslated = baseKeys.filter(
     (k) =>
-      k in other && JSON.stringify(other[k]) === JSON.stringify(base[k]) && !SAME_AS_ENGLISH_IS_FINE.has(k),
+      k in other &&
+      JSON.stringify(other[k]) === JSON.stringify(base[k]) &&
+      !SAME_AS_ENGLISH_IS_FINE.has(k) &&
+      !(typeof base[k] === 'string' && shared.has(base[k])),
   )
   const shortPlurals = []
   for (const k of baseKeys) {
