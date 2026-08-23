@@ -78,3 +78,5 @@ pnpm test:e2e   # the interface, driven in a real browser against demo data
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md), [DESIGN.md](DESIGN.md) and [CLAUDE.md](CLAUDE.md).
 Licence: [AGPL-3.0](LICENSE).
+
+Website: [kernaio.com](https://kernaio.com).
