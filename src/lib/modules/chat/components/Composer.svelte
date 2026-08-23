@@ -226,10 +226,66 @@ function insertAtCaret(fragment: string, opts: { trailingSpace?: boolean } = {})
   })
 }
 
+/**
+ * `/leave`, `/topic engineering`, `/shrug` — commands the server already understood and nothing
+ * ever sent it, so typing one posted the text of the command instead of running it.
+ *
+ * Only a line that is nothing but a command counts. A message that happens to begin with a slash
+ * and carries on ("/etc/hosts is where it lives") is a message.
+ */
+const COMMAND = /^\/([a-z][a-z0-9_-]*)(?:[ \t]+([\s\S]*))?$/i
+
+/** Confirmations for the commands this build knows, so a Persian screen does not answer in English. */
+const CONFIRMATIONS: Record<string, () => string> = {
+  leave: m.chat_cmd_left,
+  mute: m.chat_cmd_muted,
+  unmute: m.chat_cmd_unmuted,
+  topic: m.chat_cmd_topic_set,
+}
+
+async function runCommand(command: string, body: string): Promise<boolean> {
+  try {
+    const res = await store.runCommand(channelId, command, body)
+    if (!res.handled) {
+      // An unknown command is the client's to explain: it knows what it can offer, and the
+      // server's answer is a bare English string.
+      toast.error(m.chat_cmd_unknown({ command, known: Object.keys(CONFIRMATIONS).join(', ') }))
+      return false
+    }
+    const say = CONFIRMATIONS[command.toLowerCase()]
+    // Anything this build does not have a phrase for falls back to what the server said, which is
+    // what keeps this working once commands are pluggable.
+    if (say) toast.info(say())
+    else if (res.ephemeral) toast.info(res.ephemeral)
+    return true
+  } catch (error) {
+    toast.error(error instanceof Error ? error.message : m.chat_failed())
+    return false
+  }
+}
+
 async function send() {
   const value = text.trim()
   // an attachment on its own is a message; the server allows an empty body when files are present
   if ((!value && attached.length === 0) || sending || !allowed) return
+
+  const command = attached.length === 0 ? COMMAND.exec(value) : null
+  if (command) {
+    sending = true
+    const restore = text
+    text = ''
+    closeMentionMenu()
+    const ok = await runCommand(command[1] as string, (command[2] ?? '').trim())
+    // A command that did not run leaves what was typed, the same as a message that did not send.
+    if (!ok) text = restore
+    else {
+      drafts.delete(draftKey)
+      queueMicrotask(grow)
+    }
+    sending = false
+    return
+  }
+
   sending = true
   const restoreText = text
   const restorePicked = picked

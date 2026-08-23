@@ -585,8 +585,43 @@ export function createMockChatApi() {
     },
 
     commands: {
-      async run() {
-        return { ok: true, message: 'Slash commands need the chat service.' }
+      /**
+       * The built-ins the server handles, so the demo answers a slash command instead of shrugging
+       * at it. The old stub returned `{ ok, message }`, which is not the shape the contract
+       * describes — nothing called it, so nothing noticed.
+       */
+      async run({ channelId, command, text }: { channelId: string; command: string; text?: string }) {
+        const cmd = command.replace(/^\//, '').toLowerCase()
+        const body = (text ?? '').trim()
+        switch (cmd) {
+          case 'shrug':
+            return {
+              handled: true,
+              ephemeral: null,
+              message: say(channelId, ME, `${body} ¯\\_(ツ)_/¯`.trim()),
+            }
+          case 'me':
+            return { handled: true, ephemeral: null, message: say(channelId, ME, body) }
+          case 'leave': {
+            const c = find(channelId)
+            c.joined = false
+            c.memberCount = Math.max(0, c.memberCount - 1)
+            return { handled: true, ephemeral: 'You left the channel.', message: null }
+          }
+          case 'topic':
+            find(channelId).topic = body || null
+            return { handled: true, ephemeral: null, message: null }
+          case 'mute':
+          case 'unmute':
+            find(channelId).muted = cmd === 'mute'
+            return {
+              handled: true,
+              ephemeral: cmd === 'mute' ? 'Channel muted.' : 'Channel unmuted.',
+              message: null,
+            }
+          default:
+            return { handled: false, ephemeral: `Unknown command /${cmd}`, message: null }
+        }
       },
     },
   }

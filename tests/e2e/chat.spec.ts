@@ -460,3 +460,32 @@ test('a video message records and sends', async ({ page }) => {
   await expect(page.getByTestId('message')).toHaveCount(before + 1)
   await expect(page.getByTestId('attachment-video').last()).toBeVisible()
 })
+
+test('a slash command runs instead of being posted as text', async ({ page }) => {
+  // `commands.run` had a server and no caller, so typing /leave posted the word "/leave".
+  await openChat(page)
+  await page.getByTestId('conversation-row').filter({ hasText: 'eng-core' }).click()
+  const composer = page.getByTestId('composer')
+
+  // one that posts: the sender sees their own message straight away, not when realtime catches up
+  await composer.fill('/shrug well then')
+  await composer.press('Enter')
+  await expect(page.getByText('well then ¯\\_(ツ)_/¯')).toBeVisible()
+
+  // one that changes the channel: the header follows, because the store owns what the header reads
+  await composer.fill('/topic Kernel, contracts and slash commands')
+  await composer.press('Enter')
+  await expect(page.getByText('Topic updated.')).toBeVisible()
+  await expect(page.getByText('Kernel, contracts and slash commands')).toBeVisible()
+
+  // an unknown one is the client's to explain, and what was typed is not thrown away
+  await composer.fill('/nonsense')
+  await composer.press('Enter')
+  await expect(page.getByText(/There is no \/nonsense command/)).toBeVisible()
+  await expect(composer).toHaveValue('/nonsense')
+
+  // a message that merely starts with a slash is a message
+  await composer.fill('/etc/hosts is where it lives')
+  await composer.press('Enter')
+  await expect(page.getByText('/etc/hosts is where it lives')).toBeVisible()
+})
