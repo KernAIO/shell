@@ -1104,6 +1104,35 @@ export function createMockApi() {
         items: state.workspaces.map((w) => ({ ...clone(w), memberCount: state.members.length })),
         nextCursor: null,
       }),
+      /**
+       * A plausible report for each mocked module. The shapes match the real one, so the panel is
+       * built and demoed against the same fields it will get from a running instance.
+       */
+      diagnostics: async () =>
+        moduleManifests.map((mod) => ({
+          id: mod.id,
+          name: mod.name,
+          version: mod.version,
+          hostedHere: mod.id === 'core' || mod.id === 'tracker' || mod.id === 'billing',
+          host: mod.id === 'chat' ? 'chat' : mod.id === 'mail' ? 'mail' : 'core',
+          procedures: [
+            { name: `${mod.id}.list`, method: 'GET', path: `/${mod.id}`, middlewares: 2, gated: true },
+            { name: `${mod.id}.create`, method: 'POST', path: `/${mod.id}`, middlewares: 2, gated: true },
+          ],
+          missing: [],
+          undeclared: [],
+          permissions: Array.from({ length: mod.permissionCount }, (_, n) => `${mod.id}.thing.${n}`),
+          events: Array.from({ length: mod.eventCount }, (_, n) => `${mod.id}.thing.event${n}`),
+          callable: [],
+          jobs: [],
+          subscriptions: mod.id === 'core' ? [] : ['core.workspace.created'],
+          objectTypes: Array.from({ length: mod.objectTypeCount }, (_, n) => `${mod.id}.type${n}`),
+          notificationTypes: [],
+          public: mod.id === 'core' ? ['health'] : [],
+          hasMigrations: true,
+          hasSchema: true,
+          problems: [],
+        })),
       modules: async () =>
         moduleManifests.map((m) => ({
           ...m,

@@ -74,6 +74,8 @@ const SHARED_VOCABULARY = {
     'Status',
     'System',
     'Version',
+    'Route',
+    'Jobs',
     'Person',
     'Text',
     'Filter',

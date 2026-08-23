@@ -26,6 +26,7 @@ const isActive = (p: string) => page.url.pathname === href(p)
  */
 const links = $derived([
   { path: '/updates', label: m.admin_updates_title(), icon: 'refresh-cw' },
+  { path: '/modules', label: m.dev_modules_nav(), icon: 'puzzle' },
   ...instanceLinksFor({ can: (permission: string) => session.can(permission) }).map((link) => ({
     path: `/${link.moduleId}/${link.id}`,
     label: link.label,

@@ -31,6 +31,7 @@ export const keys = {
   adminModules: () => ['core', 'admin-module'] as const,
   adminSettings: () => ['core', 'admin-settings'] as const,
   adminUpdates: () => ['core', 'admin-updates'] as const,
+  adminDiagnostics: () => ['core', 'admin-diagnostics'] as const,
 }
 
 export function createQueryClient() {
