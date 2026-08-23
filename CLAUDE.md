@@ -156,3 +156,21 @@ in-memory API with demo data — no backend, no database.
   with two sources needs the same flag.
 - Tab-strip shortcuts are ⌥-based (⌥T, ⌥W, ⌥1-9, ⌥[ / ⌥]). ⌘T/⌘W/⌘1 are reserved by the browser and
   never reach the page. Match on `e.code`, not `e.key`: ⌥T on a Mac keyboard types `†`.
+- **A toggle that changes what a query asks for must be in the query key.** `includeArchived` on the
+  fields and types settings pages is the case: with the key unchanged TanStack serves the cached
+  list, so the switch does nothing until something else happens to invalidate it — which is
+  indistinguishable from the toggle being broken, and only ever reproduces on a warm cache.
+- **Before adding a handler to `modules/tracker/mock.ts`, grep it.** Whether the *app* calls a
+  procedure and whether the *mock* implements one are different questions; answering the first and
+  acting on the second produces a duplicate object key, which svelte-check catches but only after
+  the work is done.
+- **`Select`, `Checkbox` and the other `@kernhq/ui` inputs take no `data-testid`** — their props are
+  a closed list, not a spread. Wrap them in a `<span data-testid=…>` when a test needs a handle.
+- **`Badge` takes `tone`, not `variant`.** `variant` is its shape (`chip`/`count`/`dot`); the colour
+  is `tone`, and the set includes `active`, `done` and `upcoming`, which is exactly a cycle's status.
+- **A date range is `Intl.DateTimeFormat.formatRange`, not two dates and a dash.** A hand-built range
+  reads backwards under `dir="rtl"` — the earliest date ends up on the right of the latest — and
+  `formatRange` collapses the parts the two dates share for free.
+- **`scripts/check-icons.mjs` reads `icon="…"`, `icon: '…'` and any `const *ICONS = [...]`.** A name
+  reaching `<Icon>` through some other variable is unchecked, and an unregistered name renders as a
+  blank square and throws nothing. If you build a picker, name its list `…ICONS`.
