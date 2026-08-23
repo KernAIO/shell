@@ -82,7 +82,19 @@ export default defineConfig({
   ],
   server: {
     port: 5173,
+    /*
+     * Only the tracker is hosted by core; chat, mail and collab are their own services, and each
+     * serves its own `/api/<id>` prefix on its own port. Caddy routes them in production
+     * (`selfhost/Caddyfile`) and nothing routed them in development, so every chat and mail request
+     * went to core and came back 404 — with `PUBLIC_API_MOCK` unset being the default, which is a
+     * dev environment that silently only half works.
+     *
+     * Longest prefix first: Vite matches in insertion order, so a bare `/api` above these would
+     * swallow both.
+     */
     proxy: {
+      '/api/chat': { target: 'http://localhost:4100', changeOrigin: false },
+      '/api/mail': { target: 'http://localhost:4200', changeOrigin: false },
       '/api': { target: 'http://localhost:4000', changeOrigin: false },
       '/ws': { target: 'ws://localhost:4100', ws: true },
       '/collab': { target: 'ws://localhost:4300', ws: true },
