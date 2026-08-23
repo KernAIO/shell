@@ -1,12 +1,16 @@
 <script lang="ts">
 import type { View } from '@kernhq/module-tracker/client'
 import {
+  Button,
+  Dialog,
   DropdownMenu,
   EmptyState,
   Icon,
   IconButton,
+  Input,
   type MenuItem,
   SectionLabel,
+  Select,
   Skeleton,
   toast,
 } from '@kernhq/ui'
@@ -50,6 +54,12 @@ const rest = $derived(views.filter((v) => !v.pinned))
 /** The view the page is showing, so the sidebar marks it the way the nav marks a page. */
 const activeId = $derived(page.url.searchParams.get('view_id'))
 
+let editing = $state<View | null>(null)
+let draftName = $state('')
+let draftVisibility = $state<View['visibility']>('private')
+/** Named on screen before it happens, never straight off a menu. */
+let confirming = $state<View | null>(null)
+
 const invalidate = () => queryClient.invalidateQueries({ queryKey: trackerKeys.views(workspaceId) })
 const fail = (error: Error) => toast.error(error.message)
 
@@ -59,9 +69,26 @@ const pin = createMutation(() => ({
   onError: fail,
 }))
 
+/** A view can be renamed and reshared. `views.update` existed from the start and nothing called
+ * it, so a view named in a hurry kept that name and a private one stayed private. */
+const rename = createMutation(() => ({
+  mutationFn: () =>
+    api.views.update({
+      workspaceId,
+      id: editing?.id as string,
+      patch: { name: draftName.trim(), visibility: draftVisibility },
+    } as never),
+  onSuccess: () => {
+    editing = null
+    invalidate()
+  },
+  onError: fail,
+}))
+
 const remove = createMutation(() => ({
   mutationFn: (id: string) => api.views.delete({ workspaceId, id }),
   onSuccess: () => {
+    confirming = null
     invalidate()
     // Leaving the deleted view in the URL would reopen a query that no longer exists.
     if (activeId) void goto(`/${slug}/tracker`, { replaceState: true, keepFocus: true })
@@ -70,8 +97,24 @@ const remove = createMutation(() => ({
 }))
 
 /** Who may change a view: your own always, a shared one only with the permission for it. */
+const visibilityOptions = $derived([
+  { value: 'private', label: m.tracker_view_private() },
+  ...(canManageShared
+    ? [
+        { value: 'project', label: m.tracker_view_project() },
+        { value: 'workspace', label: m.tracker_view_workspace() },
+      ]
+    : []),
+])
+
 const mayEdit = (view: View) =>
   !view.builtin && (view.visibility === 'private' ? view.ownerId === session.user?.id : canManageShared)
+
+const openEditor = (view: View) => {
+  editing = view
+  draftName = view.name
+  draftVisibility = view.visibility
+}
 
 const menuFor = (view: View): MenuItem[] => [
   {
@@ -85,11 +128,19 @@ const menuFor = (view: View): MenuItem[] => [
     ? [
         {
           type: 'item' as const,
+          id: 'rename',
+          label: m.tracker_view_rename(),
+          icon: 'pencil',
+          onSelect: () => openEditor(view),
+        },
+        {
+          type: 'item' as const,
           id: 'delete',
           label: m.delete(),
           icon: 'trash-2',
           danger: true,
-          onSelect: () => remove.mutate(view.id),
+          // Asked for, not fired from a menu — the only irreversible entry in it.
+          onSelect: () => (confirming = view),
         },
       ]
     : []),
@@ -136,7 +187,84 @@ const menuFor = (view: View): MenuItem[] => [
   {/if}
 </div>
 
+<Dialog
+  open={editing !== null}
+  title={m.tracker_view_rename()}
+  size="sm"
+  onOpenChange={(next: boolean) => {
+    if (!next) editing = null
+  }}
+>
+  <div class="egrid">
+    <label class="erow">
+      <span class="elbl">{m.tracker_view_name()}</span>
+      <Input bind:value={draftName} data-testid="view-rename-name" />
+    </label>
+    <label class="erow">
+      <span class="elbl">{m.tracker_view_visibility()}</span>
+      <Select
+        value={draftVisibility}
+        options={visibilityOptions}
+        onValueChange={(v: string) => (draftVisibility = v as View['visibility'])}
+      />
+    </label>
+  </div>
+
+  {#snippet footer()}
+    <Button variant="ghost" size="sm" onclick={() => (editing = null)}>{m.cancel()}</Button>
+    <Button
+      size="sm"
+      disabled={!draftName.trim()}
+      loading={rename.isPending}
+      onclick={() => rename.mutate()}
+      data-testid="view-rename-save"
+    >
+      {m.save()}
+    </Button>
+  {/snippet}
+</Dialog>
+
+<Dialog
+  open={confirming !== null}
+  title={m.tracker_view_delete_title({ name: confirming?.name ?? '' })}
+  size="sm"
+  onOpenChange={(next: boolean) => {
+    if (!next) confirming = null
+  }}
+>
+  <p class="ebody">{m.tracker_view_delete_body()}</p>
+
+  {#snippet footer()}
+    <Button variant="ghost" size="sm" onclick={() => (confirming = null)}>{m.cancel()}</Button>
+    <Button
+      size="sm"
+      variant="danger"
+      loading={remove.isPending}
+      onclick={() => confirming && remove.mutate(confirming.id)}
+      data-testid="view-delete-confirm"
+    >
+      {m.delete()}
+    </Button>
+  {/snippet}
+</Dialog>
+
 <style>
+.egrid {
+  display: grid;
+  gap: 12px;
+}
+.erow {
+  display: grid;
+  gap: 4px;
+}
+.elbl {
+  font-size: 12px;
+  color: var(--kern-ink-550);
+}
+.ebody {
+  margin: 0;
+  font-size: 13px;
+}
 .views {
   display: flex;
   flex-direction: column;

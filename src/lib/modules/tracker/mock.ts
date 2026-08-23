@@ -1249,7 +1249,14 @@ export function createMockTrackerApi() {
       },
     },
     fields: {
-      list: async (_input: Ws) => clone(fields),
+      list: async ({ includeArchived }: Ws & { includeArchived?: boolean }) =>
+        clone(fields.filter((f) => includeArchived || !f.archivedAt)),
+      archive: async ({ id, archived }: Ws & { id: string; archived?: boolean }) => {
+        const field = fields.find((f) => f.id === id)
+        if (!field) throw new Error(`[mock] unknown field ${id}`)
+        field.archivedAt = archived === false ? null : new Date().toISOString()
+        return clone(field)
+      },
       create: async (input: Ws & { key: string; name: string; type: FieldDef['type'] }) => {
         if (fields.some((f) => f.key === input.key))
           // Same rule as the database: the key is where the value lives, so it is unique per
@@ -1507,6 +1514,18 @@ export function createMockTrackerApi() {
         issue.timeSpentSec += durationSec
         touch(issue)
         return { worklog: clone(worklog), issue: clone(issue) }
+      },
+      update: async ({ id, patch }: Ws & { id: string; patch: Record<string, unknown> }) => {
+        const worklog = state.worklogs.find((w) => w.id === id)
+        if (!worklog) throw new Error(`[mock] unknown worklog ${id}`)
+        Object.assign(worklog, patch, { updatedAt: new Date().toISOString() })
+        // The issue's total is the sum of its entries, so correcting one has to reach it.
+        const issue = state.issues.find((i) => i.id === worklog.issueId)
+        if (issue)
+          issue.timeSpentSec = state.worklogs
+            .filter((w) => w.issueId === worklog.issueId)
+            .reduce((sum, w) => sum + w.durationSec, 0)
+        return clone(worklog)
       },
       delete: async ({ id }: Ws & { id: string }) => {
         const gone = state.worklogs.find((w) => w.id === id)

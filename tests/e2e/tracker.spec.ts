@@ -364,8 +364,11 @@ test('a query can be saved as a view, pinned, reopened and deleted', async ({ pa
   await page.getByRole('menu').getByRole('menuitem', { name: 'Pin to the sidebar' }).click()
   await expect(page.getByText('Pinned')).toBeVisible()
 
+  // deleting asks first, like every other irreversible thing in the tracker
   await page.getByRole('button', { name: 'Actions for Open by priority' }).click()
   await page.getByRole('menu').getByRole('menuitem', { name: 'Delete' }).click()
+  await expect(page.getByText('Delete Open by priority?')).toBeVisible()
+  await page.getByTestId('view-delete-confirm').click()
   await expect(page.locator('[data-view-name="Open by priority"]')).toHaveCount(0)
 })
 
@@ -407,6 +410,56 @@ test('a project can be given components, versions and labels', async ({ page }) 
   await expect(page.getByText(/comes off every issue/)).toBeVisible()
   await components.getByRole('button', { name: 'Delete' }).click()
   await expect(components.locator('[data-item="Realtime gateway"]')).toHaveCount(0)
+})
+
+test('what was made in a hurry can be corrected afterwards', async ({ page }) => {
+  // `views.update`, `worklogs.update` and `fields.archive` all had a server and no control, so a
+  // view named badly kept its name, a mistyped hour stayed mistyped, and a field nobody used any
+  // more could only be deleted — which strips its value off every work item.
+  await page.goto('/northstar/tracker')
+
+  // refining a saved view offers to change it, not only to make a second copy
+  await page.getByTestId('save-view').click()
+  await page.getByTestId('view-name').fill('My open bugs')
+  await page.getByTestId('view-save').click()
+  await page.getByTestId('saved-view').filter({ hasText: 'My open bugs' }).click()
+  await expect(page.getByTestId('save-view')).toBeVisible()
+  await page.getByTestId('save-view').click()
+  await expect(page.getByTestId('view-update')).toBeVisible()
+  await page.getByTestId('view-update').click()
+
+  // and it can be renamed rather than deleted and made again
+  const row = page
+    .locator('li')
+    .filter({ has: page.getByTestId('saved-view') })
+    .first()
+  await row.getByRole('button', { name: /My open bugs/ }).click()
+  await page.getByRole('menuitem', { name: 'Rename and share' }).click()
+  await page.getByTestId('view-rename-name').fill('Open bugs')
+  await page.getByTestId('view-rename-save').click()
+  await expect(page.locator('[data-view-name="Open bugs"]')).toBeVisible()
+})
+
+test('a logged hour can be corrected, and a field retired without losing its values', async ({ page }) => {
+  await page.goto('/northstar/tracker?issue=KRN-6')
+  const time = page.getByRole('dialog').getByTestId('issue-time')
+  await time.getByRole('button', { name: 'Log time' }).click()
+  await time.getByTestId('time-amount').fill('2h')
+  await time.getByTestId('time-log').click()
+
+  // the entry is corrected in place, which keeps the day it was worked
+  await time.getByTestId('worklog-duration').first().click()
+  await time.getByTestId('worklog-edit').fill('20m')
+  await time.getByTestId('worklog-edit').press('Enter')
+  await expect(time.getByTestId('worklog-duration').first()).toHaveText('20m')
+
+  // a field is archived rather than deleted: it leaves the forms, its values stay recorded
+  await page.goto('/northstar/settings/tracker/fields')
+  const field = page.locator('li').filter({ has: page.locator('[data-field-key="severity"]') })
+  await field.getByTestId('field-archive').click()
+  await expect(page.locator('[data-field-key="severity"]')).toHaveCount(0)
+  await page.getByLabel('Show archived').check()
+  await expect(page.locator('[data-field-key="severity"]')).toBeVisible()
 })
 
 test('a workflow can be created, given a status, and pointed at a type', async ({ page }) => {

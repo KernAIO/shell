@@ -82,6 +82,37 @@ const remove = createMutation(() => ({
   onError: fail,
 }))
 
+/**
+ * Correcting an entry.
+ *
+ * `worklogs.update` existed from the start and nothing called it, so "2h" typed where "20m" was
+ * meant could only be deleted and logged again — which moves the entry to now and loses the day it
+ * was worked.
+ */
+const edit = createMutation(() => ({
+  mutationFn: (input: { id: string; durationSec: number }) =>
+    api.worklogs.update({ workspaceId, id: input.id, patch: { durationSec: input.durationSec } }),
+  onSuccess: () => {
+    editingId = null
+    refresh()
+  },
+  onError: fail,
+}))
+
+let editingId = $state<string | null>(null)
+let editDraft = $state('')
+const editParsed = $derived(parseDuration(editDraft))
+
+const startEdit = (entry: { id: string; durationSec: number }) => {
+  editingId = entry.id
+  editDraft = formatDuration(entry.durationSec)
+}
+const commitEdit = () => {
+  const id = editingId
+  if (!id || editParsed === null) return
+  edit.mutate({ id, durationSec: editParsed })
+}
+
 const parsed = $derived(parseDuration(manual))
 const elapsed = $derived(
   timer ? Math.max(0, Math.floor((Date.now() - Date.parse(timer.startedAt)) / 1000)) : 0,
@@ -142,7 +173,32 @@ const who = (userId: string) =>
     <ul class="logs">
       {#each worklogs as entry (entry.id)}
         <li>
-          <span class="dur">{formatDuration(entry.durationSec)}</span>
+          {#if editingId === entry.id}
+            <input
+              class="edur"
+              value={editDraft}
+              aria-label={m.tracker_time_edit()}
+              data-testid="worklog-edit"
+              oninput={(e) => (editDraft = e.currentTarget.value)}
+              onblur={commitEdit}
+              onkeydown={(e) => {
+                if (e.key === 'Enter') commitEdit()
+                if (e.key === 'Escape') editingId = null
+              }}
+            />
+          {:else if canLog && entry.userId === session.user?.id}
+            <button
+              type="button"
+              class="dur edit"
+              title={m.tracker_time_edit()}
+              onclick={() => startEdit(entry)}
+              data-testid="worklog-duration"
+            >
+              {formatDuration(entry.durationSec)}
+            </button>
+          {:else}
+            <span class="dur">{formatDuration(entry.durationSec)}</span>
+          {/if}
           <span class="by">{who(entry.userId)}</span>
           <time datetime={entry.startedAt}>{relativeTime(entry.startedAt)}</time>
           {#if entry.note}<span class="note">{entry.note}</span>{/if}
@@ -170,6 +226,28 @@ const who = (userId: string) =>
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+}
+.edit {
+  padding: 1px 4px;
+  margin-inline-start: -4px;
+  border: 0;
+  border-radius: var(--kern-radius-sm);
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+.edit:hover {
+  background: var(--kern-surface-hover);
+}
+.edur {
+  width: 72px;
+  padding: 1px 4px;
+  border: 1px solid var(--kern-border);
+  border-radius: var(--kern-radius-sm);
+  background: var(--kern-surface);
+  color: inherit;
+  font: inherit;
 }
 .total {
   font-size: 13px;

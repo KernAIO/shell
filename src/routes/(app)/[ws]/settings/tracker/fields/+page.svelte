@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { FieldDef } from '@kernhq/module-tracker/client'
-import { Badge, Button, EmptyState, Spinner, toast } from '@kernhq/ui'
+import { Badge, Button, Checkbox, EmptyState, Spinner, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
@@ -28,10 +28,13 @@ const canManage = $derived(canTracker('fieldManage'))
 let editing = $state<FieldDef | null>(null)
 let editorOpen = $state(false)
 let confirmingDelete = $state<FieldDef | null>(null)
+let showArchived = $state(false)
 
 const fieldsQuery = createQuery(() => ({
-  queryKey: trackerKeys.fields(workspaceId),
-  queryFn: () => api.fields.list({ workspaceId, includeArchived: false }),
+  // The toggle is part of the key: without it the cached list is served and the switch does
+  // nothing until something else happens to invalidate it.
+  queryKey: [...trackerKeys.fields(workspaceId), showArchived],
+  queryFn: () => api.fields.list({ workspaceId, includeArchived: showArchived }),
   enabled: Boolean(workspaceId),
 }))
 const fields = $derived(fieldsQuery.data ?? [])
@@ -65,6 +68,19 @@ const remove = createMutation(() => ({
   onError: fail,
 }))
 
+/**
+ * Archiving, which the page could not do.
+ *
+ * Deleting a field strips its value off every work item; archiving takes it off every form and
+ * leaves what was already recorded. Almost every "we do not use this any more" is the second one,
+ * and it was the one that had no control.
+ */
+const archive = createMutation(() => ({
+  mutationFn: (input: { id: string; archived: boolean }) => api.fields.archive({ workspaceId, ...input }),
+  onSuccess: invalidate,
+  onError: fail,
+}))
+
 const openNew = () => {
   editing = null
   editorOpen = true
@@ -77,6 +93,11 @@ const openEdit = (field: FieldDef) => {
 
 <SettingsPage title={m.tracker_settings_fields()} description={m.tracker_settings_fields_hint()}>
   {#snippet actions()}
+    <Checkbox
+      checked={showArchived}
+      label={m.tracker_field_show_archived()}
+      onCheckedChange={(on: boolean) => (showArchived = on)}
+    />
     {#if canManage}
       <Button size="sm" onclick={openNew} data-testid="new-field">{m.tracker_field_new()}</Button>
     {/if}
@@ -113,8 +134,27 @@ const openEdit = (field: FieldDef) => {
               <span class="ftype">{field.type}</span>
               {#if field.required}<Badge tone="warning">{m.tracker_field_required()}</Badge>{/if}
               {#if field.projectId}<Badge>{m.tracker_field_project_scoped()}</Badge>{/if}
+              {#if field.archivedAt}<Badge tone="grey">{m.tracker_field_archived()}</Badge>{/if}
             </button>
             {#if canManage}
+              {#if field.archivedAt}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onclick={() => archive.mutate({ id: field.id, archived: false })}
+                >
+                  {m.tracker_field_restore()}
+                </Button>
+              {:else}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onclick={() => archive.mutate({ id: field.id, archived: true })}
+                  data-testid="field-archive"
+                >
+                  {m.archive()}
+                </Button>
+              {/if}
               <Button
                 size="sm"
                 variant="ghost"

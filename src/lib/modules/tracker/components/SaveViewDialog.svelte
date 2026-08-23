@@ -12,6 +12,10 @@ import { trackerKeys } from '../query'
  * The view captures what the page is showing — the KQL, the layout and the grouping — because that
  * is what somebody means by "this view". Anything they change afterwards is a different view until
  * they save it again.
+ *
+ * When the page is already showing a saved view, saving offers to change that view as well as to
+ * make a new one. Without the first, refining a view you had saved silently produced a second copy
+ * of it, and a sidebar filled with "My bugs 2".
  */
 interface Props {
   open: boolean
@@ -19,9 +23,11 @@ interface Props {
   kql: string
   layout: 'list' | 'board'
   groupBy: string
+  /** the saved view the page is showing, when it is showing one you may change */
+  editing?: { id: string; name: string } | null
   onclose: () => void
 }
-let { open, workspaceId, kql, layout, groupBy, onclose }: Props = $props()
+let { open, workspaceId, kql, layout, groupBy, editing = null, onclose }: Props = $props()
 
 const api = getTrackerApi()
 const queryClient = useQueryClient()
@@ -47,6 +53,24 @@ const options = $derived([
     : []),
 ])
 
+const done = (view: { name: string }) => {
+  void queryClient.invalidateQueries({ queryKey: trackerKeys.views(workspaceId) })
+  toast.success(m.tracker_view_saved({ name: view.name }))
+  onclose()
+}
+
+/** Changing the view that is open: the same query the page is showing, under the same name. */
+const update = createMutation(() => ({
+  mutationFn: () =>
+    api.views.update({
+      workspaceId,
+      id: editing?.id as string,
+      patch: { kql, layout, display: { groupBy } },
+    } as never),
+  onSuccess: done,
+  onError: (error: Error) => toast.error(error.message),
+}))
+
 const save = createMutation(() => ({
   mutationFn: () =>
     api.views.create({
@@ -57,18 +81,14 @@ const save = createMutation(() => ({
       display: { groupBy },
       visibility,
     } as never),
-  onSuccess: (view: { name: string }) => {
-    void queryClient.invalidateQueries({ queryKey: trackerKeys.views(workspaceId) })
-    toast.success(m.tracker_view_saved({ name: view.name }))
-    onclose()
-  },
+  onSuccess: done,
   onError: (error: Error) => toast.error(error.message),
 }))
 </script>
 
 <Dialog
   {open}
-  title={m.tracker_view_save()}
+  title={editing ? m.tracker_view_save_changes() : m.tracker_view_save()}
   size="sm"
   onOpenChange={(next: boolean) => {
     if (!next) onclose()
@@ -92,6 +112,17 @@ const save = createMutation(() => ({
 
   {#snippet footer()}
     <Button variant="ghost" size="sm" onclick={onclose}>{m.cancel()}</Button>
+    {#if editing}
+      <Button
+        variant="ghost"
+        size="sm"
+        loading={update.isPending}
+        onclick={() => update.mutate()}
+        data-testid="view-update"
+      >
+        {m.tracker_view_update({ name: editing.name })}
+      </Button>
+    {/if}
     <Button
       size="sm"
       disabled={!name.trim()}
@@ -99,7 +130,7 @@ const save = createMutation(() => ({
       onclick={() => save.mutate()}
       data-testid="view-save"
     >
-      {m.save()}
+      {editing ? m.tracker_view_save_as_new() : m.save()}
     </Button>
   {/snippet}
 </Dialog>

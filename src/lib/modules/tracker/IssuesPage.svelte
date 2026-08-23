@@ -65,6 +65,26 @@ const layout = $derived(params.get('view') === 'board' ? 'board' : 'list')
 const groupBy = $derived(params.get('group') ?? 'status')
 const preset = $derived((params.get('preset') ?? 'all') as Preset)
 const manualKql = $derived(params.get('q') ?? '')
+/**
+ * The saved view the page is showing, when it is one this person may change.
+ *
+ * Without this, refining a saved view and pressing Save quietly produced a second copy of it —
+ * the URL knew which view was open and the dialog did not.
+ */
+const viewsQuery = createQuery(() => ({
+  queryKey: trackerKeys.views(workspaceId),
+  queryFn: () => tracker.views.list({ workspaceId }),
+  enabled: Boolean(workspaceId),
+}))
+const canManageShared = $derived(canTracker('viewManageShared'))
+
+const editingView = $derived.by(() => {
+  const id = params.get('view_id')
+  const view = id ? viewsQuery.data?.find((v) => v.id === id) : undefined
+  if (!view || view.builtin) return null
+  const mine = view.visibility === 'private' ? view.ownerId === session.user?.id : canManageShared
+  return mine ? { id: view.id, name: view.name } : null
+})
 const openIssueKey = $derived(params.get('issue'))
 /** `?new=1` lets the command palette and any deep link open the create dialog. */
 const newRequested = $derived(params.get('new') === '1')
@@ -527,6 +547,7 @@ $effect(() => {
     kql={manualKql}
     layout={layout === 'board' ? 'board' : 'list'}
     {groupBy}
+    editing={editingView}
     onclose={() => (savingView = false)}
   />
 
