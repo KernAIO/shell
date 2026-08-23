@@ -174,3 +174,12 @@ in-memory API with demo data — no backend, no database.
 - **`scripts/check-icons.mjs` reads `icon="…"`, `icon: '…'` and any `const *ICONS = [...]`.** A name
   reaching `<Icon>` through some other variable is unchecked, and an unregistered name renders as a
   blank square and throws nothing. If you build a picker, name its list `…ICONS`.
+- **Never `git checkout` a file in this worktree.** Parallel agents share it, and `git checkout
+  <file>` overwrites the working copy from the index — which for a file somebody else is editing
+  discards work that was never committed and cannot be got back. Undoing a deliberate edit of your
+  own means `cp` from a copy you made first. One `git checkout messages/fa.json`, to revert a
+  two-line test edit, destroyed 212 uncommitted Persian translations; 72 came back out of dangling
+  objects (`git fsck --unreachable`) and the other 140 had to be written again.
+- **`node scripts/check-i18n.mjs` before saying a screen is done.** It is in `pnpm lint`, and it is
+  the only thing that sees a locale gap: Paraglide compiles a missing key to a silent English alias,
+  so nothing else — not the compiler, not the build, not a test — ever notices.
