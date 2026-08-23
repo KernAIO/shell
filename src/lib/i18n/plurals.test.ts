@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { members_count, tracker_issues_count } from '../paraglide/messages.js'
+import type { Locale } from '../paraglide/runtime.js'
 
 /**
  * Plurals, per locale, against the compiled catalogue.
@@ -10,7 +11,7 @@ import { members_count, tracker_issues_count } from '../paraglide/messages.js'
  * *key*, so a reader sees `tracker_issues_count` where a sentence belongs. Arabic has six plural
  * categories and reaches that state on the number two.
  */
-const count = (n: number, locale: string) => tracker_issues_count({ count: n }, { locale })
+const count = (n: number, locale: Locale) => tracker_issues_count({ count: n }, { locale })
 
 describe('plural variants', () => {
   it('inflects English on one', () => {
@@ -41,7 +42,7 @@ describe('plural variants', () => {
 
   it('never renders a message key', () => {
     // The regression that matters: a key on screen instead of a sentence.
-    for (const locale of ['en', 'fa', 'ar', 'de']) {
+    for (const locale of ['en', 'fa', 'ar', 'de'] as const) {
       for (const n of [0, 1, 2, 3, 6, 11, 100, 101]) {
         expect(count(n, locale)).not.toContain('tracker_issues_count')
         expect(members_count({ count: n }, { locale })).not.toContain('members_count')
