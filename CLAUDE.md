@@ -183,3 +183,15 @@ in-memory API with demo data — no backend, no database.
 - **`node scripts/check-i18n.mjs` before saying a screen is done.** It is in `pnpm lint`, and it is
   the only thing that sees a locale gap: Paraglide compiles a missing key to a silent English alias,
   so nothing else — not the compiler, not the build, not a test — ever notices.
+- **A counted message is a variant message, not a string with `{count}` in it.** The plugin's shape
+  is a one-element array carrying `declarations`, `selectors` and `match`; `local n = count: number`
+  is what puts the number through `Intl`, which is the only reason a Persian screen reads «۱۱ کار»
+  and not "11 کار". When no branch matches the count, Paraglide returns **the message key**, so a
+  short variant map puts `tracker_issues_count` on the screen — worse than falling back to English,
+  and invisible at n=1. `check-i18n.mjs` compares each variant against
+  `Intl.PluralRules(locale).pluralCategories`; Persian needs `one` *and* `other` even though both
+  read the same, and Arabic needs all six.
+- **Message JSON written by a script must be biome-formatted before it is committed.** Biome
+  collapses short arrays onto one line and `json.dumps` does not, so a catalogue edited by a script
+  passes every i18n check and fails `pnpm lint` on formatting alone. Run
+  `pnpm exec biome format --write messages/` after any script that writes them.
