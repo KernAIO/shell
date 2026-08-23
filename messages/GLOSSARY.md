@@ -6,28 +6,32 @@ string, "{count} issues", and were once rendered «{count} کار» and «{count
 
 Add a row when you settle a product noun. Check here before inventing one.
 
+The same pass found German rendering "work item" as «Vorgang» everywhere except two dashboard
+widgets, which said «Aufgaben» — one noun, two words, in the screens most likely to be read side by
+side. A glossary row is what stops the second word being invented.
+
 ## Product nouns
 
-| English | فارسی | العربية | Deutsch | Note |
-|---|---|---|---|---|
-| issue | کار | مهمة | Vorgang | what a team tracks; the everyday word |
-| work item type | نوع مورد | نوع العنصر | Vorgangstyp | the configurable kind — «مورد» is the item, «کار» the work |
-| workspace | فضای کاری | مساحة العمل | Workspace | |
-| project | پروژه | مشروع | Projekt | |
-| workflow | گردش کار | سير العمل | Workflow | |
-| status | وضعیت | حالة | Status | |
-| transition | جابه‌جایی | انتقال | Übergang | a move between statuses |
-| cycle | چرخه | دورة | Zyklus | a sprint, whatever a team calls it |
-| milestone | نقطه عطف | معلم | Meilenstein | |
-| backlog | بک‌لاگ | قائمة الانتظار | Backlog | |
-| triage | بررسی اولیه | فرز | Triage | |
-| label | برچسب | تسمية | Label | |
-| field | فیلد | حقل | Feld | a custom field |
-| view | نما | عرض | Ansicht | a saved query |
-| board | تخته | لوحة | Board | |
-| channel | کانال | قناة | Kanal | |
-| plan | طرح | خطة | Tarif | billing |
-| seat | کاربر | مستخدم | Nutzer | never «صندلی» — it is a person, not furniture |
+| English | فارسی | العربية | Deutsch | Türkçe | Note |
+|---|---|---|---|---|---|
+| issue | کار | مهمة | Vorgang | İş | what a team tracks; the everyday word |
+| work item type | نوع مورد | نوع العنصر | Vorgangstyp | İş türü | the configurable kind — «مورد» is the item, «کار» the work |
+| workspace | فضای کاری | مساحة العمل | Workspace | Çalışma alanı | German keeps the English word |
+| project | پروژه | مشروع | Projekt | Proje | |
+| workflow | گردش کار | سير العمل | Workflow | İş akışı | |
+| status | وضعیت | حالة | Status | Durum | |
+| transition | جابه‌جایی | انتقال | Übergang | Geçiş | a move between statuses |
+| cycle | چرخه | دورة | Zyklus | Döngü | a sprint, whatever a team calls it |
+| milestone | نقطه عطف | معلم | Meilenstein | Kilometre taşı | |
+| backlog | بک‌لاگ | قائمة الانتظار | Backlog | Backlog | |
+| triage | بررسی اولیه | فرز | Triage | Triyaj | |
+| label | برچسب | تسمية | Label | Etiket | |
+| field | فیلد | حقل | Feld | Alan | a custom field |
+| view | نما | عرض | Ansicht | Görünüm | a saved query |
+| board | تخته | لوحة | Board | Pano | |
+| channel | کانال | قناة | Kanal | Kanal | |
+| plan | طرح | خطة | Tarif | Tarife | billing |
+| seat | کاربر | مستخدم | Nutzer | Kullanıcı | never «صندلی» — it is a person, not furniture |
 
 ## Spelling and orthography
 

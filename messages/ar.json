@@ -613,7 +613,7 @@
   "integrations_mail_desc": "أرسل بريد مساحة العمل عبر مزوّدك الخاص",
   "integrations_soon": "قريباً",
   "integrations_title": "التكاملات",
-  "integrations_webhooks": "Webhooks",
+  "integrations_webhooks": "ويب هوك",
   "integrations_webhooks_desc": "أحداث صادرة موقّعة لخدماتك الخاصة",
   "invite_accept": "قبول الدعوة",
   "invite_body": "دعا {inviter} البريد {email} للتعاون في {workspace}.",
