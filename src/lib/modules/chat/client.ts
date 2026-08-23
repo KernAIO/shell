@@ -18,6 +18,60 @@ export const chatClientModule = defineClientModule({
   name: 'Chat',
   icon: 'message-circle',
 
+  widgets: [
+    {
+      id: 'chat.unread',
+      get title() {
+        return m.widget_chat_title()
+      },
+      get description() {
+        return m.widget_chat_desc()
+      },
+      icon: 'message-square-text',
+      permission: CHAT_PERMISSIONS.view,
+      sizes: ['m', 'l', 'xl'],
+      defaultSize: 'm',
+      order: 10,
+      settings: [
+        {
+          kind: 'toggle',
+          key: 'mentionsOnly',
+          get label() {
+            return m.widget_chat_mentions_only()
+          },
+          default: false,
+        },
+        {
+          kind: 'number',
+          key: 'limit',
+          get label() {
+            return m.widget_setting_rows()
+          },
+          default: 6,
+          min: 3,
+          max: 15,
+        },
+      ],
+      component: () => import('./widgets/UnreadChatWidget.svelte'),
+    },
+    {
+      id: 'chat.stat-unread',
+      get title() {
+        return m.widget_chat_unread_title()
+      },
+      get description() {
+        return m.widget_chat_unread_desc()
+      },
+      icon: 'message-circle',
+      permission: CHAT_PERMISSIONS.view,
+      sizes: ['s'],
+      defaultSize: 's',
+      compact: true,
+      order: 20,
+      component: () => import('./widgets/UnreadCountWidget.svelte'),
+    },
+  ],
+
   nav: [
     {
       id: 'chat',

@@ -142,3 +142,14 @@ export function docFromText(text: string): RichDoc | null {
     })),
   }
 }
+
+/**
+ * Whether a document has nothing in it.
+ *
+ * The editor stores an empty document as `null`, but a document that once had text and was cleared
+ * arrives as a doc holding one empty paragraph — perfectly truthy, and the reason a "Send" button
+ * that only checked for `null` stayed enabled on an empty comment.
+ */
+export function isEmptyDoc(doc: RichDoc | null | undefined): boolean {
+  return !doc || textFromDoc(doc).trim() === ''
+}

@@ -3,6 +3,7 @@ import type { Issue } from '@kernhq/module-tracker/client'
 import { Avatar, AvatarStack, Icon } from '@kernhq/ui'
 import * as m from '$msg'
 import { getTrackerCatalogue } from '../context.svelte'
+import { estimateLabel } from '../labels'
 import DueDate from './DueDate.svelte'
 import PriorityGlyph from './PriorityGlyph.svelte'
 import StatusIcon from './StatusIcon.svelte'
@@ -68,7 +69,7 @@ const assignees = $derived(issue.assigneeIds.map((id) => cat.person(id)).filter(
   {/if}
 
   <span class="cell est">
-    {#if issue.estimate !== null}{m.tracker_points({ count: issue.estimate })}{/if}
+    {#if issue.estimate !== null}{estimateLabel(issue.estimate, issue.estimateUnit)}{/if}
   </span>
 
   <span class="cell due">

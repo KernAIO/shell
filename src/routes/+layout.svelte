@@ -3,6 +3,7 @@ import { Toaster, TooltipProvider } from '@kernhq/ui'
 import { QueryClientProvider } from '@tanstack/svelte-query'
 import '@kernhq/ui/styles/index.css'
 import '../app.css'
+import { loadTimezoneCities } from '$lib/i18n/timezones.svelte'
 import { getLocale } from '$lib/paraglide/runtime'
 import { createQueryClient } from '$lib/query'
 import { theme } from '$lib/state/theme.svelte'
@@ -21,6 +22,8 @@ $effect(() => {
 })
 // referenced so the theme singleton initialises with the layout
 $effect(() => void theme.resolved)
+// the clock and the zone pickers name cities in the reader's language; fetch that language's list
+loadTimezoneCities()
 </script>
 
 <QueryClientProvider client={queryClient}>

@@ -1,4 +1,5 @@
 import type {
+  Component,
   Cycle,
   FieldDef,
   Label,
@@ -30,6 +31,7 @@ export class TrackerCatalogue {
   labels = $state<Label[]>([])
   cycles = $state<Cycle[]>([])
   milestones = $state<Milestone[]>([])
+  components = $state<Component[]>([])
   people = $state<Person[]>([])
   /** The workspace's custom fields, so cards and group headings can read a value's label. */
   fields = $state<FieldDef[]>([])
@@ -40,6 +42,7 @@ export class TrackerCatalogue {
   #labels = $derived(new Map(this.labels.map((l) => [l.id, l])))
   #cycles = $derived(new Map(this.cycles.map((c) => [c.id, c])))
   #milestones = $derived(new Map(this.milestones.map((ms) => [ms.id, ms])))
+  #components = $derived(new Map(this.components.map((c) => [c.id, c])))
   #people = $derived(new Map(this.people.map((p) => [p.id, p])))
   #fields = $derived(new Map(this.fields.map((f) => [f.key, f])))
 
@@ -49,6 +52,7 @@ export class TrackerCatalogue {
   label = (id: string | null | undefined) => (id ? this.#labels.get(id) : undefined)
   cycle = (id: string | null | undefined) => (id ? this.#cycles.get(id) : undefined)
   milestone = (id: string | null | undefined) => (id ? this.#milestones.get(id) : undefined)
+  component = (id: string | null | undefined) => (id ? this.#components.get(id) : undefined)
   person = (id: string | null | undefined) => (id ? this.#people.get(id) : undefined)
   field = (key: string | null | undefined) => (key ? this.#fields.get(key) : undefined)
 
@@ -66,6 +70,19 @@ export class TrackerCatalogue {
     if (field.type === 'user' || field.type === 'multiuser') return this.person(value)?.name ?? value
     return value
   }
+
+  /**
+   * What a sum of estimates is said in.
+   *
+   * Per-issue the unit comes off the issue, but a group heading adds several up: they can only be
+   * added at all when the projects in view agree, and where they do not, points is what a mixed sum
+   * already meant.
+   */
+  estimateUnit = $derived.by<'points' | 'hours' | 'none'>(() => {
+    const units = new Set(this.projects.map((p) => p.settings.estimation))
+    const only = units.size === 1 ? [...units][0] : null
+    return only === 'hours' ? 'hours' : 'points'
+  })
 
   /** The active cycle drives the sprint progress bar in the header. */
   activeCycle = $derived(this.cycles.find((c) => c.status === 'active') ?? null)

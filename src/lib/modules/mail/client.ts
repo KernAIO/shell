@@ -17,6 +17,72 @@ export const mailClientModule = defineClientModule({
   name: 'Mail',
   icon: 'mail',
 
+  widgets: [
+    {
+      id: 'mail.deliveries',
+      get title() {
+        return m.widget_mail_title()
+      },
+      get description() {
+        return m.widget_mail_desc()
+      },
+      icon: 'mail',
+      permission: MAIL_PERMISSIONS.deliveriesView,
+      sizes: ['m', 'l', 'xl'],
+      defaultSize: 'l',
+      order: 10,
+      settings: [
+        {
+          kind: 'select',
+          key: 'status',
+          get label() {
+            return m.widget_setting_status()
+          },
+          default: null,
+          nullable: true,
+          get nullLabel() {
+            return m.dash_any()
+          },
+          get options() {
+            return [
+              { value: 'queued', label: m.widget_mail_queued() },
+              { value: 'sent', label: m.widget_mail_sent() },
+              { value: 'failed', label: m.widget_mail_failed() },
+              { value: 'bounced', label: m.widget_mail_bounced() },
+            ]
+          },
+        },
+        {
+          kind: 'number',
+          key: 'limit',
+          get label() {
+            return m.widget_setting_rows()
+          },
+          default: 8,
+          min: 3,
+          max: 20,
+        },
+      ],
+      component: () => import('./widgets/DeliveriesWidget.svelte'),
+    },
+    {
+      id: 'mail.stat-failed',
+      get title() {
+        return m.widget_mail_failed_title()
+      },
+      get description() {
+        return m.widget_mail_failed_desc()
+      },
+      icon: 'circle-alert',
+      permission: MAIL_PERMISSIONS.deliveriesView,
+      sizes: ['s'],
+      defaultSize: 's',
+      compact: true,
+      order: 20,
+      component: () => import('./widgets/FailedWidget.svelte'),
+    },
+  ],
+
   settingsPages: [
     {
       id: 'mail',

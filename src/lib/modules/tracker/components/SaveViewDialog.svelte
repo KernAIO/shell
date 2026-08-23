@@ -143,7 +143,7 @@ const save = createMutation(() => ({
 .preview {
   margin: 0;
   padding: 6px 8px;
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-shell);
   font-family: var(--kern-font-mono);
   font-size: 12px;

@@ -837,3 +837,105 @@ test('a spreadsheet is mapped column by column before anything is imported', asy
   // a failing row is shown rather than buried in a count
   await expect(page.getByText('Row 3 has no title')).toBeVisible()
 })
+
+test('the sidebar is the tracker: what you make, what you look at, and every project', async ({ page }) => {
+  // The sidebar used to hold saved views and nothing else, so a project could only be reached by
+  // typing KQL and the ways it plans its work had no route at all.
+  await openTracker(page)
+
+  // the module owns the control strip, so what a tracker makes is where the sidebar starts
+  await expect(page.getByTestId('sidebar-new-issue')).toBeVisible()
+
+  // the workspace's own ways of looking, each a query the URL carries
+  await page.getByTestId('tracker-nav-mine').click()
+  await expect(page).toHaveURL(/preset=assigned/)
+  await page.getByTestId('tracker-nav-projects').click()
+  await expect(page).toHaveURL(/group=project/)
+  await expect(page.getByTestId('group-by')).toContainText('Project')
+
+  // a project is a heading with its own pages underneath
+  const project = page.getByTestId('sidebar-project').filter({ hasText: 'Kern Platform' })
+  await expect(project).toBeVisible()
+  const components = page.locator('[data-testid="project-components"][data-project="KRN"]')
+  await components.click()
+
+  // components are made and managed on a page, not sorted into an issue list
+  await expect(page).toHaveURL(/tracker\/projects\/KRN\/components/)
+  await expect(page.getByRole('heading', { name: 'Components', level: 1 })).toBeVisible()
+  await expect(page.getByTestId('component-table')).toContainText('Sync engine')
+
+  // folding a project away hides its rows and keeps the heading
+  await project.click()
+  await expect(components).toHaveCount(0)
+  await expect(project).toBeVisible()
+  await project.click()
+  await expect(components).toBeVisible()
+})
+
+test('a project page is where its parts are made, not another sorting of the list', async ({ page }) => {
+  // Components, milestones and cycles had one cramped settings screen between them and no route
+  // from the work itself — and a milestone could not be given the date that is the point of it.
+  await page.goto('/northstar/tracker/projects/KRN/components')
+  await expect(page.getByRole('heading', { name: 'Components', level: 1 })).toBeVisible()
+
+  // a component carries a lead and what it is, not just a name
+  await page.getByTestId('component-new').click()
+  await page.getByTestId('component-name').fill('Search index')
+  await page.getByTestId('component-description').fill('Everything behind the search box')
+  await page.getByTestId('component-save').click()
+  const row = page.locator('[data-item="Search index"]')
+  await expect(row).toBeVisible()
+  await expect(row).toContainText('Everything behind the search box')
+
+  // a milestone is a date and a goal, on its own page
+  await page.goto('/northstar/tracker/projects/KRN/milestones')
+  await expect(page.getByRole('heading', { name: 'Milestones', level: 1 })).toBeVisible()
+  await page.getByTestId('milestone-new').click()
+  await page.getByTestId('milestone-name').fill('Public beta')
+  await page.getByTestId('milestone-date').fill('2026-11-30')
+  await page.getByTestId('milestone-goal').fill('Everything a pilot needs')
+  await page.getByTestId('milestone-save').click()
+  const card = page.locator('[data-testid="plan-card"][data-item="Public beta"]')
+  await expect(card).toBeVisible()
+  await expect(card).toContainText('Nov 30, 2026')
+  await expect(card).toContainText('Everything a pilot needs')
+
+  // and the card opens the work that is in it
+  await card.getByRole('link', { name: 'Public beta' }).click()
+  await expect(page).toHaveURL(/milestone/)
+
+  // a template says what the issue it raises is called; `templates.create` had never been called
+  await page.goto('/northstar/tracker/projects/KRN/templates')
+  await page.getByTestId('template-new').click()
+  await page.getByTestId('template-name').fill('Incident review')
+  await page.getByTestId('template-title').fill('Incident review: ')
+  await page.getByTestId('template-save').click()
+  await expect(page.locator('[data-item="Incident review"]')).toContainText('Incident review: ')
+})
+
+test('the sidebar opens what it names: a new issue, a new project, a saved view', async ({ page }) => {
+  await openTracker(page)
+
+  // raising an issue from the sidebar keeps the list underneath rather than jumping to a blank page
+  await page.getByTestId('tracker-nav-mine').click()
+  await expect(page).toHaveURL(/preset=assigned/)
+  await page.getByTestId('sidebar-new-issue').click()
+  await expect(page.getByTestId('new-issue-title')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page).toHaveURL(/preset=assigned/)
+  // the parameter that opened it is taken back off, so a reload does not open it again
+  await expect(page).not.toHaveURL(/new=1/)
+
+  // "+" beside the saved views saves what is on screen
+  await page.getByTestId('sidebar-save-view').click()
+  await expect(page.getByTestId('view-name')).toBeVisible()
+  await page.getByTestId('view-name').fill('Mine, from the sidebar')
+  await page.getByTestId('view-save').click()
+  await expect(page.locator('[data-view-name="Mine, from the sidebar"]')).toBeVisible()
+
+  // and the project menu lands on the project you clicked, not on whichever is first
+  await page.getByRole('button', { name: 'Actions for Realtime' }).click()
+  await page.getByRole('menuitem', { name: 'Project settings' }).click()
+  await expect(page).toHaveURL(/settings\/tracker\/projects\?project=/)
+  await expect(page.getByTestId('project-name')).toHaveValue('Realtime')
+})

@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { ChannelView, ChatStore } from '@kernhq/module-chat/client'
 import { Avatar, Icon, SectionLabel } from '@kernhq/ui'
+import { formatCount } from '$lib/format'
 import * as m from '$msg'
 import { kindOf } from '../labels'
 
@@ -80,12 +81,12 @@ const otherUser = (c: ChannelView) => {
               {/if}
               <span class="name">{store.channelLabel(c)}</span>
               {#if mentions > 0 && !muted}
-                <span class="badge glow">{mentions}</span>
+                <span class="badge glow">{formatCount(mentions)}</span>
               {:else if unread > 0 && !muted}
-                <span class="badge glow">{unread > 99 ? '99+' : unread}</span>
+                <span class="badge glow">{formatCount(unread)}</span>
               {:else if unread > 0 && muted}
                 <!-- muted still counts, quietly: the point of muting is that it does not shout -->
-                <span class="badge">{unread > 99 ? '99+' : unread}</span>
+                <span class="badge">{formatCount(unread)}</span>
               {:else if muted}
                 <Icon name="bell-off" size={13} strokeWidth={1.6} class="mute-mark" />
               {/if}
@@ -161,14 +162,19 @@ const otherUser = (c: ChannelView) => {
   /* DESIGN.md 2.3 badge: the "count" variant, and "glow" when it is unread or a mention. */
   .badge {
     flex: none;
-    padding: 1px 6px;
-    border-radius: 5px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    height: 16px;
+    min-width: 17px;
+    padding: 0 5px;
+    line-height: 1;
+    border-radius: var(--kern-r-full);
     background: var(--kern-surface-active);
     color: var(--kern-ink-400);
     font-family: var(--kern-font-mono);
     font-size: 10.5px;
     font-weight: 500;
-    line-height: 1.5;
   }
   .badge.glow {
     background: var(--kern-danger);

@@ -59,6 +59,18 @@ const MODULE_PERMISSIONS = [
     dangerous: false,
   },
   { key: 'tracker.workflow.manage', label: 'Change workflows', module: 'tracker', dangerous: true },
+  {
+    key: 'billing.subscription.view',
+    label: 'View the plan and what it costs',
+    module: 'billing',
+    dangerous: false,
+  },
+  {
+    key: 'billing.subscription.manage',
+    label: 'Change the plan and the payment method',
+    module: 'billing',
+    dangerous: true,
+  },
   { key: 'chat.channel.view', label: 'Browse channels', module: 'chat', dangerous: false },
   { key: 'chat.channel.create', label: 'Create channels', module: 'chat', dangerous: false },
   { key: 'chat.message.post', label: 'Post messages', module: 'chat', dangerous: false },
@@ -236,6 +248,15 @@ const members = [
   { userId: people[2]!.id, role: 'member', title: 'Design' as string | null, status: 'active' },
 ]
 
+const MOCK_VERSION = '1.1.0'
+const MOCK_LATEST = '1.2.0'
+let mockPolicy = {
+  mode: 'notify' as 'off' | 'notify' | 'auto',
+  window: { start: '03:00', end: '05:00' },
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  minReleaseAgeHours: 72,
+}
+
 const moduleManifests = [
   {
     id: 'core',
@@ -291,6 +312,19 @@ const moduleManifests = [
     hasSettings: false,
   },
   {
+    id: 'billing',
+    name: 'Billing',
+    version: '0.1.0',
+    description: 'Plans, entitlements and subscriptions — what lets an instance sell seats on itself',
+    icon: 'credit-card',
+    core: false,
+    dependsOn: ['core'],
+    permissionCount: 2,
+    eventCount: 3,
+    objectTypeCount: 0,
+    hasSettings: true,
+  },
+  {
     id: 'mail',
     name: 'Mail',
     version: '0.1.0',
@@ -319,6 +353,62 @@ const moduleManifests = [
 ]
 
 /** Shapes a seed entry like the manifest the real API returns. */
+/** One release ahead of the mock instance: tracker moves, chat is new, everything else stands still. */
+const mockRelease = {
+  version: MOCK_LATEST,
+  channel: 'stable' as const,
+  publishedAt: '2026-08-20T09:00:00.000Z',
+  notesUrl: `https://github.com/KernAIO/kern/releases/tag/v${MOCK_LATEST}`,
+  services: { app: MOCK_LATEST, core: MOCK_LATEST, chat: MOCK_LATEST },
+  modules: Object.fromEntries(
+    moduleManifests.map((mod) => [mod.id, mod.id === 'tracker' ? '0.2.0' : mod.version]),
+  ) as Record<string, string>,
+  minPreviousVersion: '1.0.0',
+  schemaChanges: 'additive' as const,
+  requiredEnv: [] as string[],
+}
+
+function mockUpdateStatus() {
+  const current = moduleManifests.map((mod) => ({ id: mod.id, version: mod.version }))
+  const on = mockPolicy.mode !== 'off'
+  const plan = {
+    shouldUpgrade: false,
+    version: on ? MOCK_LATEST : null,
+    reason:
+      mockPolicy.mode === 'off'
+        ? 'Automatic updates are off'
+        : mockPolicy.mode === 'notify'
+          ? 'Automatic updates are set to notify only'
+          : `Outside the update window (${mockPolicy.window.start}–${mockPolicy.window.end} ${mockPolicy.timezone})`,
+    policy: mockPolicy,
+  }
+  return {
+    policy: mockPolicy,
+    lastAttempt: null,
+    nextAttemptAt: mockPolicy.mode === 'auto' ? new Date(Date.now() + 6 * 3_600_000).toISOString() : null,
+    plan: on ? plan : null,
+    checkedAt: on ? new Date(Date.now() - 42 * 60_000).toISOString() : null,
+    lastError: null,
+    current: { version: MOCK_VERSION, modules: current },
+    latest: on ? mockRelease : null,
+    updateAvailable: on,
+    moduleChanges: on
+      ? current.map((mod) => ({
+          moduleId: mod.id,
+          from: mod.version,
+          to: mockRelease.modules[mod.id] ?? null,
+          kind: (mockRelease.modules[mod.id] === mod.version ? 'unchanged' : 'changed') as
+            | 'added'
+            | 'changed'
+            | 'removed'
+            | 'unchanged',
+        }))
+      : [],
+    blockers: [] as Array<{ code: string; message: string }>,
+    command: on ? `cd ~/kern && ./kern-upgrade.sh ${MOCK_LATEST}` : null,
+  }
+}
+
 const manifestOf = (m: (typeof moduleManifests)[number]) => ({
   id: m.id,
   name: m.name,
@@ -374,12 +464,28 @@ export function createMockApi() {
   let fileCounter = 0
   const fileId = (n: number) => `01920000-0000-7000-8003-${String(n).padStart(12, '0')}`
 
+  /** Mirrors `DashboardLayout` in the contract, minus what the mock has no opinion about. */
+  type MockDashboardLayout = {
+    items: Array<Record<string, unknown>>
+    presetId: string | null
+    updatedAt: string
+  }
+
   const state = {
     notifications: clone(notifications),
     workspaces: clone(workspaces),
     members: clone(members),
     enabled: new Map<string, Set<string>>(),
     invitations: [] as Array<Record<string, unknown>>,
+    dashboards: new Map<
+      string,
+      {
+        policy: 'locked' | 'default' | 'open'
+        defaultPresetId: string
+        workspace: MockDashboardLayout | null
+        personal: Map<string, MockDashboardLayout>
+      }
+    >(),
     roles: [
       {
         id: id(400),
@@ -414,7 +520,7 @@ export function createMockApi() {
   const enabledFor = (workspaceId: string) => {
     let set = state.enabled.get(workspaceId)
     if (!set) {
-      set = new Set(['core', 'chat', 'tracker', 'mail'])
+      set = new Set(['core', 'chat', 'tracker', 'mail', 'billing'])
       state.enabled.set(workspaceId, set)
     }
     return set
@@ -439,7 +545,12 @@ export function createMockApi() {
   }
 
   return {
-    health: async () => ({ ok: true, service: 'mock', version: '0.1.0', modules: ['core'] }),
+    health: async () => ({
+      ok: true,
+      service: 'mock',
+      version: MOCK_VERSION,
+      modules: moduleManifests.map((mod) => ({ id: mod.id, version: mod.version })),
+    }),
 
     users: {
       me: async () => ({
@@ -701,6 +812,111 @@ export function createMockApi() {
       }),
     },
 
+    /**
+     * The dashboard, including every branch of the policy resolution table — the e2e suite drives
+     * `locked` and its refusal through here, so a mock that only implemented the happy path would
+     * make the one rule worth testing untestable.
+     */
+    dashboard: (() => {
+      const bucket = (workspaceId: string) => {
+        let b = state.dashboards.get(workspaceId)
+        if (!b) {
+          b = { policy: 'default', defaultPresetId: 'my-work', workspace: null, personal: new Map() }
+          state.dashboards.set(workspaceId, b)
+        }
+        return b
+      }
+      const layout = (workspaceId: string, userId: string | null, row: MockDashboardLayout | null) => ({
+        workspaceId,
+        surface: 'home' as const,
+        userId,
+        items: row ? clone(row.items) : [],
+        presetId: row?.presetId ?? null,
+        updatedAt: row?.updatedAt ?? null,
+      })
+      const view = (workspaceId: string) => {
+        const b = bucket(workspaceId)
+        const mine = b.policy === 'locked' ? null : (b.personal.get(user.id) ?? null)
+        const shared = b.policy === 'open' ? null : b.workspace
+        const chosen = mine ?? shared
+        return {
+          policy: b.policy,
+          defaultPresetId: b.defaultPresetId,
+          layout: layout(workspaceId, mine ? user.id : null, chosen),
+          source: mine ? ('personal' as const) : shared ? ('workspace' as const) : ('preset' as const),
+          canCustomise: b.policy !== 'locked',
+        }
+      }
+      return {
+        get: async ({ workspaceId }: { workspaceId: string }) => view(workspaceId),
+        save: async ({
+          workspaceId,
+          items,
+          presetId,
+        }: {
+          workspaceId: string
+          items: Array<Record<string, unknown>>
+          presetId: string | null
+        }) => {
+          const b = bucket(workspaceId)
+          if (b.policy === 'locked') {
+            throw Object.assign(new Error('This dashboard is set by the workspace'), {
+              code: 'CONFLICT',
+              data: { reason: 'core.dashboard.locked' },
+            })
+          }
+          const row = { items: clone(items), presetId, updatedAt: new Date().toISOString() }
+          b.personal.set(user.id, row)
+          return layout(workspaceId, user.id, row)
+        },
+        reset: async ({ workspaceId }: { workspaceId: string }) => {
+          bucket(workspaceId).personal.delete(user.id)
+          return view(workspaceId)
+        },
+        settings: {
+          get: async ({ workspaceId }: { workspaceId: string }) => {
+            const b = bucket(workspaceId)
+            return {
+              policy: b.policy,
+              defaultPresetId: b.defaultPresetId,
+              workspace: b.workspace ? layout(workspaceId, null, b.workspace) : null,
+            }
+          },
+          set: async ({
+            workspaceId,
+            policy,
+            defaultPresetId,
+          }: {
+            workspaceId: string
+            policy?: 'locked' | 'default' | 'open'
+            defaultPresetId?: string
+          }) => {
+            const b = bucket(workspaceId)
+            if (policy) b.policy = policy
+            if (defaultPresetId) b.defaultPresetId = defaultPresetId
+            return {
+              policy: b.policy,
+              defaultPresetId: b.defaultPresetId,
+              workspace: b.workspace ? layout(workspaceId, null, b.workspace) : null,
+            }
+          },
+          saveWorkspace: async ({
+            workspaceId,
+            items,
+            presetId,
+          }: {
+            workspaceId: string
+            items: Array<Record<string, unknown>>
+            presetId: string | null
+          }) => {
+            const b = bucket(workspaceId)
+            b.workspace = { items: clone(items), presetId, updatedAt: new Date().toISOString() }
+            return layout(workspaceId, null, b.workspace)
+          },
+        },
+      }
+    })(),
+
     notifications: {
       list: async ({ workspaceId, unreadOnly }: { workspaceId?: string; unreadOnly?: boolean } = {}) => ({
         items: state.notifications
@@ -899,6 +1115,18 @@ export function createMockApi() {
           host: 'core',
           healthy: true,
         })),
+
+      // The mock instance is deliberately one release behind, so the update screen has something to
+      // show without a network call — including a module that moves and one that does not.
+      updates: {
+        get: async () => mockUpdateStatus(),
+        check: async () => mockUpdateStatus(),
+        setPolicy: async (patch: Partial<typeof mockPolicy>) => {
+          mockPolicy = { ...mockPolicy, ...patch }
+          return mockUpdateStatus()
+        },
+        plan: async () => mockUpdateStatus().plan,
+      },
     },
   }
 }

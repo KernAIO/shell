@@ -16,6 +16,11 @@ export const keys = {
   groups: (id: string) => ['core', 'group', id] as const,
   modules: (id: string) => ['core', 'module', id] as const,
   audit: (id: string) => ['core', 'audit', id] as const,
+  // One entity for both, so a realtime `change` on the dashboard invalidates the layout and the
+  // settings together. `['core','dashboard-settings',…]` would not match: realtime.svelte.ts
+  // compares the [module, entity] prefix element-wise.
+  dashboard: (workspaceId: string) => ['core', 'dashboard', workspaceId] as const,
+  dashboardSettings: (workspaceId: string) => ['core', 'dashboard', workspaceId, 'settings'] as const,
   notifications: (scope: string) => ['core', 'notification', scope] as const,
   notificationCounts: () => ['core', 'notification-counts'] as const,
   notificationTypes: () => ['core', 'notification-type'] as const,
@@ -25,6 +30,7 @@ export const keys = {
   adminWorkspaces: () => ['core', 'admin-workspace'] as const,
   adminModules: () => ['core', 'admin-module'] as const,
   adminSettings: () => ['core', 'admin-settings'] as const,
+  adminUpdates: () => ['core', 'admin-updates'] as const,
 }
 
 export function createQueryClient() {

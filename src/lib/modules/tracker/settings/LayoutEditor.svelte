@@ -214,7 +214,7 @@ header {
   flex-direction: column;
   gap: 4px;
   border: 1px dashed var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-shell);
 }
 .drop li {
@@ -223,7 +223,7 @@ header {
   gap: 6px;
   padding: 5px 8px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface);
   font-size: 13px;
   cursor: grab;

@@ -118,7 +118,7 @@ input {
   width: 100%;
   padding: 5px 8px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface);
   color: inherit;
   font: inherit;
@@ -140,9 +140,9 @@ input:focus-visible {
   padding: 4px;
   list-style: none;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface);
-  box-shadow: var(--kern-shadow-menu, 0 8px 24px rgb(0 0 0 / 12%));
+  box-shadow: var(--kern-shadow-popover);
 }
 .results button {
   display: flex;
@@ -151,7 +151,7 @@ input:focus-visible {
   width: 100%;
   padding: 4px 6px;
   border: 0;
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: none;
   color: inherit;
   font: inherit;

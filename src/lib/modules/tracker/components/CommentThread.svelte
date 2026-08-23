@@ -120,7 +120,7 @@ const reacted = (userIds: readonly string[]) => (session.user ? userIds.includes
         </div>
       </div>
     {:else}
-      <div class="tprose">{@html renderDoc(comment.body)}</div>
+      <div class="kern-prose tprose">{@html renderDoc(comment.body)}</div>
     {/if}
 
     {#if attachments.length}
@@ -203,7 +203,7 @@ const reacted = (userIds: readonly string[]) => (session.user ? userIds.includes
                 <span class="author">{author?.name ?? ''}</span>
                 <time datetime={reply.createdAt}>{relativeTime(reply.createdAt)}</time>
               </div>
-              <div class="tprose">{@html renderDoc(reply.body)}</div>
+              <div class="kern-prose tprose">{@html renderDoc(reply.body)}</div>
             </div>
           </li>
         {/each}
@@ -246,7 +246,7 @@ const reacted = (userIds: readonly string[]) => (session.user ? userIds.includes
 }
 .author {
   font-weight: 600;
-  color: var(--kern-ink);
+  color: var(--kern-ink-900);
 }
 .spacer {
   flex: 1;
@@ -260,18 +260,11 @@ const reacted = (userIds: readonly string[]) => (session.user ? userIds.includes
 .internal-tag {
   color: var(--kern-warning);
 }
+/* Size only — everything else now comes from `@kernhq/ui/styles/prose.css`, the same sheet the
+   editor's writing surface uses, so a comment reads exactly as it was written. */
 .tprose {
   font-size: 13px;
-  line-height: 1.55;
   margin-top: 3px;
-}
-/* `renderDoc` emits this; without a rule for it a mention reads as ordinary text. */
-.tprose :global(.kern-mention) {
-  padding: 0 3px;
-  border-radius: 3px;
-  background: var(--kern-info-tint);
-  color: var(--kern-accent);
-  font-weight: 500;
 }
 .files {
   display: flex;
@@ -286,7 +279,7 @@ const reacted = (userIds: readonly string[]) => (session.user ? userIds.includes
   align-items: center;
   gap: 4px;
   padding: 2px 6px;
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface-active);
   font-size: 12px;
 }
@@ -344,7 +337,7 @@ const reacted = (userIds: readonly string[]) => (session.user ? userIds.includes
   padding: 1px 4px;
 }
 .reply-btn:hover {
-  color: var(--kern-ink);
+  color: var(--kern-ink-900);
 }
 .replies {
   list-style: none;
@@ -362,7 +355,7 @@ const reacted = (userIds: readonly string[]) => (session.user ? userIds.includes
   margin-top: 6px;
   padding: 8px 10px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-shell);
   font-size: 13px;
 }
@@ -376,7 +369,7 @@ const reacted = (userIds: readonly string[]) => (session.user ? userIds.includes
 .confirm button {
   padding: 3px 10px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface);
   color: inherit;
   font: inherit;

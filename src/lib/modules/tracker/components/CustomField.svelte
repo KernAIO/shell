@@ -75,6 +75,7 @@ const userMenu = $derived<MenuItem[]>(
     type: 'checkbox' as const,
     id: person.id,
     label: person.name,
+    avatar: { id: person.id, name: person.name, src: person.avatarUrl },
     checked: field.type === 'user' ? asText === person.id : asArray.includes(person.id),
     onCheckedChange: (on: boolean) =>
       field.type === 'user' ? commit(on ? person.id : null) : commit(toggle(asArray, person.id, on)),
@@ -235,7 +236,7 @@ const dateValue = $derived(field.type === 'datetime' && asText ? asText.slice(0,
   padding: 2px 6px;
   margin-inline-start: -6px;
   border: 1px solid transparent;
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: none;
   color: inherit;
   font: inherit;
@@ -293,7 +294,7 @@ const dateValue = $derived(field.type === 'datetime' && asText ? asText.slice(0,
   padding: 2px 6px;
   margin-inline-start: -6px;
   border: 0;
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: none;
   color: var(--kern-ink-350);
   font: inherit;
@@ -302,7 +303,7 @@ const dateValue = $derived(field.type === 'datetime' && asText ? asText.slice(0,
 }
 .link-btn:hover {
   background: var(--kern-surface-active);
-  color: var(--kern-ink);
+  color: var(--kern-ink-900);
 }
 .val {
   display: inline-flex;
@@ -311,7 +312,7 @@ const dateValue = $derived(field.type === 'datetime' && asText ? asText.slice(0,
   min-height: 24px;
   padding: 2px 6px;
   margin-inline-start: -6px;
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: none;
   border: 0;
   color: inherit;

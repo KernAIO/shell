@@ -494,7 +494,7 @@ const from = (t: { from: string | string[] }) =>
   margin: 10px 0 0;
   padding: 8px 10px;
   border: 1px solid var(--kern-danger);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   font-size: 12px;
   color: var(--kern-danger);
 }

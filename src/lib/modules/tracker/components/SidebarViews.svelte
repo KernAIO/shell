@@ -4,13 +4,12 @@ import {
   Button,
   Dialog,
   DropdownMenu,
-  EmptyState,
   Icon,
   IconButton,
   Input,
   type MenuItem,
-  SectionLabel,
   Select,
+  SidebarGroup,
   Skeleton,
   toast,
 } from '@kernhq/ui'
@@ -35,12 +34,20 @@ import { viewHref } from '../views'
  * quieter heading rather than in a menu, because a view you cannot see is a view you forget you
  * saved.
  */
+interface Props {
+  /** the sidebar's "+": save what the screen is showing right now, without leaving it */
+  onsave?: () => void
+}
+let { onsave }: Props = $props()
+
 const api = getTrackerApi()
 const queryClient = useQueryClient()
 
 const slug = $derived(page.params.ws ?? '')
 const workspaceId = $derived(session.workspaces.find((w) => w.slug === slug)?.id ?? '')
 const canManageShared = $derived(canTracker('viewManageShared'))
+/** Saving a view is saving a query, which anyone who may raise work may do. */
+const canSave = $derived(canTracker('create'))
 
 const viewsQuery = createQuery(() => ({
   queryKey: trackerKeys.views(workspaceId),
@@ -168,24 +175,35 @@ const menuFor = (view: View): MenuItem[] => [
   </li>
 {/snippet}
 
-<div class="views">
+{#if pinned.length}
+  <SidebarGroup title={m.tracker_views_pinned()} count={pinned.length}>
+    <ul>{#each pinned as view (view.id)}{@render row(view)}{/each}</ul>
+  </SidebarGroup>
+{/if}
+
+<SidebarGroup title={m.tracker_views_all()} count={rest.length || null}>
+  {#snippet trailing()}
+    {#if canSave}
+      <IconButton
+        icon="plus"
+        label={m.tracker_view_save_current()}
+        size={22}
+        onclick={() => onsave?.()}
+        data-testid="sidebar-save-view"
+      />
+    {/if}
+  {/snippet}
+
   {#if viewsQuery.isPending}
     <div class="loading">
       {#each [1, 2, 3] as row (row)}<Skeleton class="h-[26px] w-full" />{/each}
     </div>
   {:else if !views.length}
-    <EmptyState icon="list" title={m.tracker_views_empty()} description={m.tracker_views_empty_hint()} />
+    <p class="none">{m.tracker_views_empty_hint()}</p>
   {:else}
-    {#if pinned.length}
-      <SectionLabel label={m.tracker_views_pinned()} />
-      <ul>{#each pinned as view (view.id)}{@render row(view)}{/each}</ul>
-    {/if}
-    {#if rest.length}
-      <SectionLabel label={m.tracker_views_all()} />
-      <ul>{#each rest as view (view.id)}{@render row(view)}{/each}</ul>
-    {/if}
+    <ul>{#each rest as view (view.id)}{@render row(view)}{/each}</ul>
   {/if}
-</div>
+</SidebarGroup>
 
 <Dialog
   open={editing !== null}
@@ -265,10 +283,11 @@ const menuFor = (view: View): MenuItem[] => [
   margin: 0;
   font-size: 13px;
 }
-.views {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+/* A sidebar has no room for an illustrated empty state; one quiet line says the same thing. */
+.none {
+  margin: 2px 10px 6px;
+  font-size: 12.5px;
+  color: var(--kern-ink-330);
 }
 .loading {
   display: flex;
@@ -278,7 +297,7 @@ const menuFor = (view: View): MenuItem[] => [
 }
 ul {
   list-style: none;
-  margin: 0 0 8px;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
@@ -295,20 +314,20 @@ li {
   gap: 8px;
   flex: 1;
   min-width: 0;
-  height: 30px;
-  padding: 0 8px;
-  border-radius: 8px;
-  color: var(--kern-ink-700);
-  font-size: 13px;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: var(--kern-r-xl);
+  color: var(--kern-ink-650);
+  font-size: 13.5px;
   text-decoration: none;
 }
 .vrow:hover {
-  background: var(--kern-surface-hover);
+  background: var(--kern-border);
 }
 .vrow.on {
   background: var(--kern-ink-900);
   color: var(--kern-ink-inverse);
-  font-weight: 500;
+  font-weight: 600;
 }
 .vname {
   overflow: hidden;

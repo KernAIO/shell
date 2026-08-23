@@ -28,7 +28,15 @@ const slug = $derived(page.params.ws ?? '')
 const workspaceId = $derived(session.workspaces.find((w) => w.slug === slug)?.id ?? '')
 const canManage = $derived(canTracker('projectManage'))
 
+/**
+ * Which project the page is on, and how a link can say so.
+ *
+ * `?project=<id>` is what the sidebar's project menu links to — landing on the project you clicked
+ * rather than on whichever one happens to be first. An id for a project this workspace does not
+ * have is ignored rather than obeyed, so a stale link opens the page instead of an empty one.
+ */
 let selectedProject = $state<string | null>(null)
+const asked = $derived(page.url.searchParams.get('project'))
 let newName = $state('')
 let freq = $state<RecurrenceRule['freq']>('weekly')
 let at = $state('09:00')
@@ -39,7 +47,9 @@ const projectsQuery = createQuery(() => ({
   enabled: Boolean(workspaceId),
 }))
 const projects = $derived(projectsQuery.data ?? [])
-const projectId = $derived(selectedProject ?? projects[0]?.id ?? '')
+const projectId = $derived(
+  selectedProject ?? (asked && projects.some((p) => p.id === asked) ? asked : (projects[0]?.id ?? '')),
+)
 
 const templatesQuery = createQuery(() => ({
   queryKey: [...trackerKeys.projects(workspaceId), 'issue-templates', projectId],

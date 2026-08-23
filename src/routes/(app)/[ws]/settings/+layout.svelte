@@ -33,6 +33,12 @@ const workspaceLinks = $derived(
       { path: '/members', label: m.settings_members(), icon: 'users', permission: 'core.members.view' },
       { path: '/roles', label: m.settings_roles(), icon: 'shield-check', permission: 'core.roles.manage' },
       { path: '/groups', label: m.settings_groups(), icon: 'user-plus', permission: 'core.members.manage' },
+      {
+        path: '/dashboard',
+        label: m.settings_dashboard(),
+        icon: 'layout-grid',
+        permission: 'core.workspace.manage',
+      },
       { path: '/modules', label: m.settings_modules(), icon: 'puzzle', permission: 'core.modules.manage' },
       {
         path: '/integrations',

@@ -139,6 +139,14 @@ in-memory API with demo data — no backend, no database.
   survive into another workspace.
 - Query keys are `[module, entity, …scope]` so a realtime `change` event invalidates precisely what it
   touched. Keep new queries in that shape.
+- **A module settings page's `id` is part of its URL.** The shell builds the href as
+  `/<ws>/settings/<moduleId>/<pageId>`, so the route file has to be
+  `settings/<moduleId>/<pageId>/+page.svelte`. Nothing checks this: a mismatch renders a nav entry
+  that 404s, and it is invisible until somebody clicks it. `mail` has this bug today — it declares
+  `id: 'mail'`, so the shell links `/settings/mail/mail`, and the page is at `/settings/mail`.
+- **A module's screens are only reachable if the module is in the mock too.** `dev:mock` decides the
+  nav from `enabledFor()` and `moduleManifests` in `src/lib/api/mock.ts`; a module missing from
+  either has a working page and no way to reach it, in exactly the environment used for demos.
 - Every user-facing string goes through Paraglide (`messages/*.json`), and the layout must survive
   `dir="rtl"` — use logical properties, never `left`/`right`.
 - **The module clients ship Svelte source, so they must be in `optimizeDeps.exclude`.**
@@ -156,6 +164,17 @@ in-memory API with demo data — no backend, no database.
   with two sources needs the same flag.
 - Tab-strip shortcuts are ⌥-based (⌥T, ⌥W, ⌥1-9, ⌥[ / ⌥]). ⌘T/⌘W/⌘1 are reserved by the browser and
   never reach the page. Match on `e.code`, not `e.key`: ⌥T on a Mac keyboard types `†`.
+- **A Latin-only font in an RTL screen is not a fallback, it is a bug.** DM Mono has no Arabic glyphs,
+  so every timestamp, count and section label fell through to a system monospace — which draws
+  Persian in isolated forms, and "فضای کاری" rendered as unjoined letters spaced like code. Under
+  `[dir="rtl"]` the mono token now resolves to the sans stack. Before reaching for a Persian
+  monospace: there is no good one, and the metadata voice is size, weight and colour, not the face.
+- **A token override must sit where the token was defined.** `:root` in `tokens.css` is unlayered, and
+  an unlayered normal declaration beats one inside `@layer base` regardless of specificity — an
+  override written in the base layer looks right and does nothing.
+- **Numbers shown to people go through `Intl`, counts included.** `formatCount` in `$lib/format.ts`
+  gives a badge Persian digits and caps it at "99+"; interpolating a raw number leaves the one
+  untranslated thing on a Persian screen.
 - **A toggle that changes what a query asks for must be in the query key.** `includeArchived` on the
   fields and types settings pages is the case: with the key unchanged TanStack serves the cached
   list, so the switch does nothing until something else happens to invalidate it — which is
@@ -171,6 +190,27 @@ in-memory API with demo data — no backend, no database.
 - **A date range is `Intl.DateTimeFormat.formatRange`, not two dates and a dash.** A hand-built range
   reads backwards under `dir="rtl"` — the earliest date ends up on the right of the latest — and
   `formatRange` collapses the parts the two dates share for free.
+- **`@kernhq/ui` is consumed from `dist`, so editing its `src` changes nothing here** until
+  `pnpm --filter @kernhq/ui build` runs — the opposite of a module's `./client`, which ships source
+  and is live once linked. A browser stack trace names the file it actually loaded; read that path
+  before concluding the fix did not work.
+- **Time-zone cities are translated, and `Intl` cannot do it.** `Intl` localises a zone's *name*
+  ("Nordamerikanische Ostküsten-Sommerzeit") but never its city, so the cities come from CLDR,
+  generated per locale into `src/lib/i18n/timezone-cities/` by `scripts/gen-timezone-cities.mjs`.
+  A file only carries the zones whose city differs from the zone id — `timezoneCity()` falls back to
+  the id's own last segment — which is why English is fifty entries and Persian is every one.
+  Re-run the script when a locale is added.
+- **The app's own icons come from `pnpm icons` (`scripts/gen-icons.mjs`), not from a design export.**
+  Output lands in `static/` and is committed, so no build needs sharp. The "K" is a path taken from
+  Instrument Sans, never a `<text>` element: a rasteriser without the font falls back to Helvetica
+  and draws a different letter, silently. The maskable and apple-touch variants are full-bleed —
+  iOS and Android apply their own mask, and transparent corners under it show as a pale halo.
+- **`<link rel="manifest">` belongs in `app.html` with `%sveltekit.assets%`, not in a layout.**
+  `+layout.ts` sets `ssr = false`, so anything in `<svelte:head>` only appears after hydration; and
+  `pwaInfo.webManifest.linkTag` from vite-plugin-pwa carries a `./manifest.webmanifest` href, which
+  resolves against the current directory and 404s on every route deeper than one segment.
+  `%sveltekit.assets%` is recomputed per request, so it is right at any depth. vite-plugin-pwa only
+  writes that file in a build, so `vite.config.ts` serves the same manifest object in dev.
 - **`scripts/check-icons.mjs` reads `icon="…"`, `icon: '…'` and any `const *ICONS = [...]`.** A name
   reaching `<Icon>` through some other variable is unchecked, and an unregistered name renders as a
   blank square and throws nothing. If you build a picker, name its list `…ICONS`.
@@ -180,6 +220,13 @@ in-memory API with demo data — no backend, no database.
   own means `cp` from a copy you made first. One `git checkout messages/fa.json`, to revert a
   two-line test edit, destroyed 212 uncommitted Persian translations; 72 came back out of dangling
   objects (`git fsck --unreachable`) and the other 140 had to be written again.
+- **`vite preview` serves the build it started with.** After a rebuild the old process keeps
+  answering from the output it loaded, so a fix that is in `build/` looks like it did nothing —
+  and `pkill -f "vite preview --port 4173"` does not match, because the process name is
+  `vite.js preview`. Kill it by port (`kill $(lsof -ti:4173)`) and start it again.
+- **A name a test types must not exist in the mock's seed data.** Seeding a component called
+  "Realtime gateway" — which `tracker.spec.ts` creates by hand — turned one assertion into a strict
+  mode violation with two matches. Grep `tests/e2e` for a name before seeding it.
 - **`node scripts/check-i18n.mjs` before saying a screen is done.** It is in `pnpm lint`, and it is
   the only thing that sees a locale gap: Paraglide compiles a missing key to a silent English alias,
   so nothing else — not the compiler, not the build, not a test — ever notices.
@@ -195,3 +242,27 @@ in-memory API with demo data — no backend, no database.
   collapses short arrays onto one line and `json.dumps` does not, so a catalogue edited by a script
   passes every i18n check and fails `pnpm lint` on formatting alone. Run
   `pnpm exec biome format --write messages/` after any script that writes them.
+- **`{#await load()}` in a template makes a new promise on every render.** The dashboard called
+  `entry.component()` inside its await block, so every state change — focusing a grip was enough —
+  unmounted and remounted every widget body on the board, blanking their data while each one
+  refetched. Memoise the promise per key (`bodyOf` in `Dashboard.svelte`). Nothing catches this: it
+  type-checks, builds, and only shows as a flicker you have to be looking for.
+- **A key handler inside the page must claim the keys it uses.** The shell binds shortcuts on
+  `window`, so any key a component does not `stopPropagation` reaches them — pressing `]` over the
+  dashboard navigated to the issues list mid-edit. `preventDefault` alone is not enough, and it is
+  worth checking that a chosen key is free before binding it at all.
+- **The dashboard grid compacts upward, which makes "move down" a trick question.** Nudging a card
+  into the empty space below it is undone the moment the layout settles, so ArrowDown appeared to do
+  nothing. Vertically, the move somebody means is "put me after the next one" — the handler falls
+  back to a reorder, and the same rule applies to any gravity layout added later.
+- **Rewriting `messages/*.json` from a script reformats the plural entries.** A message with
+  variants is an array of objects, and `json.dump(indent=2)` expands the `declarations` and
+  `selectors` arrays that Biome keeps inline — so a script that only added a key leaves a diff
+  touching messages nobody edited, and `pnpm lint` fails on formatting. Run
+  `pnpm exec biome check --write messages/` immediately after any scripted edit to them.
+- **SvelteKit's CSP does not nonce the inline script in `app.html`.** It nonces the scripts it emits
+  itself, and nothing else — so the no-flash theme script needs `nonce="%sveltekit.nonce%"` written
+  on it by hand. Without it the script is blocked, every dark-mode load flashes light before
+  hydration, and the page reports nothing: a blocked inline script is silent unless you are watching
+  the console. `frame-ancestors` is not in `svelte.config.js` on purpose — it is ignored in a
+  `<meta>` tag, so it is a real header in `selfhost/Caddyfile` instead.

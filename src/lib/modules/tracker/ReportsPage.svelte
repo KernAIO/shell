@@ -3,12 +3,12 @@ import { formatDuration } from '@kernhq/module-tracker/client'
 import { EmptyState, PageHeader, SegmentedControl, Select, Spinner } from '@kernhq/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { page } from '$app/state'
-import { session } from '$lib/state/session.svelte'
-import * as m from '$msg'
-import { getTrackerApi } from './api'
 import BarChart from '$lib/charts/BarChart.svelte'
 import LineChart from '$lib/charts/LineChart.svelte'
 import StackedAreaChart from '$lib/charts/StackedAreaChart.svelte'
+import { session } from '$lib/state/session.svelte'
+import * as m from '$msg'
+import { getTrackerApi } from './api'
 import { trackerKeys } from './query'
 
 /**
@@ -269,7 +269,7 @@ const shortDate = (date: string) => date.slice(5)
               </tbody>
             </table>
           {:else}
-            <p class="empty">{m.tracker_report_empty()}</p>
+            <p class="empty">{m.chart_empty()}</p>
           {/if}
         {/if}
       {/if}
@@ -296,7 +296,7 @@ const shortDate = (date: string) => date.slice(5)
   margin: 14px var(--kern-gutter, 24px) 0;
   padding: 16px 18px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-md, 12px);
+  border-radius: var(--kern-r-card);
   background: var(--kern-surface);
 }
 h2 {

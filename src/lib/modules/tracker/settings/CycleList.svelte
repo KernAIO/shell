@@ -407,7 +407,7 @@ li {
   width: 100%;
   padding: 4px 8px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface);
   color: inherit;
   font: inherit;

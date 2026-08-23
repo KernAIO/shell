@@ -282,6 +282,31 @@ const cycles: Cycle[] = [
   },
 ]
 
+const component = (n: number, project: number, name: string): Component => ({
+  id: uid(n),
+  workspaceId: WORKSPACE,
+  projectId: uid(project),
+  name,
+  description: null,
+  leadId: null,
+  defaultAssignee: 'none',
+  issueCount: 0,
+  createdAt: iso(90 * DAY),
+  updatedAt: iso(90 * DAY),
+})
+
+/**
+ * The parts each project is built from.
+ *
+ * Seeded rather than empty because the sidebar offers a project's components as a way to look at
+ * its work: with none, the demo's "Components" view is one heap called "No component".
+ */
+const components: Component[] = [
+  component(2200, 700, 'Sync engine'),
+  component(2201, 700, 'Kernel'),
+  component(2202, 701, 'Presence'),
+]
+
 const milestones: Milestone[] = [
   {
     id: uid(770),
@@ -585,7 +610,8 @@ function buildIssues(): Issue[] {
       reporterId: who(i + 1),
       creatorId: who(i + 2),
       labelIds: labelIds.map((n) => uid(n)),
-      componentIds: [],
+      // the first project's work is spread over its two components; the rest carry none
+      componentIds: p === 0 ? [uid(i % 2 === 0 ? 2200 : 2201)] : p === 1 && i % 3 === 0 ? [uid(2202)] : [],
       versionIds: [],
       affectsVersionIds: [],
       cycleId: cycle ? uid(cycle) : null,
@@ -828,7 +854,7 @@ export function createMockTrackerApi() {
     // and a demo that resets them on every render cannot show a cycle being closed.
     cycles: cycles.map((c) => ({ ...c })),
     milestones: milestones.map((ms) => ({ ...ms })),
-    components: [] as Component[],
+    components: components.map((c) => ({ ...c })),
     versions: [] as Version[],
     worklogs: [] as Worklog[],
     issueTemplates: [] as IssueTemplate[],
@@ -1206,18 +1232,39 @@ export function createMockTrackerApi() {
     },
 
     components: {
+      // The count is derived rather than stored: the server counts issues, and a mock that keeps a
+      // number of its own drifts from the list it is meant to describe the moment anything moves.
       list: async ({ projectId }: Ws & { projectId: string }) =>
-        clone(state.components.filter((c) => c.projectId === projectId)),
-      create: async ({ projectId, name }: Ws & { projectId: string; name: string }) => {
+        clone(
+          state.components
+            .filter((c) => c.projectId === projectId)
+            .map((c) => ({
+              ...c,
+              issueCount: state.issues.filter((i) => i.componentIds.includes(c.id)).length,
+            })),
+        ),
+      create: async ({
+        projectId,
+        name,
+        description,
+        leadId,
+        defaultAssignee,
+      }: Ws & {
+        projectId: string
+        name: string
+        description?: string | null
+        leadId?: Component['leadId']
+        defaultAssignee?: Component['defaultAssignee']
+      }) => {
         const now = new Date().toISOString()
         const component: Component = {
           id: uid(2200 + state.components.length),
           workspaceId: WORKSPACE,
           projectId,
           name,
-          description: null,
-          leadId: null,
-          defaultAssignee: 'none',
+          description: description ?? null,
+          leadId: leadId ?? null,
+          defaultAssignee: defaultAssignee ?? 'none',
           issueCount: 0,
           createdAt: now,
           updatedAt: now,
@@ -1408,15 +1455,25 @@ export function createMockTrackerApi() {
     milestones: {
       list: async ({ projectId }: Ws & { projectId?: string }) =>
         clone(state.milestones.filter((ms) => !projectId || ms.projectId === projectId)),
-      create: async ({ projectId, name }: Ws & { projectId: string; name: string }) => {
+      create: async ({
+        projectId,
+        name,
+        description,
+        targetDate,
+      }: Ws & {
+        projectId: string
+        name: string
+        description?: string | null
+        targetDate?: string | null
+      }) => {
         const now = new Date().toISOString()
         const milestone: Milestone = {
           id: uid(2600 + state.milestones.length),
           workspaceId: WORKSPACE,
           projectId,
           name,
-          description: null,
-          targetDate: null,
+          description: description ?? null,
+          targetDate: targetDate ?? null,
           status: 'open',
           stats: { total: 0, done: 0 },
           completedAt: null,
@@ -1450,9 +1507,16 @@ export function createMockTrackerApi() {
       create: async ({
         projectId,
         name,
+        goal,
         startAt,
         endAt,
-      }: Ws & { projectId: string; name?: string; startAt: string; endAt: string }) => {
+      }: Ws & {
+        projectId: string
+        name?: string
+        goal?: string | null
+        startAt: string
+        endAt: string
+      }) => {
         const now = new Date().toISOString()
         const number =
           Math.max(0, ...state.cycles.filter((c) => c.projectId === projectId).map((c) => c.number)) + 1
@@ -1462,7 +1526,7 @@ export function createMockTrackerApi() {
           projectId,
           number,
           name: name || `Cycle ${number}`,
-          goal: null,
+          goal: goal ?? null,
           startAt,
           endAt,
           status: 'upcoming',
@@ -2198,23 +2262,41 @@ export function createMockTrackerApi() {
       },
 
       templates: {
-        list: async (_input: Ws & { projectId?: string }) => clone(state.issueTemplates),
-        create: async (input: Ws & { name: string; projectId?: string | null }) => {
+        // Filtered, because a template belongs to one project and the project's own page asks for
+        // its own: an unfiltered list showed another team's templates as if they were yours.
+        list: async ({ projectId }: Ws & { projectId?: string }) =>
+          clone(state.issueTemplates.filter((t) => !projectId || t.projectId === projectId)),
+        create: async (
+          input: Ws & {
+            name: string
+            projectId?: string | null
+            description?: string | null
+            defaults?: IssueTemplate['defaults']
+          },
+        ) => {
           const now = new Date().toISOString()
           const template: IssueTemplate = {
-            id: uid(2600 + state.issueTemplates.length),
+            // Its own range: 2600 is the milestones', and two objects sharing an id made one of
+            // them unremovable, since a delete matches by id alone.
+            id: uid(3100 + state.issueTemplates.length),
             workspaceId: WORKSPACE,
             projectId: input.projectId ?? null,
             name: input.name,
-            description: null,
+            description: input.description ?? null,
             typeId: null,
-            defaults: {},
+            defaults: input.defaults ?? {},
             subItems: [],
             createdBy: ME,
             createdAt: now,
             updatedAt: now,
           }
           state.issueTemplates.push(template)
+          return clone(template)
+        },
+        update: async ({ id, patch }: Ws & { id: string; patch: Partial<IssueTemplate> }) => {
+          const template = state.issueTemplates.find((t) => t.id === id)
+          if (!template) throw new Error(`[mock] unknown issue template ${id}`)
+          Object.assign(template, patch, { updatedAt: new Date().toISOString() })
           return clone(template)
         },
         delete: async ({ id }: Ws & { id: string }) => {

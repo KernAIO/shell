@@ -272,7 +272,7 @@ form {
   gap: 6px;
   padding: 64px 0;
   text-align: center;
-  color: var(--kern-success, var(--kern-ink));
+  color: var(--kern-success, var(--kern-ink-900));
 }
 .done h1 {
   margin: 0;

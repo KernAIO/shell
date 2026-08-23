@@ -51,6 +51,250 @@ export const trackerClientModule = defineClientModule({
     },
   ],
 
+  widgets: [
+    {
+      id: 'tracker.issues',
+      get title() {
+        return m.widget_issues_title()
+      },
+      get description() {
+        return m.widget_issues_desc()
+      },
+      icon: 'square-check-big',
+      permission: TRACKER_PERMISSIONS.view,
+      sizes: ['m', 'l', 'xl'],
+      defaultSize: 'l',
+      order: 10,
+      // One widget instead of six. Every one of these settings resolves into the KQL that
+      // `issues.query` already answers, which is why the same card can be placed twice showing two
+      // entirely different lists.
+      settings: [
+        {
+          kind: 'select',
+          key: 'preset',
+          get label() {
+            return m.widget_setting_show()
+          },
+          default: 'assigned',
+          get options() {
+            return [
+              { value: 'assigned', label: m.tracker_preset_assigned() },
+              { value: 'active', label: m.tracker_preset_active() },
+              { value: 'backlog', label: m.tracker_preset_backlog() },
+              { value: 'created', label: m.tracker_preset_created() },
+              { value: 'subscribed', label: m.tracker_preset_subscribed() },
+              { value: 'triage', label: m.widget_preset_triage() },
+            ]
+          },
+        },
+        {
+          kind: 'select',
+          key: 'view',
+          get label() {
+            return m.widget_setting_saved_view()
+          },
+          default: null,
+          nullable: true,
+          get nullLabel() {
+            return m.widget_setting_no_view()
+          },
+          loadOptions: async (ctx) => {
+            const { getTrackerApi } = await import('./api')
+            const views = await getTrackerApi().views.list({ workspaceId: ctx.workspaceId })
+            return views.map((v) => ({ value: v.id, label: v.name }))
+          },
+        },
+        {
+          kind: 'number',
+          key: 'limit',
+          get label() {
+            return m.widget_setting_rows()
+          },
+          default: 8,
+          min: 3,
+          max: 20,
+        },
+      ],
+      component: () => import('./widgets/IssuesWidget.svelte'),
+    },
+    {
+      id: 'tracker.stat-assigned',
+      get title() {
+        return m.widget_assigned_title()
+      },
+      get description() {
+        return m.widget_assigned_desc()
+      },
+      icon: 'square-check-big',
+      permission: TRACKER_PERMISSIONS.view,
+      sizes: ['s'],
+      defaultSize: 's',
+      compact: true,
+      order: 20,
+      component: () => import('./widgets/AssignedCountWidget.svelte'),
+    },
+    {
+      id: 'tracker.stat-due-soon',
+      get title() {
+        return m.widget_due_soon_title()
+      },
+      get description() {
+        return m.widget_due_soon_desc()
+      },
+      icon: 'clock',
+      permission: TRACKER_PERMISSIONS.view,
+      sizes: ['s'],
+      defaultSize: 's',
+      compact: true,
+      order: 30,
+      component: () => import('./widgets/DueSoonCountWidget.svelte'),
+    },
+    {
+      id: 'tracker.cycle-progress',
+      get title() {
+        return m.widget_cycle_title()
+      },
+      get description() {
+        return m.widget_cycle_desc()
+      },
+      icon: 'gauge',
+      permission: TRACKER_PERMISSIONS.view,
+      sizes: ['m', 'l'],
+      defaultSize: 'm',
+      order: 40,
+      settings: [
+        {
+          kind: 'select',
+          key: 'project',
+          get label() {
+            return m.widget_setting_project()
+          },
+          default: null,
+          nullable: true,
+          get nullLabel() {
+            return m.dash_any()
+          },
+          loadOptions: async (ctx) => {
+            const { getTrackerApi } = await import('./api')
+            const projects = await getTrackerApi().projects.list({ workspaceId: ctx.workspaceId })
+            return projects.map((p) => ({ value: p.id, label: p.name }))
+          },
+        },
+      ],
+      component: () => import('./widgets/CycleWidget.svelte'),
+    },
+    {
+      id: 'tracker.velocity',
+      get title() {
+        return m.widget_velocity_title()
+      },
+      get description() {
+        return m.widget_velocity_desc()
+      },
+      icon: 'chart-column',
+      permission: TRACKER_PERMISSIONS.view,
+      // A grouped bar chart is unreadable in a quarter-width card, so `s` is not offered.
+      sizes: ['l', 'xl'],
+      defaultSize: 'l',
+      order: 60,
+      settings: [
+        {
+          kind: 'select',
+          key: 'project',
+          get label() {
+            return m.widget_setting_project()
+          },
+          default: null,
+          nullable: true,
+          get nullLabel() {
+            return m.dash_any()
+          },
+          loadOptions: async (ctx) => {
+            const { getTrackerApi } = await import('./api')
+            const projects = await getTrackerApi().projects.list({ workspaceId: ctx.workspaceId })
+            return projects.map((p) => ({ value: p.id, label: p.name }))
+          },
+        },
+        {
+          kind: 'number',
+          key: 'lastN',
+          get label() {
+            return m.widget_velocity_cycles()
+          },
+          default: 6,
+          min: 3,
+          max: 12,
+        },
+      ],
+      component: () => import('./widgets/VelocityWidget.svelte'),
+    },
+    {
+      id: 'tracker.created-vs-resolved',
+      get title() {
+        return m.widget_throughput_title()
+      },
+      get description() {
+        return m.widget_throughput_desc()
+      },
+      icon: 'chart-line',
+      permission: TRACKER_PERMISSIONS.view,
+      sizes: ['l', 'xl'],
+      defaultSize: 'xl',
+      order: 70,
+      settings: [
+        {
+          kind: 'select',
+          key: 'project',
+          get label() {
+            return m.widget_setting_project()
+          },
+          default: null,
+          nullable: true,
+          get nullLabel() {
+            return m.dash_any()
+          },
+          loadOptions: async (ctx) => {
+            const { getTrackerApi } = await import('./api')
+            const projects = await getTrackerApi().projects.list({ workspaceId: ctx.workspaceId })
+            return projects.map((p) => ({ value: p.id, label: p.name }))
+          },
+        },
+        {
+          kind: 'select',
+          key: 'range',
+          get label() {
+            return m.widget_setting_range()
+          },
+          default: '30',
+          get options() {
+            return [
+              { value: '14', label: m.widget_range_14() },
+              { value: '30', label: m.widget_range_30() },
+              { value: '90', label: m.widget_range_90() },
+            ]
+          },
+        },
+      ],
+      component: () => import('./widgets/ThroughputWidget.svelte'),
+    },
+    {
+      id: 'tracker.timer',
+      get title() {
+        return m.widget_timer_title()
+      },
+      get description() {
+        return m.widget_timer_desc()
+      },
+      icon: 'timer',
+      permission: TRACKER_PERMISSIONS.view,
+      sizes: ['s', 'm'],
+      defaultSize: 's',
+      compact: true,
+      order: 50,
+      component: () => import('./widgets/TimerWidget.svelte'),
+    },
+  ],
+
   commands: [
     {
       id: 'tracker.new-issue',
@@ -133,9 +377,9 @@ export const trackerClientModule = defineClientModule({
   slots: [
     {
       slot: 'sidebar.widget',
-      id: 'tracker.views',
+      id: 'tracker.sidebar',
       order: 10,
-      component: () => import('./components/SidebarViews.svelte'),
+      component: () => import('./components/TrackerSidebar.svelte'),
       // only while you are in the tracker: the sidebar belongs to the module you are looking at
       when: (ctx) => ((ctx as { pathname?: string }).pathname ?? '').includes('/tracker'),
     },

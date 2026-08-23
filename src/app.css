@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "@kernhq/ui/styles/index.css";
 @import "@kernhq/ui/styles/theme.css";
+@import "@kernhq/ui/styles/prose.css";
 
 html,
 body {

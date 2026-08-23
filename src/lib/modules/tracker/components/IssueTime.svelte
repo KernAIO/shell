@@ -231,7 +231,7 @@ const who = (userId: string) =>
   padding: 1px 4px;
   margin-inline-start: -4px;
   border: 0;
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: none;
   color: inherit;
   font: inherit;
@@ -244,7 +244,7 @@ const who = (userId: string) =>
   width: 72px;
   padding: 1px 4px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface);
   color: inherit;
   font: inherit;
@@ -273,7 +273,7 @@ const who = (userId: string) =>
   cursor: pointer;
 }
 .manual:hover {
-  color: var(--kern-ink);
+  color: var(--kern-ink-900);
 }
 .logs {
   list-style: none;

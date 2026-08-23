@@ -25,7 +25,7 @@ const hasData = $derived(series.some((s) => s.values.some((v) => v > 0)))
 </script>
 
 {#if !hasData}
-  <p class="empty">{m.tracker_report_empty()}</p>
+  <p class="empty">{m.chart_empty()}</p>
 {:else}
   <figure class="chart">
     <svg viewBox="0 0 {WIDTH} {height}" role="img" aria-label={title} preserveAspectRatio="none">
@@ -56,7 +56,7 @@ const hasData = $derived(series.some((s) => s.values.some((v) => v > 0)))
       <caption>{title}</caption>
       <thead>
         <tr>
-          <th scope="col">{m.tracker_report_when()}</th>
+          <th scope="col">{m.chart_when()}</th>
           {#each series as s (s.label)}<th scope="col">{s.label}</th>{/each}
         </tr>
       </thead>
@@ -77,7 +77,7 @@ const hasData = $derived(series.some((s) => s.values.some((v) => v > 0)))
           {s.label}
         </span>
       {/each}
-      <span class="scale">{m.tracker_report_max({ value: format(max) })}</span>
+      <span class="scale">{m.chart_max({ value: format(max) })}</span>
     </figcaption>
   </figure>
 {/if}

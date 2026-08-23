@@ -39,7 +39,7 @@ import NewProjectDialog from './components/NewProjectDialog.svelte'
 import SaveViewDialog from './components/SaveViewDialog.svelte'
 import { setTrackerCatalogue, TrackerCatalogue } from './context.svelte'
 import { composeKql, emptyFilters, filterCount, PRESETS, type Preset, type TrackerFilters } from './filters'
-import { GROUP_CYCLE, groupByLabel, presetLabel } from './labels'
+import { estimateLabel, GROUP_CYCLE, groupByLabel, presetLabel } from './labels'
 import { canTracker } from './permissions'
 import { trackerKeys } from './query'
 
@@ -86,8 +86,16 @@ const editingView = $derived.by(() => {
   return mine ? { id: view.id, name: view.name } : null
 })
 const openIssueKey = $derived(params.get('issue'))
-/** `?new=1` lets the command palette and any deep link open the create dialog. */
+/**
+ * What a link may ask this page to open.
+ *
+ * The palette, the sidebar and any deep link all arrive as a parameter rather than reaching into
+ * this component's state — which is also why raising an issue from the sidebar keeps the list that
+ * was underneath it, and why the dialog closes by taking the parameter back off the URL.
+ */
 const newRequested = $derived(params.get('new') === '1')
+const newProjectRequested = $derived(params.get('new_project') === '1')
+const saveRequested = $derived(params.get('save') === '1')
 
 let newProjectOpen = $state(false)
 let savingView = $state(false)
@@ -173,6 +181,14 @@ const milestonesQuery = createQuery(() => ({
     ).flat(),
   enabled: enabled && projects.length > 0,
 }))
+const componentsQuery = createQuery(() => ({
+  queryKey: trackerKeys.components(workspaceId, null),
+  queryFn: async () =>
+    (
+      await Promise.all(projects.map((p) => tracker.components.list({ workspaceId, projectId: p.id })))
+    ).flat(),
+  enabled: enabled && projects.length > 0,
+}))
 
 $effect(() => {
   catalogue.projects = projects
@@ -185,6 +201,9 @@ $effect(() => {
 })
 $effect(() => {
   catalogue.labels = labelsQuery.data ?? []
+})
+$effect(() => {
+  catalogue.components = componentsQuery.data ?? []
 })
 $effect(() => {
   catalogue.fields = fieldsQuery.data ?? []
@@ -239,7 +258,7 @@ const subtitle = $derived(
   [
     activeCycle ? activeCycle.name : presetLabel(preset),
     m.tracker_issues_count({ count: issues.length }),
-    totalPoints > 0 ? m.tracker_points({ count: totalPoints }) : null,
+    totalPoints > 0 ? estimateLabel(totalPoints, catalogue.estimateUnit) : null,
   ]
     .filter((part): part is string => Boolean(part))
     .join(' · '),
@@ -406,11 +425,24 @@ function onWindowKeydown(event: KeyboardEvent) {
 
 const selected = $derived(new Set(selection))
 
-// the palette navigates here with ?new=1 rather than reaching into this component's state
+// the palette and the sidebar navigate here with a parameter rather than reaching into this state
 $effect(() => {
   if (newRequested && !creating) {
-    startCreate()
-    setParams({ new: null })
+    // `?new=1&project=<id>` raises the issue in the project the link came from
+    startCreate({ projectId: params.get('project') ?? undefined })
+    setParams({ new: null, project: null })
+  }
+})
+$effect(() => {
+  if (newProjectRequested && !newProjectOpen) {
+    newProjectOpen = true
+    setParams({ new_project: null })
+  }
+})
+$effect(() => {
+  if (saveRequested && !savingView) {
+    savingView = true
+    setParams({ save: null })
   }
 })
 </script>

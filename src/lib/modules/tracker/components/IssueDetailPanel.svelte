@@ -19,6 +19,7 @@ import {
   Spinner,
   toast,
 } from '@kernhq/ui'
+import { RichTextEditor } from '@kernhq/ui/editor'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { formatBytes } from '$lib/files/format'
 import { uploadFile } from '$lib/files/upload'
@@ -27,10 +28,10 @@ import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 import { getTrackerApi } from '../api'
 import { getTrackerCatalogue } from '../context.svelte'
-import { priorityLabel } from '../labels'
+import { estimateLabel, estimateUnitOf, priorityLabel } from '../labels'
 import { canTracker } from '../permissions'
 import { trackerKeys } from '../query'
-import { docFromText, renderDoc, textFromDoc } from '../richtext'
+import { renderDoc } from '../richtext'
 import CommentComposer from './CommentComposer.svelte'
 import CommentThread from './CommentThread.svelte'
 import CustomField from './CustomField.svelte'
@@ -110,7 +111,7 @@ const queryClient = useQueryClient()
 let editingDescription = $state(false)
 /** Named on screen before it happens, never behind `window.confirm`. */
 let confirmingDelete = $state(false)
-let descriptionDraft = $state('')
+let descriptionDraft = $state<RichDoc | null>(null)
 
 const issueQuery = createQuery(() => ({
   queryKey: trackerKeys.issue(workspaceId, issueKey ?? ''),
@@ -428,6 +429,8 @@ const assigneeMenu = $derived<MenuItem[]>(
     type: 'checkbox' as const,
     id: person.id,
     label: person.name,
+    // a face is recognised faster than a name, and this menu is how work is handed over
+    avatar: { id: person.id, name: person.name, src: person.avatarUrl },
     checked: issue?.assigneeIds.some((id) => id === person.id) ?? false,
     onCheckedChange: (on: boolean) =>
       patch.mutate(on ? { assigneeAdd: [person.id] } : { assigneeRemove: [person.id] }),
@@ -458,12 +461,21 @@ const cycleMenu = $derived<MenuItem[]>([
     })),
 ])
 
+/**
+ * What this project estimates in.
+ *
+ * A project chooses points or hours — or neither — and the issue keeps the unit it was raised
+ * under. The panel said "pts" whatever the project had chosen, and offered to estimate work in a
+ * project whose setting is "do not estimate".
+ */
+const estimateUnit = $derived(estimateUnitOf(project ?? null))
+
 const estimateMenu = $derived<MenuItem[]>([
   { id: 'none', label: m.tracker_no_estimate(), onSelect: () => patch.mutate({ estimate: null }) },
   { type: 'separator' as const },
   ...(project?.settings.estimateScale ?? [1, 2, 3, 5, 8]).map((value) => ({
     id: String(value),
-    label: m.tracker_points({ count: value }),
+    label: estimateLabel(value, estimateUnit),
     icon: issue?.estimate === value ? 'check' : undefined,
     onSelect: () => patch.mutate({ estimate: value }),
   })),
@@ -494,12 +506,17 @@ const activity = $derived.by(() => {
 })
 
 function startEditingDescription(current: Issue) {
-  descriptionDraft = textFromDoc(current.description)
+  descriptionDraft = current.description ?? null
   editingDescription = true
 }
 
 function saveDescription() {
-  patch.mutate({ description: docFromText(descriptionDraft) })
+  /*
+   * `$state.snapshot` because the editor's document is a Svelte state proxy, and a proxy cannot be
+   * passed to `structuredClone` — which is what the API layer does on the way out. Without it the
+   * save threw "could not be cloned" and silently dropped the edit.
+   */
+  patch.mutate({ description: $state.snapshot(descriptionDraft) as RichDoc | null })
   editingDescription = false
 }
 
@@ -531,7 +548,13 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
       />
       <span class="hkey">{issue.key}</span>
       <span class="hstatus">{status?.name ?? ''}</span>
-      <span class="hgap"></span>
+    {/if}
+  {/snippet}
+
+  <!-- The menu belongs beside the close button, not beside the title: a spacer of our own here
+       and `Sheet`'s own one split the row and stranded it mid-header. -->
+  {#snippet actions()}
+    {#if issue}
       <DropdownMenu items={issueMenu} align="end">
         {#snippet trigger(props)}
           <button
@@ -547,7 +570,6 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
       </DropdownMenu>
     {/if}
   {/snippet}
-
 
   {#if !issue}
     <div class="loading"><Spinner /></div>
@@ -732,7 +754,7 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
                     disabled={!canEdit}
                     title={canEdit ? undefined : m.tracker_no_permission()}>
                     {#if issue.estimate !== null}
-                      {m.tracker_points({ count: issue.estimate })}
+                      {estimateLabel(issue.estimate, issue.estimateUnit)}
                     {:else}
                       <span class="muted">{m.tracker_no_estimate()}</span>
                     {/if}
@@ -765,7 +787,10 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
         {:else if f.fieldId === 'cycle'}
           {@render row_cycle()}
         {:else if f.fieldId === 'estimate'}
-          {@render row_estimate()}
+          <!-- A project that estimates in nothing is not offered an estimate to set. -->
+          {#if estimateUnit !== 'none' || issue.estimate !== null}
+            {@render row_estimate()}
+          {/if}
         {:else if f.fieldId === 'project'}
           {@render row_project()}
         {:else if f.kind === 'custom' && f.field}
@@ -910,14 +935,15 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
 
     <section class="desc">
       {#if editingDescription}
-        <textarea
+        <RichTextEditor
           bind:value={descriptionDraft}
-          rows="6"
-          aria-label={m.tracker_detail_description()}
-          onkeydown={(e) => {
-            if (e.key === 'Escape') editingDescription = false
-          }}
-        ></textarea>
+          minRows={6}
+          autofocus
+          label={m.tracker_detail_description()}
+          placeholder={m.tracker_no_description()}
+          onsubmit={saveDescription}
+          onescape={() => (editingDescription = false)}
+        />
         <div class="row">
           <Button size="sm" onclick={saveDescription}>{m.save()}</Button>
           <Button size="sm" variant="ghost" onclick={() => (editingDescription = false)}>
@@ -927,7 +953,7 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
       {:else}
         <button
           type="button"
-          class="prose"
+          class="kern-prose prose"
           disabled={!canEdit}
           onclick={() => startEditingDescription(issue)}
         >
@@ -996,7 +1022,7 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
     margin-top: 14px;
     padding: 10px 12px;
     border: 1px solid var(--kern-warning);
-    border-radius: var(--kern-radius-sm);
+    border-radius: var(--kern-r-sm);
     background: var(--kern-warning-tint, var(--kern-shell));
   }
   .thead {
@@ -1068,16 +1094,13 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
     font-size: 13px;
     color: var(--kern-ink-550);
   }
-  .hgap {
-  flex: 1;
-}
 .hmore {
   display: grid;
   place-items: center;
   width: 24px;
   height: 24px;
   border: 0;
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: none;
   color: var(--kern-ink-500);
   cursor: pointer;
@@ -1089,7 +1112,7 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
   margin: 0 0 10px;
   padding: 10px 12px;
   border: 1px solid var(--kern-danger);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   font-size: 12.5px;
 }
 .danger p {
@@ -1188,41 +1211,18 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
     padding-top: 18px;
     border-top: 1px solid var(--kern-border-hairline);
   }
+  /* The read view of the description. Everything typographic now comes from
+     `@kernhq/ui/styles/prose.css` — the same sheet the editor wears — so switching between reading
+     and editing does not move a single line. What is left here is the button it happens to be. */
   .prose {
     display: block;
     width: 100%;
     text-align: start;
     font-size: 14px;
-    line-height: 1.6;
-    color: var(--kern-ink-700);
     border-radius: var(--kern-r-lg);
   }
   .prose:hover {
     background: var(--kern-surface-hover);
-  }
-  .prose :global(p) {
-    margin: 0 0 10px;
-  }
-  .prose :global(p:last-child) {
-    margin-bottom: 0;
-  }
-  .prose :global(code) {
-    font-family: var(--kern-font-mono);
-    font-size: 0.92em;
-    background: var(--kern-surface-chip);
-    padding: 1px 4px;
-    border-radius: var(--kern-r-xs);
-  }
-  .desc textarea {
-    width: 100%;
-    border: 1px solid var(--kern-border-strong);
-    border-radius: var(--kern-r-lg);
-    background: var(--kern-surface-raised);
-    padding: 10px 12px;
-    font-size: 13.5px;
-    line-height: 1.6;
-    color: var(--kern-ink-800);
-    resize: vertical;
   }
   .row {
     display: flex;
@@ -1279,15 +1279,7 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
   }
   .tprose {
     font-size: 13.5px;
-    line-height: 1.55;
-    color: var(--kern-ink-700);
     margin-top: 3px;
-  }
-  .tprose :global(p) {
-    margin: 0 0 6px;
-  }
-  .tprose :global(p:last-child) {
-    margin-bottom: 0;
   }
   .reactions {
     display: flex;

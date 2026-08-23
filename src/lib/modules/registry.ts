@@ -1,5 +1,12 @@
-import type { SvelteClientModule as ClientModule, ClientNavItem, SlotName } from '@kernhq/ui'
+import type {
+  SvelteClientModule as ClientModule,
+  ClientNavItem,
+  SlotName,
+  SvelteWidgetDefinition,
+} from '@kernhq/ui'
+import { billingClientModule } from './billing/client'
 import { chatClientModule } from './chat/client'
+import { coreClientModule } from './core/client'
 import { mailClientModule } from './mail/client'
 import { trackerClientModule } from './tracker/client'
 
@@ -58,6 +65,37 @@ export function slotsFor(slot: SlotName, ctx: NavContext & { pathname?: string }
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
 }
 
+export interface WidgetEntry extends SvelteWidgetDefinition {
+  moduleId: string
+  moduleName: string
+}
+
+/**
+ * Every dashboard widget the person may place.
+ *
+ * Same filter as navigation and slots — an enabled module, and a permission they hold — which is
+ * what makes a widget disappear from the picker *and* from a layout that already named it when a
+ * workspace switches its module off, with no conditional on the dashboard itself.
+ */
+export function widgetsFor(ctx: NavContext): WidgetEntry[] {
+  return modules
+    .filter((mod) => ctx.enabled.has(mod.id))
+    .flatMap((mod) => (mod.widgets ?? []).map((w) => ({ ...w, moduleId: mod.id, moduleName: mod.name })))
+    .filter((w) => !w.permission || ctx.can(w.permission))
+    .sort((a, b) => (a.order ?? 100) - (b.order ?? 100) || a.id.localeCompare(b.id))
+}
+
+/**
+ * One widget by id, for drawing a layout that was stored earlier.
+ *
+ * Returning `undefined` is the normal case, not an error: a saved layout can name a widget from a
+ * module that has since been switched off, uninstalled, or renamed between releases. The frame
+ * draws "no longer available" with a way to remove it — never a blank card, and never a crash.
+ */
+export function widgetById(id: string, ctx: NavContext): WidgetEntry | undefined {
+  return widgetsFor(ctx).find((w) => w.id === id)
+}
+
 /** Command-palette actions contributed by enabled modules. */
 export function commandsFor(ctx: NavContext) {
   return modules
@@ -68,9 +106,12 @@ export function commandsFor(ctx: NavContext) {
 
 // Composition happens here, at build time. Importing a module's client and registering it is the only
 // wiring the shell needs: navigation, commands, presenters and routes all follow from the manifest.
+// Core first: it is always enabled, and its widgets are the ones every workspace has.
+registerModule(coreClientModule)
 registerModule(trackerClientModule)
 registerModule(chatClientModule)
 registerModule(mailClientModule)
+registerModule(billingClientModule)
 
 export interface ModuleSettingsLink {
   moduleId: string
@@ -91,11 +132,34 @@ export interface ModuleSettingsLink {
  * manage fields does not see the entry rather than meeting a page that refuses them.
  */
 export function settingsLinksFor(ctx: NavContext): ModuleSettingsLink[] {
-  return modules
-    .filter((m) => ctx.enabled.has(m.id))
+  return pagesForScope(
+    'workspace',
+    modules.filter((m) => ctx.enabled.has(m.id)),
+    ctx,
+  )
+}
+
+/**
+ * Pages a module contributes to the **instance console**.
+ *
+ * Not filtered by which modules a workspace has enabled, because the console is not about a
+ * workspace: an operator looking at what every workspace is billed must still see the screen when
+ * the workspace they happen to be standing in has that module switched off. The console's layout
+ * gates the whole area on the instance-admin flag, which is the check that matters here.
+ */
+export function instanceLinksFor(ctx: Pick<NavContext, 'can'>): ModuleSettingsLink[] {
+  return pagesForScope('instance', modules, { enabled: new Set(), can: ctx.can })
+}
+
+function pagesForScope(
+  scope: 'workspace' | 'instance',
+  from: ClientModule[],
+  ctx: NavContext,
+): ModuleSettingsLink[] {
+  return from
     .flatMap((m) =>
       (m.settingsPages ?? [])
-        .filter((p) => p.scope === 'workspace')
+        .filter((p) => p.scope === scope)
         .map((p) => ({
           moduleId: m.id,
           moduleName: m.name,

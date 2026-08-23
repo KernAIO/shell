@@ -5,6 +5,8 @@ import { getApi } from '$lib/api/client'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsRow from '$lib/components/settings/SettingsRow.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
+import { timezoneOptions } from '$lib/i18n/timezone-options'
+import { timezoneList } from '$lib/i18n/timezones.svelte'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 
@@ -42,9 +44,9 @@ const save = createMutation(() => ({
   onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
 }))
 
-// the browser knows every zone it supports; no need to ship a list
-const timezones = Intl.supportedValuesOf?.('timeZone') ?? ['UTC']
-const timezoneOptions = timezones.map((tz) => ({ value: tz, label: tz.replace(/_/g, ' ') }))
+// the browser knows every zone it supports; only the city names are ours to translate
+const here = Intl.DateTimeFormat().resolvedOptions().timeZone
+const zoneOptions = $derived(timezoneOptions(timezoneList([here]), m.profile_timezone_yours()))
 </script>
 
 <svelte:head><title>{m.profile_title()} · {m.settings_title()}</title></svelte:head>
@@ -67,7 +69,7 @@ const timezoneOptions = timezones.map((tz) => ({ value: tz, label: tz.replace(/_
     </SettingsRow>
 
     <SettingsRow label={m.profile_timezone()} hint={m.profile_timezone_hint()} for="tz">
-      <Select id="tz" bind:value={timezone} options={timezoneOptions} width="240px" />
+      <Select id="tz" bind:value={timezone} options={zoneOptions} width="260px" />
     </SettingsRow>
 
     {#snippet footer()}

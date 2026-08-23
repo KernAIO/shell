@@ -32,7 +32,15 @@ const slug = $derived(page.params.ws ?? '')
 const workspaceId = $derived(session.workspaces.find((w) => w.slug === slug)?.id ?? '')
 const canManage = $derived(canTracker('projectManage'))
 
+/**
+ * Which project the page is on, and how a link can say so.
+ *
+ * `?project=<id>` is what the sidebar's project menu links to — landing on the project you clicked
+ * rather than on whichever one happens to be first. An id for a project this workspace does not
+ * have is ignored rather than obeyed, so a stale link opens the page instead of an empty one.
+ */
 let selectedId = $state<string | null>(null)
+const asked = $derived(page.url.searchParams.get('project'))
 let showArchived = $state(false)
 /** `null` means "no unsaved change", which is what disables Save. */
 let draft = $state<Record<string, unknown> | null>(null)
@@ -45,7 +53,7 @@ const projectsQuery = createQuery(() => ({
   enabled: Boolean(workspaceId),
 }))
 const projects = $derived(projectsQuery.data ?? [])
-const project = $derived(projects.find((p) => p.id === selectedId) ?? projects[0] ?? null)
+const project = $derived(projects.find((p) => p.id === (selectedId ?? asked)) ?? projects[0] ?? null)
 
 /** What the form shows: the unsaved value where there is one, the stored value otherwise. */
 const field = <K extends keyof Project>(key: K): Project[K] =>
@@ -427,7 +435,7 @@ const leadOptions = $derived([
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--kern-danger);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   font-size: 12.5px;
 }
 .danger p {

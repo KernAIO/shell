@@ -199,7 +199,7 @@ function save() {
   width: 32px;
   height: 32px;
   border: 1px solid var(--kern-border-hairline);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: none;
   color: var(--kern-ink-600);
   cursor: pointer;

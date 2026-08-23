@@ -17,6 +17,13 @@ export const trackerKeys = {
     ['tracker', 'cycle', workspaceId, projectId ?? 'all'] as const,
   milestones: (workspaceId: string, projectId: string | null) =>
     ['tracker', 'milestone', workspaceId, projectId ?? 'all'] as const,
+  components: (workspaceId: string, projectId: string | null) =>
+    ['tracker', 'component', workspaceId, projectId ?? 'all'] as const,
+  versions: (workspaceId: string, projectId: string | null) =>
+    ['tracker', 'version', workspaceId, projectId ?? 'all'] as const,
+  /** a project's issue templates: what somebody raises again and again */
+  issueTemplates: (workspaceId: string, projectId: string | null) =>
+    ['tracker', 'issue-template', workspaceId, projectId ?? 'all'] as const,
   views: (workspaceId: string) => ['tracker', 'view', workspaceId] as const,
   worklogs: (workspaceId: string, issueId: string) => ['tracker', 'worklog', workspaceId, issueId] as const,
   /** the caller's running timer, which is theirs rather than any issue's */

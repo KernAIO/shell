@@ -18,6 +18,7 @@ import {
   StatusDot,
 } from '@kernhq/ui'
 import { createQuery, useQueryClient } from '@tanstack/svelte-query'
+import { untrack } from 'svelte'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
@@ -25,11 +26,17 @@ import { authDisabled, signOut } from '$lib/auth/client'
 import CommandPalette from '$lib/components/CommandPalette.svelte'
 import InstallPrompt from '$lib/components/InstallPrompt.svelte'
 import OfflineBanner from '$lib/components/OfflineBanner.svelte'
+import WorkspaceTabs from '$lib/components/WorkspaceTabs.svelte'
+import { formatCount } from '$lib/format'
 import { navigationFor, slotsFor } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { realtime } from '$lib/realtime.svelte'
+import { prefs } from '$lib/state/prefs.svelte'
 import { session } from '$lib/state/session.svelte'
+import { relativeHref } from '$lib/state/tabs'
+import { tabs } from '$lib/state/tabs.svelte'
 import { theme } from '$lib/state/theme.svelte'
+import { metaFor } from '$lib/tabs-nav'
 import * as m from '$msg'
 
 let { children } = $props()
@@ -91,6 +98,12 @@ const enabledModules = $derived(
 const moduleNav = $derived(navigationFor({ enabled: enabledModules, can: (p) => session.can(p) }))
 
 /**
+ * What the active module puts in the sidebar.
+ *
+ * The sidebar belongs to whichever module you are in: the tracker fills it with saved views, chat
+ * with conversations.
+ */
+/**
  * Which section the rail is on, so the sidebar can show that section's own navigation.
  *
  * Derived from the path rather than held as state: the rail, the palette, a link and the back
@@ -112,12 +125,6 @@ const MY_WORK = [
   { preset: 'subscribed', icon: 'eye', label: () => m.tracker_preset_subscribed() },
 ] as const
 
-/**
- * What the active module puts in the sidebar.
- *
- * The sidebar belongs to whichever module you are in: the tracker leaves it as navigation, chat
- * fills it with conversations. A module that contributes nothing here simply gets the default.
- */
 const sidebarWidgets = $derived(
   slotsFor('sidebar.widget', {
     enabled: enabledModules,
@@ -128,6 +135,68 @@ const sidebarWidgets = $derived(
 
 const badgeFor = (id: string) => realtime.badges[id]?.unread ?? workspaceById(id)?.unread ?? 0
 const workspaceById = (id: string) => me.data?.workspaces.find((w) => w.id === id)
+
+/** The same count a badge shows: in the interface's digits, capped, and absent when it is zero. */
+const countBadge = (id: string) => {
+  const n = badgeFor(id)
+  return n ? formatCount(n) : null
+}
+
+/**
+ * The tab strip, when this device wants one.
+ *
+ * The strip is fed by navigation rather than driving it: every navigation — a sidebar click, the
+ * palette, the back button — reports where it landed, and the tab you are on follows. That keeps the
+ * shell working identically with the strip turned off, which is the point of it being a preference.
+ *
+ * While it is off nothing is synced, so turning it back on adopts wherever you are into the strip
+ * you last had, instead of resurrecting a stale one.
+ */
+const tabHref = $derived(workspace ? relativeHref(page.url.pathname, page.url.search, slug) : '')
+
+$effect(() => {
+  if (!workspace || !prefs.tabBar) return
+  const at = slug
+  const href = tabHref
+  const nav = moduleNav
+  // the store reads the state it is about to write; the dependencies are the four values above
+  untrack(() => tabs.attach(at, href, (h) => metaFor(h, nav)))
+})
+
+/**
+ * Tab keys avoid ⌘T/⌘W/⌘1: the browser takes those before a page ever sees them, and a shortcut that
+ * works in one browser and closes the window in another is worse than none. ⌥ is ours.
+ * `code` rather than `key`, because ⌥T on a Mac keyboard types "†".
+ */
+function tabKeys(e: KeyboardEvent) {
+  if (!prefs.tabBar || !e.altKey || e.ctrlKey || e.metaKey) return
+  const digit = /^Digit([1-9])$/.exec(e.code)
+  if (digit) {
+    e.preventDefault()
+    const n = Number(digit[1])
+    tabs.selectIndex(n === 9 ? -1 : n - 1)
+    return
+  }
+  switch (e.code) {
+    case 'KeyT':
+      e.preventDefault()
+      if (e.shiftKey) tabs.reopen()
+      else tabs.open('', { label: m.nav_home(), icon: 'home' })
+      return
+    case 'KeyW':
+      e.preventDefault()
+      if (tabs.activeId) tabs.close(tabs.activeId)
+      return
+    case 'BracketRight':
+      e.preventDefault()
+      tabs.step(1)
+      return
+    case 'BracketLeft':
+      e.preventDefault()
+      tabs.step(-1)
+      return
+  }
+}
 
 const isActive = (href: string) => page.url.pathname === href || page.url.pathname.startsWith(`${href}/`)
 const wsHref = (path = '') => `/${slug}${path}`
@@ -171,14 +240,26 @@ const userMenu: MenuItem[] = $derived([
     if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault()
       paletteOpen = !paletteOpen
+      return
     }
+    tabKeys(e)
   }}
 />
 
 {#if !workspace}
   <div class="grid min-h-dvh place-items-center"><Spinner /></div>
 {:else}
-  <AppShell bind:sidebarOpen>
+  {#snippet tabStrip()}
+    <WorkspaceTabs
+      {slug}
+      nav={moduleNav}
+      unread={badgeFor(workspace.id)}
+      onsearch={() => (paletteOpen = true)}
+    />
+  {/snippet}
+
+  <!-- passed rather than declared inline: an empty `topBar` snippet would still reserve its 38px -->
+  <AppShell bind:sidebarOpen topBar={prefs.tabBar ? tabStrip : undefined}>
     {#snippet rail()}
       <Rail>
         {#snippet top()}
@@ -196,7 +277,7 @@ const userMenu: MenuItem[] = $derived([
           icon="inbox"
           href={wsHref('/inbox')}
           active={isActive(wsHref('/inbox'))}
-          badge={badgeFor(workspace.id) || null}
+          badge={countBadge(workspace.id)}
         />
         {#each moduleNav as item (item.id)}
           <RailItem
@@ -227,7 +308,7 @@ const userMenu: MenuItem[] = $derived([
                 id: w.id,
                 label: w.name,
                 icon: w.slug === slug ? 'check' : undefined,
-                hint: badgeFor(w.id) ? String(badgeFor(w.id)) : undefined,
+                hint: countBadge(w.id) ?? undefined,
                 onSelect: () => goto(`/${w.slug}`),
               })),
               { type: 'separator' as const },
@@ -279,7 +360,7 @@ const userMenu: MenuItem[] = $derived([
               label={m.nav_inbox()}
               icon="inbox"
               href={wsHref('/inbox')}
-              badge={badgeFor(workspace.id) || null}
+              badge={countBadge(workspace.id)}
               glow={badgeFor(workspace.id) > 0}
             />
             {#each MY_WORK as item (item.preset)}
@@ -300,7 +381,7 @@ const userMenu: MenuItem[] = $derived([
               icon="inbox"
               href={wsHref('/inbox')}
               active={inboxFilter !== 'all'}
-              badge={badgeFor(workspace.id) || null}
+              badge={countBadge(workspace.id)}
               glow={badgeFor(workspace.id) > 0}
             />
             <SidebarItem

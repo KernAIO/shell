@@ -350,7 +350,7 @@ li {
   padding: 3px 6px;
   margin-inline-start: -6px;
   border: 0;
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: none;
   color: inherit;
   font: inherit;
@@ -392,7 +392,7 @@ li {
 .linkform input {
   padding: 5px 8px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface);
   color: inherit;
   font: inherit;
@@ -410,7 +410,7 @@ li {
 .row button {
   padding: 3px 10px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface);
   color: inherit;
   font: inherit;

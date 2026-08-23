@@ -5,6 +5,8 @@ import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { realtime } from '$lib/realtime.svelte'
 import { session } from '$lib/state/session.svelte'
+import { relativeHref } from '$lib/state/tabs'
+import { tabs } from '$lib/state/tabs.svelte'
 import * as m from '$msg'
 import BrowseChannelsDialog from './components/BrowseChannelsDialog.svelte'
 import Composer from './components/Composer.svelte'
@@ -12,7 +14,7 @@ import ConversationHeader from './components/ConversationHeader.svelte'
 import MessageList from './components/MessageList.svelte'
 import PinnedPanel from './components/PinnedPanel.svelte'
 import ThreadPanel from './components/ThreadPanel.svelte'
-import { composerTarget, kindOf } from './labels'
+import { composerTarget, KIND_TILE, kindOf } from './labels'
 import { getChatStore } from './store.svelte'
 
 /**
@@ -72,6 +74,24 @@ $effect(() => {
   if (!s || !id) return
   untrack(() => {
     void s.openThread(id)
+  })
+})
+
+/**
+ * Tell the shell what this tab is showing.
+ *
+ * The strip can only name a URL — "Chat" — from the navigation it knows about. Only the page knows
+ * the conversation is `# eng-core`, so it says so once the channel is loaded. Nothing depends on the
+ * strip existing: with tabs turned off this goes nowhere.
+ */
+$effect(() => {
+  const c = channel
+  if (!c || !store) return
+  const kind = kindOf(c)
+  tabs.describe(relativeHref(page.url.pathname, page.url.search, workspaceSlug), {
+    // no `#` prefix: the tab already carries the kind as its icon, and two hashes read as a typo
+    label: store.channelLabel(c),
+    icon: KIND_TILE[kind].icon,
   })
 })
 

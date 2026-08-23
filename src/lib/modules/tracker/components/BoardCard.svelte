@@ -4,7 +4,7 @@ import { Avatar, Icon } from '@kernhq/ui'
 import { realtime } from '$lib/realtime.svelte'
 import * as m from '$msg'
 import { getTrackerCatalogue } from '../context.svelte'
-import { priorityLabel } from '../labels'
+import { estimateLabel, priorityLabel } from '../labels'
 import DueDate from './DueDate.svelte'
 import PriorityGlyph from './PriorityGlyph.svelte'
 import StatusIcon from './StatusIcon.svelte'
@@ -75,7 +75,7 @@ const online = $derived(assignee ? realtime.online.has(assignee.id) : false)
   <footer class="foot">
     <span class="stat"><Icon name="clock" size={13} strokeWidth={1.6} />{formatDuration(issue.timeSpentSec)}</span>
     {#if issue.estimate !== null}
-      <span class="stat">{m.tracker_points({ count: issue.estimate })}</span>
+      <span class="stat">{estimateLabel(issue.estimate, issue.estimateUnit)}</span>
     {/if}
     <span class="sp"></span>
     {#if issue.commentCount > 0}

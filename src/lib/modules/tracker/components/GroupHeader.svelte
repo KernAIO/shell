@@ -2,7 +2,9 @@
 import type { StatusCategory } from '@kernhq/module-tracker/client'
 import { Avatar, Icon } from '@kernhq/ui'
 import * as m from '$msg'
+import { getTrackerCatalogue } from '../context.svelte'
 import type { GroupBadge } from '../labels'
+import { estimateLabel } from '../labels'
 import PriorityGlyph from './PriorityGlyph.svelte'
 import StatusIcon from './StatusIcon.svelte'
 
@@ -23,6 +25,9 @@ interface Props {
   onAdd?: () => void
 }
 let { label, count, estimate = null, open = true, badge, onToggle, onAdd }: Props = $props()
+
+/** The unit a sum of estimates is said in, which belongs to the projects in view. */
+const cat = getTrackerCatalogue()
 </script>
 
 <div class="kgh">
@@ -44,7 +49,7 @@ let { label, count, estimate = null, open = true, badge, onToggle, onAdd }: Prop
   </button>
   <span class="sp"></span>
   {#if estimate !== null && estimate > 0}
-    <span class="count">{m.tracker_points({ count: estimate })}</span>
+    <span class="count">{estimateLabel(estimate, cat.estimateUnit)}</span>
   {/if}
   {#if onAdd}
     <button type="button" class="add" aria-label={m.tracker_new_issue()} onclick={onAdd}>

@@ -204,7 +204,7 @@ li {
   padding: 3px 6px;
   margin-inline-start: -6px;
   border: 0;
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: none;
   color: inherit;
   font: inherit;

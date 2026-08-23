@@ -28,6 +28,23 @@ const modules = createQuery(() => ({
   enabled: Boolean(workspaceId),
 }))
 
+/**
+ * A module's version only ever moves with the platform, so what is worth saying here is where a
+ * pending release would take it. Instance admins are the only ones who can see that, and the only
+ * ones who could act on it, so nobody else pays for the query.
+ */
+const updates = createQuery(() => ({
+  queryKey: keys.adminUpdates(),
+  queryFn: () => api.admin.updates.get(),
+  enabled: session.user?.instanceAdmin === true,
+}))
+
+const pendingVersion = (moduleId: string) => {
+  if (!updates.data?.updateAvailable) return null
+  const change = updates.data.moduleChanges.find((c) => c.moduleId === moduleId)
+  return change && change.kind === 'changed' ? change.to : null
+}
+
 type Entry = NonNullable<typeof modules.data>[number]
 
 let filter = $state('')
@@ -122,9 +139,17 @@ const contributions = (e: Entry) =>
           {:else if kind === 'on'}
             <Badge tone="success">{m.enabled()}</Badge>
           {/if}
-          <span class="font-[var(--kern-font-mono)] text-[11.5px] text-[var(--kern-ink-400)]">
+          <span class="font-[var(--kern-font-mono)] text-[11.5px] text-[var(--kern-ink-400)]" dir="ltr">
             {entry.manifest.version}
           </span>
+          {#if pendingVersion(entry.manifest.id)}
+            <span class="font-[var(--kern-font-mono)] text-[11.5px] text-[var(--kern-accent-deep)]" dir="ltr">
+              {m.modules_moves_to({
+                version: pendingVersion(entry.manifest.id) ?? '',
+                release: updates.data?.latest?.version ?? '',
+              })}
+            </span>
+          {/if}
         </div>
 
         <p class="mt-1.5 text-[13px] leading-relaxed text-[var(--kern-ink-600)]">
@@ -143,6 +168,12 @@ const contributions = (e: Entry) =>
           {#if entry.manifest.dependsOn?.length}
             <span class="text-[12px] text-[var(--kern-ink-450)]">
               {m.modules_depends_on({ deps: entry.manifest.dependsOn.join(', ') })}
+            </span>
+          {/if}
+
+          {#if entry.manifest.minKernel}
+            <span class="text-[12px] text-[var(--kern-ink-450)]">
+              {m.modules_min_kernel({ version: entry.manifest.minKernel })}
             </span>
           {/if}
 

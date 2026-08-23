@@ -148,7 +148,7 @@ const name = (userId: string | null) => (userId ? (cat.person(userId)?.name ?? u
   margin-top: 6px;
   padding: 10px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-shell);
 }
 .chead {
@@ -186,7 +186,7 @@ textarea {
   margin-top: 6px;
   padding: 6px 8px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface);
   color: inherit;
   font: inherit;
@@ -213,6 +213,6 @@ textarea:focus-visible {
   cursor: pointer;
 }
 .addnote:hover {
-  color: var(--kern-ink);
+  color: var(--kern-ink-900);
 }
 </style>

@@ -1,4 +1,11 @@
-import type { GroupBy, GroupKey, Priority, StatusCategory } from '@kernhq/module-tracker/client'
+import type {
+  EstimateUnit,
+  GroupBy,
+  GroupKey,
+  Priority,
+  Project,
+  StatusCategory,
+} from '@kernhq/module-tracker/client'
 import * as m from '$msg'
 import type { TrackerCatalogue } from './context.svelte'
 import type { Preset } from './filters'
@@ -18,8 +25,22 @@ export type GroupBadge =
   | { kind: 'person'; id: string; name: string; avatarUrl: string | null }
   | { kind: 'colour'; color: string | null }
 
-/** What the toolbar's group-by button cycles through, in order (DESIGN.md 2.5). */
-export const GROUP_CYCLE: GroupBy[] = ['status', 'priority', 'assignee']
+/**
+ * The built-in groupings the toolbar offers, in order (DESIGN.md 2.5).
+ *
+ * The last four are how a project is planned rather than how work is triaged, which is also how the
+ * sidebar reaches them — a project's "Components" row is this list grouped by component, so the two
+ * cannot offer different things.
+ */
+export const GROUP_CYCLE: GroupBy[] = [
+  'status',
+  'priority',
+  'assignee',
+  'project',
+  'component',
+  'milestone',
+  'cycle',
+]
 
 export function groupByLabel(groupBy: GroupBy): string {
   switch (groupBy) {
@@ -35,10 +56,31 @@ export function groupByLabel(groupBy: GroupBy): string {
       return m.tracker_group_project()
     case 'cycle':
       return m.tracker_group_cycle()
+    case 'component':
+      return m.tracker_group_component()
+    case 'milestone':
+      return m.tracker_group_milestone()
+    case 'type':
+      return m.tracker_group_type()
     default:
       return m.tracker_group_none()
   }
 }
+
+/**
+ * An estimate, in the unit its project keeps.
+ *
+ * A project decides whether it estimates in points or in hours (`settings.estimation`), and every
+ * issue carries the unit it was raised under — so a row asks the issue rather than assuming. The
+ * whole interface said "pts" regardless, which made an hours project read as story points.
+ */
+export function estimateLabel(value: number, unit: EstimateUnit): string {
+  return unit === 'hours' ? m.tracker_hours({ count: value }) : m.tracker_points({ count: value })
+}
+
+/** What a project estimates in; `none` means it does not, and nothing should offer to. */
+export const estimateUnitOf = (project: Project | null | undefined): EstimateUnit =>
+  project?.settings.estimation ?? 'points'
 
 export function priorityLabel(priority: Priority): string {
   switch (priority) {
@@ -88,6 +130,8 @@ export function describeGroup(
         return { label: m.tracker_no_cycle() }
       case 'milestone':
         return { label: m.tracker_no_milestone() }
+      case 'component':
+        return { label: m.tracker_no_component() }
       default:
         return { label: m.tracker_group_none() }
     }
@@ -130,6 +174,11 @@ export function describeGroup(
     case 'milestone': {
       const milestone = cat.milestone(key)
       return { label: milestone?.name ?? key }
+    }
+    case 'component': {
+      // without this a components board reads `01920000-…` where a name belongs
+      const component = cat.component(key)
+      return { label: component?.name ?? key }
     }
     case 'type': {
       const type = cat.type(key)

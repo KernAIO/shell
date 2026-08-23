@@ -15,9 +15,19 @@
       rel="stylesheet"
       href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400&family=DM+Mono:wght@400;500&family=Vazirmatn:wght@400..700&display=swap"
     />
+    <link rel="icon" href="%sveltekit.assets%/favicon.ico" sizes="32x32" />
     <link rel="icon" href="%sveltekit.assets%/favicon.svg" type="image/svg+xml" />
-    <link rel="apple-touch-icon" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
-    <script>
+    <link rel="apple-touch-icon" sizes="180x180" href="%sveltekit.assets%/icons/apple-touch-icon.png" />
+    <!-- %sveltekit.assets% is resolved per request; a plain "./manifest.webmanifest" points at the
+         wrong directory on any route deeper than one segment. -->
+    <link rel="manifest" href="%sveltekit.assets%/manifest.webmanifest" />
+    <!--
+      The nonce is required: the content policy in `svelte.config.js` forbids inline script, and
+      SvelteKit only nonces the scripts it emits itself. Without it this is blocked and every
+      dark-mode load flashes light before hydration — silently, because a blocked script reports
+      nothing to the page.
+    -->
+    <script nonce="%sveltekit.nonce%">
       // apply the persisted theme before first paint to avoid a flash
       var storedTheme = null
       var prefersDark = false

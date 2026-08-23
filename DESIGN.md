@@ -390,6 +390,32 @@ Derived by inverting the paper scale to warm charcoal while keeping the same hue
 
 ## 2. Layout
 
+### 2.0 Tab strip (38px, optional) **(proposed — not in source)**
+
+A full-width strip above the rail, sidebar and content, holding the places in the workspace you have
+left open. It is a per-device preference (Settings → Appearance → Interface); with it off the shell is
+exactly as §2.1 describes, and every capability stays reachable without it.
+
+- `height: 38px; padding: 0 8px 0 10px; gap: 8px; background: #F0EEE7; border-bottom: 1px solid #E4E0D6`.
+  Spans every column; the app frame becomes `grid-template-rows: 38px minmax(0,1fr)`.
+- **Tab**: height 26, `padding: 0 6px 0 9px; gap: 6px; border-radius: 7px; font-size: 12.5px`, icon 13px
+  stroke 1.7, `max-width: 190px` with an ellipsised label. Inactive `color:#6B6459`, icon `#8E8779`,
+  hover `background:#F0EDE4; color:#3A362E`. Active `background:#E9E5DB; border:1px solid #E4E0D6;
+  color:#1C1A17; font-weight:600` — the paper tone §1.1 reserves for "active tab bg", not the ink-900
+  of an active nav item: a tab is a place you left open, not where you are being sent.
+- **Close**: 15×15 r4 `color:#8A8375`, ✕ 11px stroke 2, `opacity: 0` until the tab is hovered or active
+  (always visible where there is no hover). Hover `background: rgba(0,0,0,0.08); color:#1C1A17`.
+- **Unread dot**: 5×5 r999 `#A63D26`, on inactive tabs only.
+- **Pinned** tab: icon only, `padding: 0 7px`, no close; pinned tabs sort to the front of the strip.
+- **Drop indicator** while dragging: 2px `#B4661C` down the leading edge of the target tab; the dragged
+  tab drops to `opacity: 0.45`.
+- **"+"**: 24×24 r6 `color:#8A8375`, plus 14px stroke 1.9, hover `background:#F0EDE4; color:#1C1A17`.
+  Opens a menu of destinations — the same list the sidebar shows — plus "Search…" (⌘K).
+- **Trailing actions** (`gap: 4px`): search (26px icon button, opens ⌘K), the local clock, settings.
+  Clock: place 12px `#7A7365` + DM Mono 11.5px `#615B4F`, `padding: 0 6px`; hidden below 1100px.
+- Below 768px the strip is hidden and the bottom tab bar takes over: a phone has one place open at a
+  time.
+
 ### 2.1 App frame
 
 ```
@@ -405,7 +431,30 @@ Column 1 = icon rail, column 2 = sidebar, column 3 = content (`position: relativ
 - Divider: 22×1px `#D5CFC2`, margin `14px 0 10px` (top) and `10px 0 10px` (bottom).
 - Rail items: 34×34, `border-radius:9px; display:grid; place-items:center; position:relative`, icon 18px stroke 1.5. Inactive `color:#8E8779`, hover `background:#E4E0D6`, active `background:#1C1A17; color:#FBFAF7`. Gap 3px, overflow hidden (no scroll).
 - Notification dot on rail item: 6×6, `position:absolute; top:4px; inset-inline-end:4px; border-radius:999px; background:#A63D26; box-shadow: 0 0 0 2px #F0EEE7`.
+- **Unread count badge on a rail item**: min-width 16, height 16, `position:absolute; top:-3px; inset-inline-end:-4px; padding:0 4px; border-radius:999px; background:#A63D26; color:#FBFAF7`, 9.5px w500, `box-shadow: 0 0 0 2px #F0EEE7`; over 99 it reads "99+". It deliberately **overhangs** the 34×34 button, so the item list (`overflow:hidden`, above) has to be padded by the overhang and pulled back by an equal negative margin — otherwise the badge is sliced, and in RTL `inset-inline-end` is the *left* edge, which is where it shows first.
 - Rail order: My work (target), Inbox (bell, dot), Tracker (check), Chat (chat, dot), Planner (calendar), Documents (doc), Milestones (flag), Meetings (video), Office (building), People (users), Activity (activity). Bottom: Preferences (sliders icon) 34×34 r9 `color:#8A8375`, hover `background:#E4E0D6; color:#3A362E`.
+
+### 2.2b Rich text
+
+Stored prose — issue descriptions, comments, documents — is written with `RichTextEditor`
+(`@kernhq/ui/editor`) and read through `.kern-prose` (`@kernhq/ui/styles/prose.css`). **The editable
+area wears `.kern-prose` too**, so a document does not move when it is saved.
+
+- Field: `border:1px solid #E4E0D6; border-radius:8px; background:#FBFAF7`; focused, the whole
+  control takes `border-color:#B4661C` and a 3px ring — toolbar and body are one field, not two.
+- Toolbar: 4px 5px, buttons 26×26 r6, icon 14px stroke 1.9, inactive `#6B6459`, hover
+  `background:#E9E5DB; color:#1C1A17`, active `background:#1C1A17; color:#FBFAF7`; 1×15px `#E4E0D6`
+  separators between groups. Order: bold · italic · strike · code ¦ H2 · H3 ¦ bullet · number ·
+  quote · code block ¦ link · divider. Twelve controls is the limit that stays on one row in a
+  420px panel.
+- Body: `padding:9px 11px`, `min-height` = `minRows` × 1.55em, `max-height:60vh` then scrolls.
+- Link: an inline bar under the body with a URL field (always `direction:ltr`), Apply, and Remove.
+- `@` menu: r8 popover, rows 20px avatar + name, flips above the caret when it would fall off the
+  bottom of the window.
+
+The schema is exactly what `richtext.ts` renders and no more: paragraph, h2-h4, bullet/ordered
+list, blockquote, code block, hard break, horizontal rule, mention · bold, italic, strike, code,
+link. Anything else would vanish on save.
 
 ### 2.3 Sidebar (268px)
 
@@ -421,7 +470,11 @@ Column 1 = icon rail, column 2 = sidebar, column 3 = content (`position: relativ
   - Icon variant: 16px SVG stroke 1.5.
   - Colour-square variant (teams/projects): 14×14 r4 solid project colour.
   - DM variant: 18×18 r6 avatar with 8px w600 initials.
-  - **Badge**: DM Mono 10.5px w500 `padding:1px 6px; border-radius:5px`. Normal `background:#E9E5DB; color:#7A7365`; "glow" (unread/urgent) `background:#A63D26; color:#FBFAF7`.
+  - **Badge**: DM Mono 10.5px w500, `height:16px; min-width:17px; padding:0 5px; border-radius:999px;
+    line-height:1`, contents centred. Normal `background:#E9E5DB; color:#7A7365`; "glow"
+    (unread/urgent) `background:#A63D26; color:#FBFAF7`. A count is a token, not a line of text:
+    the fixed height puts the digit on the optical centre and the min-width stops a single digit
+    collapsing into a square tile — `padding:1px 6px` alone made a "2" as wide as it was tall.
   - **Project pill** (sidebar "Your projects" headers): `inline-flex; height:26px; margin:6px 0 3px; padding:0 9px; border-radius:7px; gap:8px; background:#EFEBE1` (active `#1C1A17`), 13×13 r4 colour square, label DM Mono 11px w500 uppercase tracking 0.1em `#7A7365` (active `#FBFAF7`).
 - **User footer**: `border-top:1px solid #E4E0D6; height:52px; padding:0 14px; gap:10px`. Avatar 26×26 r8 with 10px w600 initials; presence dot 9×9 r999 `#4F7A55` `border:2px solid #F0EEE7` at `bottom:-2px; inset-inline-end:-2px`. Name 12.5px w500 `#3A362E` ellipsis. Trailing **⌘K chip**: DM Mono 10.5px `#8A8375; border:1px solid #DCD7C9; border-radius:6px; padding:2px 6px`, hover `background:#E9E5DB; color:#1C1A17`.
 
@@ -493,12 +546,41 @@ Total header height ≈ 20 + 32 + 10 + 28 + 16 + 3 = ~109px (not a fixed 60px; t
 
 **Keyboard hint**: DM Mono 12px `#A79F8E` ("G then H", "↵", "C") in palette; ⌘K chip as in footer.
 
-### 3.1 Home ("My work")
+### 3.1 Home (the dashboard)
 
-Grid `padding:20px 24px 40px; grid-template-columns: minmax(0,1fr) 320px; gap:20px; align-items:start`.
-- **Stat tiles** (3 across, gap 10): white r10 `border:1px solid #E4E0D6; padding:14px 16px`; label 12px `#6B6459`; value 28px w600 tracking −0.03em lh1 `#1C1A17` with optional delta 12.5px `#3D9A63` ("+3") baseline-aligned gap 8 at margin-top 10; note 12.5px `#8A8375` margin-top 8.
-- **"ASSIGNED TO YOU" list**: section label row with count + trailing tabs (All / In progress / In review / Due soon). Rows: grid `18px 62px minmax(0,1fr) auto auto auto 24px; gap:10px; height:44px; padding:0 12px; border-bottom:1px solid #EAE6DC`, hover `#FFFFFF`. Cells: priority glyph 15px; key 13px `#8A8375`; title 14px `#2A2721` ellipsis; project grey chip; status (icon 15 + 13px `#575247` text, gap 6); due; avatar 22.
-- Right column (320): **"WAITING ON YOU"** mention cards (gap 2): white r10 bordered `padding:11px 12px`, hover `#EFEFF1`; header row avatar 22 + author 13px w500 `#1C1A17` + time 12px `#9A9285`; text 13px `#474339` lh1.5 mt6; where 12px `#A85A18` mt6. **"TODAY"** agenda rows: `padding:10px 4px; border-bottom:1px solid #EAE6DC; gap:12px`; time 13px `#7A7365` width 42; title 13.5px `#2A2721`; meta 12.5px `#8A8375` mt3.
+A twelve-column grid of widgets, not a fixed layout. `Page padding="home"` (`20px 24px 40px`);
+`grid-template-columns: repeat(12, minmax(0,1fr)); grid-auto-rows: 84px; gap: 12px`. The stored
+layout is always twelve columns; **6 (below 1024px) and 1 (below 640px) are projections computed at
+render and never written back.**
+
+Sizes are steps, never free pixels — `s` 3x1 · `m` 4x3 · `l` 6x4 · `xl` 12x5 — and a widget declares
+which of them it allows.
+
+- **Widget card**: `Card` r11 `border:1px solid #E4E0D6`, `overflow:hidden`, column of header + body.
+  Header 40px min, `padding-block:10px; padding-inline:14px 10px`, `border-bottom:1px solid #EAE6DC`;
+  icon 15; title 13.5px w600 tracking −0.01em `#1C1A17`, ellipsis. Body scrolls itself.
+- **Stat widgets are `compact`**: no header at all, just `StatTile` at `padding:14px 16px` — label
+  12px `#6B6459`, value 28px w600 tracking −0.03em lh1 `#1C1A17`, optional delta 12.5px `#3D9A63`
+  and note 12.5px `#8A8375`. A header above a single number repeats its label and steals the height
+  the number needs.
+- **List rows inside a widget**: `padding:8px 14px; gap:8-10px; border-bottom:1px solid #EAE6DC`,
+  last row none, hover `--kern-surface-hover`. Row actions appear on hover/focus-within as 24px
+  bordered buttons on `--kern-surface-raised`, inset-inline-end 8px — and are **hidden entirely
+  while the board is being edited**.
+- **Edit mode**: a dashed 12-column rule behind the grid; each card grows a 22px `grip-vertical`
+  handle (`cursor:grab`, `touch-action:none`) and an `ellipsis` menu; a compact card gets both
+  floating over its top inline-end corner instead, so its geometry is identical in both modes.
+  Resize handle 18px at the bottom inline-end corner, `cursor:nwse-resize` (mirrored under RTL).
+  Active card: `border-color:#B4661C` + `0 0 0 3px rgba(180,102,28,0.16)`; held card adds the
+  popover shadow.
+- **Header actions**: reading — `Customise` (ghost, `sliders-vertical`); editing — `Add a widget`
+  (secondary), `Presets` (ghost), `Reset` (ghost, only when the layout is the person's own), `Done`.
+- **Empty and locked**: an `EmptyState` with `layout-dashboard`; under a locked policy a 12.5px
+  `#A79F8E` line with a `lock` glyph reads "This dashboard is set by the workspace."
+
+**Not built, and not because it was forgotten:** §3.11's presence roster has no procedure behind it,
+and the "TODAY" agenda this section used to describe needs a calendar module that does not exist.
+Both return here when they have data.
 
 ### 3.2 Issues list
 
@@ -523,7 +605,7 @@ Grid `grid-template-columns: 300px minmax(0,1fr); height:100%`.
 
 ### 3.5 Milestones
 
-`padding:18px 24px 44px; max-width:920px; gap:10px` stacked cards. Card: white r10 bordered `padding:16px 18px`. Header gap 10: flag icon 16 stroke 1.7 in state colour (`#4474C4` in progress, `#3D9A63` done, `#8A8A8F` planned) · name 15px w500 `#1C1A17` · state chip (In progress `#DCE6F5`/`#3A69B8`, Done `#DEEDE4`/`#3D9A63`, Planned `#EFEBE1`/`#6B6459`) · spacer · dates 12.5px `#8A8375`. Goal 13.5px `#615B4F` lh1.5 mt8. Progress row mt14 gap12: track `height:6px; border-radius:999px; background:#DCD7C9`, fill `#4474C4` (or `#3D9A63` done); label 12.5px `#6B6459` width 92 text-align end ("5/8 · 63%"). Chips row mt12 gap6 grey chips.
+`padding:18px 28px 44px; gap:10px` stacked cards, full width — the same gutters as the issue list, so a project's pages sit in the frame its work does. Card: white r10 bordered `padding:16px 18px`. Header gap 10: flag icon 16 stroke 1.7 in state colour (`#4474C4` in progress, `#3D9A63` done, `#8A8A8F` planned) · name 15px w500 `#1C1A17` · state chip (In progress `#DCE6F5`/`#3A69B8`, Done `#DEEDE4`/`#3D9A63`, Planned `#EFEBE1`/`#6B6459`) · spacer · dates 12.5px `#8A8375`. Goal 13.5px `#615B4F` lh1.5 mt8. Progress row mt14 gap12: track `height:6px; border-radius:999px; background:#DCD7C9`, fill `#4474C4` (or `#3D9A63` done); label 12.5px `#6B6459` width 92 text-align end ("5/8 · 63%"). Chips row mt12 gap6 grey chips.
 
 ### 3.6 Docs
 
@@ -632,7 +714,18 @@ Use logical properties everywhere; the following are the specific flips:
 - Carets: sidebar chevron-down rotates to −90° (points inline-end in LTR = right); in RTL rotate +90°. Issue group filled triangle points right when collapsed → mirror with `scaleX(-1)` in RTL.
 - Breadcrumb separators " / " fine; numbers/keys ("NS-412", times) should stay LTR: wrap in `<bdi>` or `unicode-bidi: isolate; direction: ltr` for keys, times, mono counts.
 - Letter-spacing on uppercase Latin labels (0.16em) should be reset to 0 for Arabic/Persian script (tracking breaks connected letters); keep mono labels in Latin where they are identifiers.
-- Fonts: Instrument Sans and DM Mono lack Arabic glyphs — add `Vazirmatn` (fa/ar UI) and a mono fallback (`Vazir Code`/system) to the stacks: `--kern-font-sans: 'Instrument Sans', 'Vazirmatn', …`. Slightly increase line-height (1.6–1.75) for Arabic-script body text.
+- Fonts: Instrument Sans lacks Arabic glyphs — `Vazirmatn` follows it in the sans stack
+  (`--kern-font-sans: 'Instrument Sans', 'Vazirmatn', …`). Slightly increase line-height (1.6–1.75)
+  for Arabic-script body text.
+- **There is no metadata face in RTL.** DM Mono is Latin-only, and naming a Persian monospace after it
+  does not help: a monospace Arabic face draws letters in their isolated forms, so "فضای کاری" came
+  out as unjoined letters spaced like code. Under `[dir="rtl"]` the mono token resolves to the sans
+  stack (`--kern-font-mono: var(--kern-font-sans)`), and "this is metadata" is carried by size,
+  weight and colour alone. The override lives with the tokens, unlayered — an unlayered `:root`
+  declaration beats anything inside `@layer base`.
+- Counts go through `Intl.NumberFormat` like dates do, so a badge reads "۲" beside "۱۱ دقیقه پیش"
+  rather than being the one number on the screen left in Latin digits (`formatCount` in
+  `$lib/format.ts`, which also caps at "99+").
 - Toast and palette are centred; no change. Scrollbars follow the browser side.
 
 ---

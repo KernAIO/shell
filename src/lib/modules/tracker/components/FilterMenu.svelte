@@ -60,6 +60,7 @@ const items = $derived<MenuItem[]>([
     type: 'checkbox' as const,
     id: `a-${person.id}`,
     label: person.name,
+    avatar: { id: person.id, name: person.name, src: person.avatarUrl },
     checked: filters.assigneeIds.includes(person.id),
     onCheckedChange: () => toggle('assigneeIds', person.id),
   })),

@@ -182,10 +182,17 @@ fieldset {
 .templates {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  /* every card is the same size whatever its description costs in lines: `1fr` rows make each row
+     as tall as the tallest card in the grid, and the `li` stretches its button to fill the cell —
+     without it a two-line description left the card beside it visibly short. */
+  grid-auto-rows: 1fr;
   gap: 8px;
   margin: 6px 0 0;
   padding: 0;
   list-style: none;
+}
+.templates > li {
+  display: grid;
 }
 @media (max-width: 560px) {
   .templates {
@@ -199,7 +206,7 @@ fieldset {
   width: 100%;
   padding: 10px 12px;
   border: 1px solid var(--kern-border);
-  border-radius: var(--kern-radius-sm);
+  border-radius: var(--kern-r-sm);
   background: var(--kern-surface);
   color: inherit;
   font: inherit;
