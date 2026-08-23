@@ -31,7 +31,12 @@ const LOCALES = settings.locales
  * red for three thousand strings teaches people to ignore it. They are complete now, and Turkish
  * arrived complete, so the list is the whole set and a new key has nowhere to hide.
  */
-const REQUIRED = new Set(LOCALES)
+/**
+ * Named rather than derived from `LOCALES`, so that scaffolding a sixth language does not turn CI
+ * red on the first commit — a contributor translating one screen at a time needs the locale declared
+ * and the check quiet until they are done. Add a locale here the day it reaches 100%.
+ */
+const REQUIRED = new Set(['ar', 'de', 'en', 'fa', 'tr'])
 
 /**
  * Values that are legitimately identical to English: brand names, protocol names, and literals a
