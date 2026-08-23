@@ -1014,7 +1014,20 @@ export function createMockTrackerApi() {
 
   return {
     projects: {
-      list: async (_input: Ws) => clone(projects),
+      list: async ({ includeArchived }: Ws & { includeArchived?: boolean }) =>
+        clone(
+          projects
+            .filter((p) => includeArchived || !p.archivedAt)
+            // Counted, not seeded: a static count drifts the moment the demo creates an issue,
+            // and a row whose only number is always zero says nothing.
+            .map((p) => ({
+              ...p,
+              openIssueCount: state.issues.filter(
+                (i) =>
+                  i.projectId === p.id && i.statusCategory !== 'done' && i.statusCategory !== 'cancelled',
+              ).length,
+            })),
+        ),
       get: async ({ projectId }: Ws & { projectId: string }) =>
         clone(projects.find((p) => p.id === projectId) ?? (projects[0] as Project)),
       getByKey: async ({ key }: Ws & { key: string }) =>
@@ -1044,6 +1057,20 @@ export function createMockTrackerApi() {
         if (!project) throw new Error(`[mock] unknown project ${projectId}`)
         Object.assign(project, patch, { updatedAt: new Date().toISOString() })
         return clone(project)
+      },
+      archive: async ({ projectId, archived }: Ws & { projectId: string; archived?: boolean }) => {
+        const project = projects.find((p) => p.id === projectId)
+        if (!project) throw new Error(`[mock] unknown project ${projectId}`)
+        project.archivedAt = archived === false ? null : new Date().toISOString()
+        return clone(project)
+      },
+      delete: async ({ projectId }: Ws & { projectId: string }) => {
+        const at = projects.findIndex((p) => p.id === projectId)
+        if (at < 0) throw new Error(`[mock] unknown project ${projectId}`)
+        projects.splice(at, 1)
+        // Everything that belonged to it goes with it, which is what makes this irreversible.
+        state.issues = state.issues.filter((i) => i.projectId !== projectId)
+        return { ok: true as const }
       },
       setIntake: async ({
         enabled,

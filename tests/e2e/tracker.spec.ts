@@ -409,6 +409,34 @@ test('a project can be given components, versions and labels', async ({ page }) 
   await expect(components.locator('[data-item="Realtime gateway"]')).toHaveCount(0)
 })
 
+test('a project can be renamed, archived and deleted', async ({ page }) => {
+  // A project could be created and never touched again: update, archive and delete all had a
+  // server and nothing that called it, so a typo in a name outlived the project.
+  await page.goto('/northstar/settings/tracker/projects')
+  await expect(page.getByTestId('project-name')).toHaveValue('Kern Platform')
+
+  // saving is off until something changes, and on once it does
+  await expect(page.getByTestId('project-save')).toBeDisabled()
+  await page.getByTestId('project-name').fill('Kern Core')
+  await page.getByTestId('project-save').click()
+  await expect(page.locator('[data-testid="project-row"][data-project-key="KRN"]')).toContainText('Kern Core')
+
+  // archiving takes it off the list without taking anything away
+  await page.getByTestId('project-archive').click()
+  await expect(page.locator('[data-testid="project-row"][data-project-key="KRN"]')).toHaveCount(0)
+  await page.getByLabel('Show archived').check()
+  await expect(page.locator('[data-testid="project-row"][data-project-key="KRN"]')).toBeVisible()
+
+  // deleting asks for the key itself, because it takes every issue with it and cannot be undone
+  await page.locator('[data-testid="project-row"][data-project-key="RTM"]').click()
+  await page.getByTestId('project-delete').click()
+  await expect(page.getByText(/cannot be undone/)).toBeVisible()
+  await expect(page.getByTestId('project-delete-confirm')).toBeDisabled()
+  await page.getByTestId('project-delete-key').fill('RTM')
+  await page.getByTestId('project-delete-confirm').click()
+  await expect(page.locator('[data-testid="project-row"][data-project-key="RTM"]')).toHaveCount(0)
+})
+
 test('a workspace can add a work item type of its own, and retire one', async ({ page }) => {
   // The per-type customisation this page exists for could only ever reach the types a template
   // seeded: `types.create` and `types.archive` had a server and no control anywhere.
