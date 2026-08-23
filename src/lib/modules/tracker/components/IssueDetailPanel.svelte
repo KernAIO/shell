@@ -108,6 +108,8 @@ async function uploadIssueFiles(list: FileList | null) {
 const queryClient = useQueryClient()
 
 let editingDescription = $state(false)
+/** Named on screen before it happens, never behind `window.confirm`. */
+let confirmingDelete = $state(false)
 let descriptionDraft = $state('')
 
 const issueQuery = createQuery(() => ({
@@ -294,6 +296,80 @@ const triage = createMutation(() => ({
 /** A week is the interval somebody means by "not now"; anything finer belongs on a date picker. */
 const nextWeek = () => new Date(Date.now() + 7 * 86_400_000).toISOString()
 
+/**
+ * What happens to an issue as a whole: move it, archive it, delete it.
+ *
+ * All three had a server and no control, so an issue raised in the wrong project stayed there and
+ * a mistake could never be taken back. Archiving is the ordinary one — it leaves the issue and its
+ * history intact and off every list — so it is the one offered first; deleting is behind a
+ * confirmation that says what goes with it.
+ */
+const moveIssue = createMutation(() => ({
+  mutationFn: (projectId: string) =>
+    api.issues.move({ workspaceId, issueId: issue?.id as string, projectId }),
+  onSuccess: (moved: Issue) => {
+    invalidate()
+    // The key changed with the project, so the panel is now pointed at a key that no longer
+    // exists. Following it is the only thing that leaves the screen showing the same issue.
+    toast.success(m.tracker_issue_moved({ key: moved.key }))
+    onopenissue(moved.key)
+  },
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+const archiveIssue = createMutation(() => ({
+  mutationFn: (archived: boolean) =>
+    api.issues.archive({ workspaceId, issueId: issue?.id as string, archived }),
+  onSuccess: () => {
+    invalidate()
+    void queryClient.invalidateQueries({ queryKey: ['tracker', 'issue', workspaceId] })
+  },
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+const deleteIssue = createMutation(() => ({
+  mutationFn: () => api.issues.delete({ workspaceId, issueId: issue?.id as string }),
+  onSuccess: () => {
+    confirmingDelete = false
+    void queryClient.invalidateQueries({ queryKey: ['tracker', 'issue', workspaceId] })
+    toast.success(m.tracker_issue_deleted())
+    onclose()
+  },
+  onError: (error: Error) => toast.error(error.message),
+}))
+
+const issueMenu = $derived<MenuItem[]>([
+  {
+    id: 'move',
+    label: m.tracker_issue_move(),
+    icon: 'arrow-right',
+    disabled: !canEdit,
+    children: cat.projects
+      .filter((p) => p.id !== issue?.projectId)
+      .map((p) => ({
+        id: p.id,
+        label: `${p.key} · ${p.name}`,
+        onSelect: () => moveIssue.mutate(p.id),
+      })),
+  },
+  {
+    id: 'archive',
+    label: issue?.archivedAt ? m.tracker_issue_unarchive() : m.archive(),
+    icon: 'archive',
+    disabled: !canEdit,
+    onSelect: () => archiveIssue.mutate(!issue?.archivedAt),
+  },
+  { type: 'separator' },
+  {
+    id: 'delete',
+    label: m.delete(),
+    icon: 'trash-2',
+    danger: true,
+    disabled: !canEdit,
+    onSelect: () => (confirmingDelete = true),
+  },
+])
+
 const removeAttachment = createMutation(() => ({
   mutationFn: (attachmentId: string) => api.issues.attachments.remove({ workspaceId, attachmentId }),
   onSuccess: refreshComments,
@@ -455,6 +531,20 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
       />
       <span class="hkey">{issue.key}</span>
       <span class="hstatus">{status?.name ?? ''}</span>
+      <span class="hgap"></span>
+      <DropdownMenu items={issueMenu} align="end">
+        {#snippet trigger(props)}
+          <button
+            {...props}
+            type="button"
+            class="hmore"
+            aria-label={m.tracker_issue_actions()}
+            data-testid="issue-actions"
+          >
+            <Icon name="ellipsis" size={15} strokeWidth={1.8} />
+          </button>
+        {/snippet}
+      </DropdownMenu>
     {/if}
   {/snippet}
 
@@ -462,6 +552,26 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
   {#if !issue}
     <div class="loading"><Spinner /></div>
   {:else}
+    {#if confirmingDelete}
+      <div class="danger" role="alertdialog" aria-label={m.tracker_issue_delete_body()}>
+        <p>{m.tracker_issue_delete_body()}</p>
+        <div class="drow">
+          <Button
+            size="sm"
+            variant="danger"
+            loading={deleteIssue.isPending}
+            onclick={() => deleteIssue.mutate()}
+            data-testid="issue-delete-confirm"
+          >
+            {m.delete()}
+          </Button>
+          <Button size="sm" variant="ghost" onclick={() => (confirmingDelete = false)}>
+            {m.cancel()}
+          </Button>
+        </div>
+      </div>
+    {/if}
+
     <h1 class="title">{issue.title}</h1>
 
     {#snippet row_status()}
@@ -958,7 +1068,38 @@ function describeEvent(action: string, changes: Array<{ field: string; to: unkno
     font-size: 13px;
     color: var(--kern-ink-550);
   }
-  .title {
+  .hgap {
+  flex: 1;
+}
+.hmore {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--kern-radius-sm);
+  background: none;
+  color: var(--kern-ink-500);
+  cursor: pointer;
+}
+.hmore:hover {
+  background: var(--kern-surface-hover);
+}
+.danger {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--kern-danger);
+  border-radius: var(--kern-radius-sm);
+  font-size: 12.5px;
+}
+.danger p {
+  margin: 0 0 8px;
+}
+.drow {
+  display: flex;
+  gap: 8px;
+}
+.title {
     margin: 0;
     font-size: 19px;
     font-weight: 600;

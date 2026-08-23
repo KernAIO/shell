@@ -409,6 +409,26 @@ test('a project can be given components, versions and labels', async ({ page }) 
   await expect(components.locator('[data-item="Realtime gateway"]')).toHaveCount(0)
 })
 
+test('a work item can be moved to another project, archived or deleted', async ({ page }) => {
+  // `issues.move`, `archive` and `delete` had a server and no control, so an item raised in the
+  // wrong project stayed there and a mistake could never be taken back.
+  await page.goto('/northstar/tracker?issue=KRN-6')
+  const panel = page.getByRole('dialog')
+  await panel.getByTestId('issue-actions').click()
+
+  // moving re-keys the item, because the key belongs to the project
+  await page.getByRole('menuitem', { name: 'Move to project' }).click()
+  await page.getByRole('menuitem', { name: /RTM/ }).click()
+  await expect(panel.getByText(/^RTM-/)).toBeVisible()
+
+  // deleting says what goes with it, and offers archiving as the reversible thing to do instead
+  await panel.getByTestId('issue-actions').click()
+  await page.getByRole('menuitem', { name: 'Delete' }).click()
+  await expect(page.getByText(/archiving keeps all of it/)).toBeVisible()
+  await panel.getByTestId('issue-delete-confirm').click()
+  await expect(panel).toBeHidden()
+})
+
 test('a project can be renamed, archived and deleted', async ({ page }) => {
   // A project could be created and never touched again: update, archive and delete all had a
   // server and nothing that called it, so a typo in a name outlived the project.

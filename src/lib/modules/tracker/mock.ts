@@ -1922,6 +1922,29 @@ export function createMockTrackerApi() {
         return clone(issue)
       },
 
+      move: async ({ issueId, projectId }: Ws & { issueId: string; projectId: string }) => {
+        const issue = find(issueId)
+        const project = projects.find((p) => p.id === projectId)
+        if (!project) throw new Error(`[mock] unknown project ${projectId}`)
+        // The key belongs to the project, so moving re-keys the issue — the same thing the server
+        // does, and the reason the panel has to follow the new key afterwards.
+        const next = (state.counters.get(projectId) ?? 0) + 1
+        state.counters.set(projectId, next)
+        issue.projectId = projectId
+        issue.key = `${project.key}-${next}`
+        issue.number = next
+        // Relations render by key through this map, so a stale entry would show the old key on
+        // every issue that points at this one.
+        issueKeyById.set(issue.id, issue.key)
+        // Nothing project-scoped survives the move; the server clears these for the same reason.
+        issue.componentIds = []
+        issue.versionIds = []
+        issue.cycleId = null
+        issue.milestoneId = null
+        touch(issue)
+        return clone(issue)
+      },
+
       bulkUpdate: async ({ ids, patch }: Ws & { ids: string[]; patch: Record<string, unknown> }) => {
         const results = ids.map((id) => {
           const issue = state.issues.find((i) => i.id === id)
@@ -1963,6 +1986,9 @@ export function createMockTrackerApi() {
 
       delete: async ({ issueId }: Ws & { issueId: string }) => {
         state.issues = state.issues.filter((i) => i.id !== issueId)
+        // What the screen promises goes with it: the server cascades these, so the demo must too.
+        state.comments = state.comments.filter((c) => c.issueId !== issueId)
+        state.attachments = state.attachments.filter((a) => a.issueId !== issueId)
         return { ok: true as const }
       },
 
