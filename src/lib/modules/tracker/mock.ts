@@ -1296,7 +1296,66 @@ export function createMockTrackerApi() {
     },
     workflows: {
       statuses: async (_input: Ws) => clone(statuses),
-      list: async (_input: Ws) => clone(state.workflows),
+      list: async ({ includeArchived }: Ws & { includeArchived?: boolean }) =>
+        clone(state.workflows.filter((w) => includeArchived || !w.archivedAt)),
+      // The three the server ships. The definitions are thin here — the chooser is what this is
+      // for, and the mock has no engine to run them through.
+      templates: async () => [
+        {
+          id: 'software',
+          name: 'Software',
+          definition: clone((state.workflows[0] as Workflow).definition),
+        },
+        {
+          id: 'kanban',
+          name: 'Kanban',
+          definition: clone((state.workflows[0] as Workflow).definition),
+        },
+        {
+          id: 'simple',
+          name: 'Simple',
+          definition: clone((state.workflows[0] as Workflow).definition),
+        },
+      ],
+      validate: async ({ definition }: Ws & { definition: unknown }) => {
+        const def = definition as Workflow['definition']
+        const ids = new Set<string>()
+        const problems: Array<{ path: string; message: string }> = []
+        for (const [i, st] of def.statuses.entries()) {
+          if (ids.has(st.id))
+            problems.push({ path: `statuses.${i}.id`, message: `Duplicate status id "${st.id}"` })
+          ids.add(st.id)
+        }
+        for (const [i, t] of def.transitions.entries()) {
+          if (!ids.has(t.to))
+            problems.push({ path: `transitions.${i}.to`, message: `Unknown target status "${t.to}"` })
+        }
+        return { ok: problems.length === 0, problems }
+      },
+      create: async ({ name, definition }: Ws & { name: string; definition: Workflow['definition'] }) => {
+        const now = new Date().toISOString()
+        const workflow: Workflow = {
+          ...(state.workflows[0] as Workflow),
+          id: uid(2800 + state.workflows.length),
+          name,
+          description: null,
+          isDefault: false,
+          definition: clone(definition),
+          archivedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        }
+        state.workflows.push(workflow)
+        return clone(workflow)
+      },
+      archive: async ({ id, archived }: Ws & { id: string; archived?: boolean }) => {
+        const workflow = state.workflows.find((w) => w.id === id)
+        if (!workflow) throw new Error(`[mock] unknown workflow ${id}`)
+        if (workflow.isDefault && archived !== false)
+          throw new Error('[mock] the default workflow cannot be archived')
+        workflow.archivedAt = archived === false ? null : new Date().toISOString()
+        return clone(workflow)
+      },
       update: async ({ id, patch }: Ws & { id: string; patch: Partial<Workflow> }) => {
         const workflow = state.workflows.find((w) => w.id === id)
         if (!workflow) throw new Error(`[mock] unknown workflow ${id}`)

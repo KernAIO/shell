@@ -409,6 +409,33 @@ test('a project can be given components, versions and labels', async ({ page }) 
   await expect(components.locator('[data-item="Realtime gateway"]')).toHaveCount(0)
 })
 
+test('a workflow can be created, given a status, and pointed at a type', async ({ page }) => {
+  // The page could rename and reorder statuses and nothing else: create, archive, validate and
+  // the type-to-workflow link all had a server and no control.
+  await page.goto('/northstar/settings/tracker/workflows')
+
+  await page.getByTestId('workflow-new').click()
+  await page.getByTestId('workflow-name').fill('Support')
+  await page.getByTestId('workflow-create').click()
+  await expect(page.locator('[data-workflow="Support"]')).toBeVisible()
+
+  // a new status is wired in on both sides, because validation does not catch one nothing can
+  // reach — the page says so rather than leaving it to be discovered
+  await page.getByTestId('status-add').fill('Waiting on customer')
+  await page.getByTestId('status-add-go').click()
+  // the names live in inputs, so the row is checked by its value rather than the list's text
+  await expect(page.getByTestId('workflow-statuses').locator('input').last()).toHaveValue(
+    'Waiting on customer',
+  )
+  await expect(page.getByText(/reached from any other/)).toBeVisible()
+  await page.getByRole('button', { name: 'Save', exact: true }).click()
+
+  // and a workflow nobody runs on does nothing, so the types that use it are set here
+  await expect(page.getByText(/Nothing uses this workflow yet/)).toBeVisible()
+  await page.getByLabel('Bug').check()
+  await expect(page.getByText(/Nothing uses this workflow yet/)).toHaveCount(0)
+})
+
 test('a work item can be moved to another project, archived or deleted', async ({ page }) => {
   // `issues.move`, `archive` and `delete` had a server and no control, so an item raised in the
   // wrong project stayed there and a mistake could never be taken back.
