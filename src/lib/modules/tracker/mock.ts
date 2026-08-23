@@ -821,6 +821,10 @@ export function createMockTrackerApi() {
     attachments: [] as Attachment[],
     relations: [] as RelationView[],
     views: [] as View[],
+    // Seeded and then mutable: the planning screen creates, starts, completes and deletes these,
+    // and a demo that resets them on every render cannot show a cycle being closed.
+    cycles: cycles.map((c) => ({ ...c })),
+    milestones: milestones.map((ms) => ({ ...ms })),
     components: [] as Component[],
     versions: [] as Version[],
     worklogs: [] as Worklog[],
@@ -1259,11 +1263,116 @@ export function createMockTrackerApi() {
     },
     milestones: {
       list: async ({ projectId }: Ws & { projectId?: string }) =>
-        clone(milestones.filter((m) => !projectId || m.projectId === projectId)),
+        clone(state.milestones.filter((ms) => !projectId || ms.projectId === projectId)),
+      create: async ({ projectId, name }: Ws & { projectId: string; name: string }) => {
+        const now = new Date().toISOString()
+        const milestone: Milestone = {
+          id: uid(2600 + state.milestones.length),
+          workspaceId: WORKSPACE,
+          projectId,
+          name,
+          description: null,
+          targetDate: null,
+          status: 'open',
+          stats: { total: 0, done: 0 },
+          completedAt: null,
+          createdAt: now,
+          updatedAt: now,
+        }
+        state.milestones.push(milestone)
+        return clone(milestone)
+      },
+      update: async ({ id, patch }: Ws & { id: string; patch: Partial<Milestone> }) => {
+        const milestone = state.milestones.find((ms) => ms.id === id)
+        if (!milestone) throw new Error(`[mock] unknown milestone ${id}`)
+        Object.assign(milestone, patch, { updatedAt: new Date().toISOString() })
+        if (patch.status)
+          milestone.completedAt = patch.status === 'completed' ? new Date().toISOString() : null
+        return clone(milestone)
+      },
+      delete: async ({ id }: Ws & { id: string }) => {
+        state.milestones = state.milestones.filter((ms) => ms.id !== id)
+        return { ok: true as const }
+      },
     },
     cycles: {
       list: async ({ projectId }: Ws & { projectId?: string }) =>
-        clone(cycles.filter((c) => !projectId || c.projectId === projectId)),
+        clone(state.cycles.filter((c) => !projectId || c.projectId === projectId)),
+      get: async ({ id }: Ws & { id: string }) => {
+        const cycle = state.cycles.find((c) => c.id === id)
+        if (!cycle) throw new Error(`[mock] unknown cycle ${id}`)
+        return clone(cycle)
+      },
+      create: async ({
+        projectId,
+        name,
+        startAt,
+        endAt,
+      }: Ws & { projectId: string; name?: string; startAt: string; endAt: string }) => {
+        const now = new Date().toISOString()
+        const number =
+          Math.max(0, ...state.cycles.filter((c) => c.projectId === projectId).map((c) => c.number)) + 1
+        const cycle: Cycle = {
+          id: uid(2700 + state.cycles.length),
+          workspaceId: WORKSPACE,
+          projectId,
+          number,
+          name: name || `Cycle ${number}`,
+          goal: null,
+          startAt,
+          endAt,
+          status: 'upcoming',
+          startedAt: null,
+          completedAt: null,
+          carryOverCount: 0,
+          stats: { total: 0, done: 0, estimateTotal: 0, estimateDone: 0 },
+          createdAt: now,
+          updatedAt: now,
+        }
+        state.cycles.push(cycle)
+        return clone(cycle)
+      },
+      update: async ({ id, patch }: Ws & { id: string; patch: Partial<Cycle> }) => {
+        const cycle = state.cycles.find((c) => c.id === id)
+        if (!cycle) throw new Error(`[mock] unknown cycle ${id}`)
+        Object.assign(cycle, patch, { updatedAt: new Date().toISOString() })
+        return clone(cycle)
+      },
+      start: async ({ id }: Ws & { id: string }) => {
+        const cycle = state.cycles.find((c) => c.id === id)
+        if (!cycle) throw new Error(`[mock] unknown cycle ${id}`)
+        // One at a time, like the server: starting a second while one runs is a conflict, not a swap.
+        if (state.cycles.some((c) => c.projectId === cycle.projectId && c.status === 'active'))
+          throw new Error('[mock] another cycle is already active')
+        cycle.status = 'active'
+        cycle.startedAt = new Date().toISOString()
+        return clone(cycle)
+      },
+      complete: async ({ id, rollToCycleId }: Ws & { id: string; rollToCycleId?: string | null }) => {
+        const cycle = state.cycles.find((c) => c.id === id)
+        if (!cycle) throw new Error(`[mock] unknown cycle ${id}`)
+        // Omitted means "choose for me"; null means the backlog. The server draws the same line.
+        const target =
+          rollToCycleId === undefined
+            ? (state.cycles.find((c) => c.projectId === cycle.projectId && c.status === 'upcoming')?.id ??
+              null)
+            : rollToCycleId
+        const unfinished = state.issues.filter(
+          (i) => i.cycleId === id && i.statusCategory !== 'done' && i.statusCategory !== 'cancelled',
+        )
+        for (const issue of unfinished) issue.cycleId = target
+        if (target && unfinished.length) {
+          const next = state.cycles.find((c) => c.id === target)
+          if (next) next.carryOverCount += unfinished.length
+        }
+        cycle.status = 'completed'
+        cycle.completedAt = new Date().toISOString()
+        return clone(cycle)
+      },
+      delete: async ({ id }: Ws & { id: string }) => {
+        state.cycles = state.cycles.filter((c) => c.id !== id)
+        return { ok: true as const }
+      },
     },
     worklogs: {
       list: async ({ issueId }: Ws & { issueId: string }) =>
@@ -1435,7 +1544,7 @@ export function createMockTrackerApi() {
 
     reports: {
       burndown: async ({ cycleId }: Ws & { cycleId: string }) => {
-        const cycle = cycles.find((c) => c.id === cycleId) ?? cycles[0]
+        const cycle = state.cycles.find((c) => c.id === cycleId) ?? state.cycles[0]
         if (!cycle) throw new Error('[mock] no cycle to burn down')
         // A straight ideal line and a plausible actual one: enough for the chart to be exercised
         // without pretending the mock recomputes history.
@@ -1458,7 +1567,7 @@ export function createMockTrackerApi() {
       },
       velocity: async (_input: Ws & { projectId: string }) => ({
         unit: 'points' as const,
-        cycles: cycles.slice(0, 4).map((c, i) => ({
+        cycles: state.cycles.slice(0, 4).map((c, i) => ({
           cycle: {
             id: c.id,
             number: c.number,

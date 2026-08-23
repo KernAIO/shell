@@ -388,7 +388,7 @@ test('something raised from outside can be accepted or declined', async ({ page 
 test('a project can be given components, versions and labels', async ({ page }) => {
   // All three had a server and no screen, so a project could only ever use what its template seeded.
   await page.goto('/northstar/settings/tracker/planning')
-  await expect(page.getByRole('heading', { name: 'Components, versions and labels' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Planning', exact: true })).toBeVisible()
 
   const components = page.getByTestId('planning-components')
   await components.getByTestId('planning-add').fill('Realtime gateway')
@@ -407,6 +407,61 @@ test('a project can be given components, versions and labels', async ({ page }) 
   await expect(page.getByText(/comes off every issue/)).toBeVisible()
   await components.getByRole('button', { name: 'Delete' }).click()
   await expect(components.locator('[data-item="Realtime gateway"]')).toHaveCount(0)
+})
+
+test('a cycle runs, and closing it says where unfinished work goes', async ({ page }) => {
+  // Cycles had a full server — create, start, complete, roll over — and no screen anywhere, so the
+  // sprint progress bar in the issue header had nothing to measure.
+  await page.goto('/northstar/settings/tracker/planning')
+  const cycles = page.getByTestId('planning-cycles')
+
+  // a cycle is a name and a window; the form refuses a window that runs backwards
+  await cycles.getByTestId('cycle-name').fill('Hardening week')
+  await cycles.getByTestId('cycle-start-date').fill('2026-09-01')
+  await cycles.getByTestId('cycle-end-date').fill('2026-08-01')
+  await expect(page.getByTestId('cycle-range-error')).toBeVisible()
+  await expect(cycles.getByTestId('cycle-add')).toBeDisabled()
+
+  await cycles.getByTestId('cycle-end-date').fill('2026-09-14')
+  await expect(page.getByTestId('cycle-range-error')).toHaveCount(0)
+  await cycles.getByTestId('cycle-add').click()
+  const row = cycles.locator('[data-testid="cycle-row"]').filter({ hasText: 'Hardening week' })
+  await expect(row).toContainText('Upcoming')
+
+  // one cycle at a time: the demo's Sprint 24 is already running, so this one cannot start
+  await row.getByTestId('cycle-start').click()
+  await expect(page.getByText(/already active/)).toBeVisible()
+
+  // closing the active cycle asks where the leftovers go rather than deciding quietly
+  const active = cycles.locator('[data-testid="cycle-row"]').filter({ hasText: 'Sprint 24' })
+  await active.getByTestId('cycle-complete').click()
+  const panel = page.getByTestId('cycle-complete-panel')
+  await expect(panel).toContainText('Sprint 24')
+  await panel.getByTestId('cycle-roll').click()
+  // the demo already has an upcoming Sprint 25, which is what the server would have chosen on
+  // its own — naming a different one proves the choice on screen is the one that is obeyed
+  await page.getByRole('option', { name: 'Hardening week' }).click()
+  await panel.getByTestId('cycle-complete-confirm').click()
+  await expect(active).toContainText('Completed')
+
+  // and the work that was not finished landed in the cycle that was named, not the backlog and
+  // not the one the server would have picked
+  await expect(row).toContainText('carried over')
+})
+
+test('a project can be given milestones', async ({ page }) => {
+  await page.goto('/northstar/settings/tracker/planning')
+  const milestones = page.getByTestId('planning-milestones')
+  await milestones.getByTestId('planning-add').fill('Public beta')
+  await milestones.getByRole('button', { name: 'Add', exact: true }).click()
+  await expect(milestones.locator('[data-item="Public beta"]')).toBeVisible()
+
+  // a milestone is reached rather than deleted, and can be reopened when it was not
+  const row = milestones.locator('li').filter({ hasText: 'Public beta' })
+  await row.getByRole('button', { name: 'Mark reached' }).click()
+  await expect(row.getByText('Reached', { exact: true })).toBeVisible()
+  await row.getByRole('button', { name: 'Reopen' }).click()
+  await expect(row.getByRole('button', { name: 'Mark reached' })).toBeVisible()
 })
 
 test('time can be logged on an issue, by timer or by hand', async ({ page }) => {

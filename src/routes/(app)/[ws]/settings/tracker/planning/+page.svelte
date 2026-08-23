@@ -7,18 +7,21 @@ import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
 import { getTrackerApi } from '$lib/modules/tracker/api'
 import { canTracker } from '$lib/modules/tracker/permissions'
 import { trackerKeys } from '$lib/modules/tracker/query'
+import CycleList from '$lib/modules/tracker/settings/CycleList.svelte'
 import { listMutation } from '$lib/modules/tracker/settings/mutations'
 import PlanningList from '$lib/modules/tracker/settings/PlanningList.svelte'
+import { getLocale } from '$lib/paraglide/runtime'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 
 /**
- * What a project sorts its work by: components, versions and labels.
+ * What a project plans and sorts its work by: cycles, milestones, components, versions and labels.
  *
- * All three have had a server since the module existed and no screen at all, so a project could
- * only ever use the components and versions its template happened to seed. They are project-scoped,
- * which is why this page starts by asking which project — the other tracker settings are workspace
- * wide and do not.
+ * All five have had a server since the module existed and no screen at all, so a project could only
+ * ever use what its template happened to seed — and cycles, which no template seeds, meant the
+ * sprint progress bar in the issue header had nothing to measure and never appeared. They are
+ * project-scoped, which is why this page starts by asking which project — the other tracker
+ * settings are workspace wide and do not.
  */
 const api = getTrackerApi()
 const queryClient = useQueryClient()
@@ -37,6 +40,16 @@ const projectsQuery = createQuery(() => ({
 const projects = $derived(projectsQuery.data ?? [])
 const projectId = $derived(selectedId ?? projects[0]?.id ?? '')
 
+const cyclesQuery = createQuery(() => ({
+  queryKey: trackerKeys.cycles(workspaceId, projectId),
+  queryFn: () => api.cycles.list({ workspaceId, projectId }),
+  enabled: Boolean(projectId),
+}))
+const milestonesQuery = createQuery(() => ({
+  queryKey: trackerKeys.milestones(workspaceId, projectId),
+  queryFn: () => api.milestones.list({ workspaceId, projectId }),
+  enabled: Boolean(projectId),
+}))
 const componentsQuery = createQuery(() => ({
   queryKey: [...trackerKeys.projects(workspaceId), 'components', projectId],
   queryFn: () => api.components.list({ workspaceId, projectId }),
@@ -56,12 +69,37 @@ const labelsQuery = createQuery(() => ({
 const refresh = () => {
   void queryClient.invalidateQueries({ queryKey: trackerKeys.projects(workspaceId) })
   void queryClient.invalidateQueries({ queryKey: trackerKeys.labels(workspaceId) })
+  void queryClient.invalidateQueries({ queryKey: ['tracker', 'cycle'] })
+  void queryClient.invalidateQueries({ queryKey: ['tracker', 'milestone'] })
 }
 /** A function declaration, not an arrow: an arrow's generic needs `<T,>` here, which the Svelte
  * formatter rewrites and then disagrees with itself about. */
 function mutation<T>(fn: (input: T) => Promise<unknown>) {
   return listMutation(fn, refresh)
 }
+
+const addCycle = mutation((input: { name: string; startAt: string; endAt: string }) =>
+  api.cycles.create({ workspaceId, projectId, ...input }),
+)
+const startCycle = mutation((id: string) => api.cycles.start({ workspaceId, id }))
+/**
+ * `rollToCycleId` is sent even when it is null, and that is the point: the server reads an omitted
+ * key as "pick the next cycle for me" and a null as "the backlog". The screen always has an answer,
+ * so it always says which.
+ */
+const completeCycle = mutation((input: { id: string; rollToCycleId: string | null }) =>
+  api.cycles.complete({ workspaceId, ...input }),
+)
+const removeCycle = mutation((id: string) => api.cycles.delete({ workspaceId, id }))
+
+const addMilestone = mutation((name: string) => api.milestones.create({ workspaceId, projectId, name }))
+const renameMilestone = mutation((input: { id: string; name: string }) =>
+  api.milestones.update({ workspaceId, id: input.id, patch: { name: input.name } }),
+)
+const removeMilestone = mutation((id: string) => api.milestones.delete({ workspaceId, id }))
+const setMilestoneStatus = mutation((input: { id: string; status: 'open' | 'completed' }) =>
+  api.milestones.update({ workspaceId, id: input.id, patch: { status: input.status } }),
+)
 
 const addComponent = mutation((name: string) => api.components.create({ workspaceId, projectId, name }))
 const renameComponent = mutation((input: { id: string; name: string }) =>
@@ -121,6 +159,24 @@ const copyLink = async () => {
     toast.info(m.tracker_intake_copy_manually())
   }
 }
+
+const dateFormat = new Intl.DateTimeFormat(getLocale(), { day: 'numeric', month: 'short' })
+const milestones = $derived(
+  (milestonesQuery.data ?? []).map((ms) => ({
+    id: ms.id,
+    name: ms.name,
+    badge: ms.status === 'completed' ? m.tracker_milestone_completed() : null,
+    note: [
+      ms.targetDate ? dateFormat.format(new Date(ms.targetDate)) : null,
+      m.tracker_planning_done_of({ done: ms.stats.done, total: ms.stats.total }),
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  })),
+)
+const openMilestoneIds = $derived(
+  new Set((milestonesQuery.data ?? []).filter((ms) => ms.status !== 'completed').map((ms) => ms.id)),
+)
 
 const components = $derived(
   (componentsQuery.data ?? []).map((c) => ({
@@ -199,6 +255,40 @@ const releasedIds = $derived(
     </SettingsSection>
 
     <SettingsSection>
+      <CycleList
+        cycles={cyclesQuery.data ?? []}
+        loading={cyclesQuery.isPending}
+        editable={canManage}
+        oncreate={(input) => addCycle.mutate(input)}
+        onstart={(id) => startCycle.mutate(id)}
+        oncomplete={(input) => completeCycle.mutate(input)}
+        onremove={(id) => removeCycle.mutate(id)}
+      />
+
+      <PlanningList
+        title={m.tracker_planning_milestones()}
+        description={m.tracker_planning_milestones_hint()}
+        items={milestones}
+        loading={milestonesQuery.isPending}
+        editable={canManage}
+        addLabel={m.tracker_planning_milestone_add()}
+        emptyLabel={m.tracker_planning_milestones_empty()}
+        onadd={(name) => addMilestone.mutate(name)}
+        onrename={(id, name) => renameMilestone.mutate({ id, name })}
+        onremove={(id) => removeMilestone.mutate(id)}
+        rowAction={{
+          label: (item) =>
+            openMilestoneIds.has(item.id)
+              ? m.tracker_milestone_complete()
+              : m.tracker_milestone_reopen(),
+          run: (item) =>
+            setMilestoneStatus.mutate({
+              id: item.id,
+              status: openMilestoneIds.has(item.id) ? 'completed' : 'open',
+            }),
+        }}
+      />
+
       <PlanningList
         title={m.tracker_planning_components()}
         description={m.tracker_planning_components_hint()}
