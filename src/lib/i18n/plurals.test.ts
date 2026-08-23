@@ -40,9 +40,15 @@ describe('plural variants', () => {
     expect(count(2, 'de')).toBe('2 Vorgänge')
   })
 
+  it('does not inflect Turkish after a numeral', () => {
+    // Like Persian, a Turkish noun stays singular after a number — both categories, same wording.
+    expect(count(1, 'tr')).toBe('1 iş')
+    expect(count(2, 'tr')).toBe('2 iş')
+  })
+
   it('never renders a message key', () => {
     // The regression that matters: a key on screen instead of a sentence.
-    for (const locale of ['en', 'fa', 'ar', 'de'] as const) {
+    for (const locale of ['en', 'fa', 'ar', 'de', 'tr'] as const) {
       for (const n of [0, 1, 2, 3, 6, 11, 100, 101]) {
         expect(count(n, locale)).not.toContain('tracker_issues_count')
         expect(members_count({ count: n }, { locale })).not.toContain('members_count')

@@ -24,12 +24,23 @@ const settings = read('project.inlang/settings.json')
 const BASE = settings.baseLocale
 const LOCALES = settings.locales
 
-/** Locales a gap fails on. Add one the day it reaches parity; see the language skill. */
-const REQUIRED = new Set([BASE, 'fa'])
+/**
+ * Locales a gap fails on — every one we ship.
+ *
+ * This was `[en, fa]` while Arabic and German were a thousand keys short, because a check that is
+ * red for three thousand strings teaches people to ignore it. They are complete now, and Turkish
+ * arrived complete, so the list is the whole set and a new key has nowhere to hide.
+ */
+const REQUIRED = new Set(LOCALES)
 
 /**
  * Values that are legitimately identical to English: brand names, protocol names, and literals a
- * user types verbatim. Anything else that matches English is a string somebody skipped.
+ * user types verbatim.
+ *
+ * This one is reported and never fails, because it is a heuristic rather than a rule. German shares
+ * a great deal of vocabulary with English — Name, Status, Version, Person, Text, Filter, Import,
+ * Dashboard — so sixty-five of its entries match English and every one of them is correct. Read the
+ * list; do not act on the count.
  */
 const SAME_AS_ENGLISH_IS_FINE = new Set([
   'app_name',
