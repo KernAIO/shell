@@ -75,9 +75,39 @@ const accountLinks: NavLink[] = [
 ]
 </script>
 
-<div class="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[248px_minmax(0,1fr)]">
+<!--
+  `grid-rows-[minmax(0,1fr)]`, not an implicit `auto` row: an auto row is sized by its tallest item,
+  so the column with the most content set the row height and both columns stretched past the shell.
+  The scroll container then ended below the fold — you could scroll it to its end and still not
+  reach the last thing on the page. Each column scrolls itself instead.
+-->
+{#snippet navGroup(label: string, links: NavLink[])}
+  <SectionLabel {label} />
+  <ul class="mb-4 mt-1 grid gap-0.5">
+    {#each links as link (link.path)}
+      <li>
+        <a
+          href={href(link.path)}
+          aria-current={isActive(link.path) ? 'page' : undefined}
+          class="flex h-[34px] items-center gap-2.5 rounded-[9px] px-2.5 text-[13px] transition-colors {isActive(
+            link.path,
+          )
+            ? 'bg-[var(--kern-ink-900)] font-medium text-[var(--kern-ink-inverse)]'
+            : 'text-[var(--kern-ink-700)] hover:bg-[var(--kern-surface-hover)]'}"
+        >
+          <Icon name={link.icon} size={15} class="shrink-0 opacity-90" />
+          <span class="truncate">{link.label}</span>
+        </a>
+      </li>
+    {/each}
+  </ul>
+{/snippet}
+
+<div
+  class="grid min-h-0 flex-1 grid-cols-1 grid-rows-[minmax(0,1fr)] md:grid-cols-[248px_minmax(0,1fr)]"
+>
   <nav
-    class="border-b border-[var(--kern-border)] px-3 py-4 md:border-b-0 md:border-e"
+    class="min-h-0 overflow-y-auto border-b border-[var(--kern-border)] px-3 py-4 md:border-b-0 md:border-e"
     aria-label={m.settings_title()}
   >
     <div class="mb-4 flex items-center gap-2.5 px-1.5">
@@ -90,69 +120,19 @@ const accountLinks: NavLink[] = [
       </div>
     </div>
 
+    <!--
+      Your own settings first. They are the ones that are always yours: workspace and module
+      entries appear only with the permission to act on them, so a member without them used to
+      open Settings and find their own profile below two groups they could not use — or below
+      nothing at all, with the page starting on an empty space.
+    -->
+    {@render navGroup(m.settings_account_section(), accountLinks)}
     {#if workspaceLinks.length}
-      <SectionLabel label={m.settings_workspace_section()} />
-      <ul class="mb-4 mt-1 grid gap-0.5">
-        {#each workspaceLinks as link (link.path)}
-          <li>
-            <a
-              href={href(link.path)}
-              aria-current={isActive(link.path) ? 'page' : undefined}
-              class="flex h-[34px] items-center gap-2.5 rounded-[9px] px-2.5 text-[13px] transition-colors {isActive(
-                link.path,
-              )
-                ? 'bg-[var(--kern-ink-900)] font-medium text-[var(--kern-ink-inverse)]'
-                : 'text-[var(--kern-ink-700)] hover:bg-[var(--kern-surface-hover)]'}"
-            >
-              <Icon name={link.icon} size={15} class="shrink-0 opacity-90" />
-              <span class="truncate">{link.label}</span>
-            </a>
-          </li>
-        {/each}
-      </ul>
+      {@render navGroup(m.settings_workspace_section(), workspaceLinks)}
     {/if}
-
     {#if moduleLinks.length}
-      <SectionLabel label={m.settings_modules_section()} />
-      <ul class="mb-4 mt-1 grid gap-0.5">
-        {#each moduleLinks as link (link.path)}
-          <li>
-            <a
-              href={href(link.path)}
-              aria-current={isActive(link.path) ? 'page' : undefined}
-              class="flex h-[34px] items-center gap-2.5 rounded-[9px] px-2.5 text-[13px] transition-colors {isActive(
-                link.path,
-              )
-                ? 'bg-[var(--kern-ink-900)] font-medium text-[var(--kern-ink-inverse)]'
-                : 'text-[var(--kern-ink-700)] hover:bg-[var(--kern-surface-hover)]'}"
-            >
-              <Icon name={link.icon} size={15} class="shrink-0 opacity-90" />
-              <span class="truncate">{link.label}</span>
-            </a>
-          </li>
-        {/each}
-      </ul>
+      {@render navGroup(m.settings_modules_section(), moduleLinks)}
     {/if}
-
-    <SectionLabel label={m.settings_account_section()} />
-    <ul class="mt-1 grid gap-0.5">
-      {#each accountLinks as link (link.path)}
-        <li>
-          <a
-            href={href(link.path)}
-            aria-current={isActive(link.path) ? 'page' : undefined}
-            class="flex h-[34px] items-center gap-2.5 rounded-[9px] px-2.5 text-[13px] transition-colors {isActive(
-              link.path,
-            )
-              ? 'bg-[var(--kern-ink-900)] font-medium text-[var(--kern-ink-inverse)]'
-              : 'text-[var(--kern-ink-700)] hover:bg-[var(--kern-surface-hover)]'}"
-          >
-            <Icon name={link.icon} size={15} class="shrink-0 opacity-90" />
-            <span class="truncate">{link.label}</span>
-          </a>
-        </li>
-      {/each}
-    </ul>
   </nav>
 
   <div class="min-h-0 overflow-y-auto px-6 py-6 pb-16">{@render children()}</div>

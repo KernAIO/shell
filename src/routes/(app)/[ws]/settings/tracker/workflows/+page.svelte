@@ -274,7 +274,13 @@ const from = (t: { from: string | string[] }) =>
     </SettingsSection>
 
     {#if selected}
-      <SettingsSection title={m.tracker_workflow_statuses()} description={m.tracker_workflow_statuses_hint()}>
+      <!-- Every section below names the workflow it belongs to. The list is at the top of a page
+           that scrolls well past it, so by the time you reach Save the only thing telling you which
+           workflow you are editing has scrolled away. -->
+      <SettingsSection
+        title={m.tracker_workflow_statuses_in({ name: selected.name })}
+        description={m.tracker_workflow_statuses_hint()}
+      >
         <ul class="statuses" data-testid="workflow-statuses">
           {#each statuses as status, i (status.id)}
             <li>
@@ -355,7 +361,7 @@ const from = (t: { from: string | string[] }) =>
         {/if}
 
         <div class="usedby">
-          <p class="lbl">{m.tracker_workflow_used_by_label()}</p>
+          <p class="lbl">{m.tracker_workflow_used_by_in({ name: selected.name })}</p>
           {#each typesQuery.data ?? [] as type (type.id)}
             <Checkbox
               checked={type.workflowId === selected.id}
@@ -387,7 +393,7 @@ const from = (t: { from: string | string[] }) =>
       </SettingsSection>
 
       <SettingsSection
-        title={m.tracker_workflow_transitions()}
+        title={m.tracker_workflow_transitions_in({ name: selected.name })}
         description={m.tracker_workflow_transitions_hint()}
       >
         <ul class="transitions" data-testid="workflow-transitions">
