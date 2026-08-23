@@ -61,7 +61,11 @@ const moduleLinks = $derived(
     enabled: new Set((modulesQuery.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
     can: (permission: string) => session.can(permission),
   }).map((link) => ({
-    path: `/${link.moduleId}/${link.id}`,
+    // A page whose id is its module's id is that module's main settings page and lives at
+    // `/settings/<moduleId>`; anything else is `/settings/<moduleId>/<pageId>`. Without this, mail —
+    // one module, one page, both called "mail" — linked to `/settings/mail/mail` and 404'd, and
+    // nothing caught it because the nav entry rendered perfectly.
+    path: link.id === link.moduleId ? `/${link.moduleId}` : `/${link.moduleId}/${link.id}`,
     label: link.label,
     icon: link.icon ?? 'puzzle',
   })),

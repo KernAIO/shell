@@ -9,8 +9,12 @@ test('a workspace chooses where its email comes from', async ({ page }) => {
   await page.goto('/northstar/settings/mail')
   await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible()
 
-  // it is reachable from the settings navigation, not only by URL
-  await expect(page.getByRole('link', { name: 'Email' })).toBeVisible()
+  // reachable from the settings navigation, and the link has to *arrive* — asserting it was
+  // visible is what let it ship pointing at /settings/mail/mail, which 404s
+  await page.goto('/northstar/settings')
+  await page.getByRole('link', { name: 'Email' }).click()
+  await expect(page).toHaveURL(/\/settings\/mail$/)
+  await expect(page.getByRole('heading', { name: 'Email', exact: true })).toBeVisible()
 
   // a stored secret is never sent back to the browser, and the screen says the field is not empty
   await expect(page.getByTestId('mail-pass')).toHaveValue('__kern_secret__')

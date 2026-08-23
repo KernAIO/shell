@@ -15,7 +15,7 @@
     "build": "pnpm i18n && vite build",
     "preview": "vite preview --port 5173",
     "start": "node build",
-    "lint": "biome check . && node scripts/check-icons.mjs",
+    "lint": "biome check . && node scripts/check-icons.mjs && node scripts/check-i18n.mjs",
     "i18n": "paraglide-js compile --project ./project.inlang --outdir ./src/lib/paraglide",
     "typecheck": "pnpm i18n && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
     "test": "vitest run",
