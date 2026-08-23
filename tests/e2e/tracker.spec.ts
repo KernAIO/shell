@@ -123,10 +123,10 @@ test('a comment carries a real mention, and can be edited, replied to and delete
   // the menu offers the workspace's people; picking one inserts a mention, not the characters
   await expect(page.getByRole('option', { name: /Dan/ })).toBeVisible()
   await box.press('Enter')
-  await expect(box).toHaveValue('over to @Dan Brekke ')
+  await expect(box).toHaveText('over to @Dan Brekke')
   await box.press('Enter')
 
-  // Keep a positional locator: once editing starts the text moves into a textarea, and a
+  // Keep a positional locator: once editing starts the text moves into the editor, and a
   // text filter would stop matching the very comment it is meant to follow.
   const comment = panel.locator('article').first()
   await expect(comment).toBeVisible()
@@ -137,7 +137,8 @@ test('a comment carries a real mention, and can be edited, replied to and delete
   await comment.getByRole('button', { name: 'Comment actions' }).click()
   await page.getByRole('menu').getByRole('menuitem', { name: 'Edit' }).click()
   const editBox = comment.getByRole('textbox', { name: 'Edit your comment' })
-  await expect(editBox).toHaveValue('over to @Dan Brekke')
+  // the composer is a rich-text editor, not an input: it has text, never a value
+  await expect(editBox).toHaveText('over to @Dan Brekke')
   await editBox.fill('over to @Dan Brekke — thanks')
   await comment.getByRole('button', { name: 'Save' }).click()
   await expect(comment).toContainText('thanks')
