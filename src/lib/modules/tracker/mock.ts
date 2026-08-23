@@ -188,6 +188,9 @@ const workItemType = (n: number, key: string, name: string, icon: string, level:
   updatedAt: iso(120 * DAY),
 })
 
+/** Mutable, like every other setting here: the screen changes it and the demo remembers. */
+const hierarchyRules = { allowSkipLevels: true, allowSameLevel: false, maxSubItemDepth: 1 }
+
 const types: WorkItemType[] = [
   workItemType(720, 'task', 'Task', 'square-check-big', 0),
   // Bug carries a real layout, so the demo shows a customised type beside default ones: Severity
@@ -1153,6 +1156,11 @@ export function createMockTrackerApi() {
         if (patch.isDefault) for (const other of types) other.isDefault = false
         Object.assign(type, patch, { updatedAt: new Date().toISOString() })
         return clone(type)
+      },
+      hierarchyRules: async (_input: Ws) => clone(hierarchyRules),
+      setHierarchyRules: async ({ rules }: Ws & { rules: typeof hierarchyRules }) => {
+        Object.assign(hierarchyRules, rules)
+        return clone(hierarchyRules)
       },
       archive: async ({ id, archived }: Ws & { id: string; archived?: boolean }) => {
         const type = types.find((t) => t.id === id)

@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { FieldLayoutItem, WorkItemType } from '@kernhq/module-tracker/client'
-import { Badge, Button, Checkbox, Icon, Spinner, toast } from '@kernhq/ui'
+import { Badge, Button, Checkbox, Icon, Select, Spinner, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
@@ -69,6 +69,32 @@ const save = createMutation(() => ({
 }))
 
 const refreshTypes = () => queryClient.invalidateQueries({ queryKey: ['tracker', 'type', workspaceId] })
+
+/**
+ * The rules that decide what may sit under what.
+ *
+ * These were enforced and unreachable, which is the worst combination: somebody adding a sub-item
+ * got "Sub-items may only nest 1 level(s) deep" from the server with nowhere to go and change it.
+ * They live here because they are about types and their levels, which is what this page is.
+ */
+const rulesQuery = createQuery(() => ({
+  queryKey: [...trackerKeys.types(workspaceId), 'hierarchy'],
+  queryFn: () => api.types.hierarchyRules({ workspaceId }),
+  enabled: Boolean(workspaceId),
+}))
+const rules = $derived(rulesQuery.data ?? null)
+
+const saveRules = createMutation(() => ({
+  mutationFn: (next: NonNullable<typeof rules>) => api.types.setHierarchyRules({ workspaceId, rules: next }),
+  onSuccess: () => {
+    void refreshTypes()
+    toast.success(m.tracker_hierarchy_saved())
+  },
+  onError: (error: Error) => toast.error(error.message),
+}))
+const setRule = (patch: Record<string, unknown>) => {
+  if (rules) saveRules.mutate({ ...rules, ...patch } as NonNullable<typeof rules>)
+}
 
 const saveType = createMutation(() => ({
   mutationFn: (input: Record<string, unknown>) =>
@@ -193,6 +219,37 @@ const select = (type: WorkItemType) => {
       {/snippet}
     </SettingsSection>
 
+    {#if rules}
+      <SettingsSection
+        title={m.tracker_hierarchy_title()}
+        description={m.tracker_hierarchy_hint()}
+      >
+        <div class="rules">
+          <Checkbox
+            checked={rules.allowSameLevel}
+            label={m.tracker_hierarchy_same_level()}
+            disabled={!canManage}
+            onCheckedChange={(on: boolean) => setRule({ allowSameLevel: on })}
+          />
+          <Checkbox
+            checked={rules.allowSkipLevels}
+            label={m.tracker_hierarchy_skip_levels()}
+            disabled={!canManage}
+            onCheckedChange={(on: boolean) => setRule({ allowSkipLevels: on })}
+          />
+          <label class="drow" data-testid="hierarchy-depth">
+            <span class="dlbl">{m.tracker_hierarchy_depth()}</span>
+            <Select
+              value={String(rules.maxSubItemDepth)}
+              options={[1, 2, 3, 4, 5].map((n) => ({ value: String(n), label: String(n) }))}
+              disabled={!canManage}
+              onValueChange={(v: string) => setRule({ maxSubItemDepth: Number(v) })}
+            />
+          </label>
+        </div>
+      </SettingsSection>
+    {/if}
+
     {#if selected}
       <SettingsSection
         title={m.tracker_layout_for({ name: selected.name })}
@@ -236,6 +293,20 @@ const select = (type: WorkItemType) => {
 />
 
 <style>
+.rules {
+  display: grid;
+  gap: 10px;
+  justify-items: start;
+}
+.drow {
+  display: grid;
+  gap: 4px;
+}
+.dlbl {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--kern-ink-600);
+}
 .state {
   display: grid;
   place-items: center;

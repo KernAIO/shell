@@ -21,6 +21,7 @@ interface Props {
   editable: boolean
   busy?: boolean
   oncreate: (input: { name: string; startAt: string; endAt: string }) => void
+  onupdate: (input: { id: string; name: string; startAt: string; endAt: string }) => void
   onstart: (id: string) => void
   oncomplete: (input: { id: string; rollToCycleId: string | null }) => void
   onremove: (id: string) => void
@@ -31,6 +32,7 @@ let {
   editable,
   busy = false,
   oncreate,
+  onupdate,
   onstart,
   oncomplete,
   onremove,
@@ -40,6 +42,43 @@ let name = $state('')
 let startAt = $state('')
 let endAt = $state('')
 let confirmingId = $state<string | null>(null)
+/**
+ * A cycle whose window is being corrected.
+ *
+ * `cycles.update` existed and nothing called it, so a sprint entered with the wrong end date could
+ * only be deleted — which takes its issues out of it — and made again.
+ */
+let editingId = $state<string | null>(null)
+let editName = $state('')
+let editStart = $state('')
+let editEnd = $state('')
+
+/** `<input type="date">` wants `YYYY-MM-DD` in local time; an ISO timestamp's UTC date can be the
+ * day before. */
+const dateValue = (iso: string) => {
+  const d = new Date(iso)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
+const beginEdit = (c: Cycle) => {
+  editingId = c.id
+  editName = c.name
+  editStart = dateValue(c.startAt)
+  editEnd = dateValue(c.endAt)
+  completingId = null
+  confirmingId = null
+}
+const editInvalid = $derived(Boolean(editStart && editEnd && editEnd < editStart))
+const commitEdit = () => {
+  if (!editingId || !editName.trim() || !editStart || !editEnd || editInvalid) return
+  onupdate({
+    id: editingId,
+    name: editName.trim(),
+    startAt: new Date(editStart).toISOString(),
+    endAt: new Date(editEnd).toISOString(),
+  })
+  editingId = null
+}
 /** The cycle being completed, and where its leftovers are headed. */
 let completingId = $state<string | null>(null)
 let rollTo = $state('')
@@ -120,6 +159,11 @@ const statusLabel = (status: Cycle['status']) =>
               {/if}
             </span>
           </span>
+          {#if editable && cycle.status !== 'completed'}
+            <Button size="sm" variant="ghost" onclick={() => beginEdit(cycle)} data-testid="cycle-edit">
+              {m.edit()}
+            </Button>
+          {/if}
           {#if editable && cycle.status === 'upcoming'}
             <Button size="sm" variant="ghost" onclick={() => onstart(cycle.id)} data-testid="cycle-start">
               {m.tracker_cycle_start()}
@@ -144,6 +188,44 @@ const statusLabel = (status: Cycle['status']) =>
             />
           {/if}
         </li>
+
+        {#if editingId === cycle.id}
+          <li class="panel" data-testid="cycle-edit-panel">
+            <form class="add" onsubmit={(e) => { e.preventDefault(); commitEdit() }}>
+              <span class="wide">
+                <Input bind:value={editName} data-testid="cycle-edit-name" />
+              </span>
+              <input
+                class="date"
+                type="date"
+                bind:value={editStart}
+                aria-label={m.tracker_cycle_starts()}
+                data-testid="cycle-edit-start"
+              />
+              <input
+                class="date"
+                type="date"
+                bind:value={editEnd}
+                aria-label={m.tracker_cycle_ends()}
+                data-testid="cycle-edit-end"
+              />
+              <Button
+                size="sm"
+                disabled={!editName.trim() || !editStart || !editEnd || editInvalid}
+                onclick={commitEdit}
+                data-testid="cycle-edit-save"
+              >
+                {m.save()}
+              </Button>
+            </form>
+            {#if editInvalid}
+              <p class="warn">{m.tracker_cycle_range_error()}</p>
+            {/if}
+            <div class="row">
+              <Button size="sm" variant="ghost" onclick={() => (editingId = null)}>{m.cancel()}</Button>
+            </div>
+          </li>
+        {/if}
 
         {#if completingId === cycle.id}
           <li class="panel" data-testid="cycle-complete-panel">

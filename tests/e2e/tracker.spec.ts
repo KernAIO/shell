@@ -412,6 +412,25 @@ test('a project can be given components, versions and labels', async ({ page }) 
   await expect(components.locator('[data-item="Realtime gateway"]')).toHaveCount(0)
 })
 
+test('the rules that reject a sub-item can be changed, and so can a cycle', async ({ page }) => {
+  // Hierarchy rules were enforced and unreachable — the worst pairing: somebody adding a sub-item
+  // met "Sub-items may only nest 1 level(s) deep" from the server with nowhere to go.
+  await page.goto('/northstar/settings/tracker/types')
+  await expect(page.getByTestId('hierarchy-depth')).toContainText('1')
+  await page.getByLabel(/another of its own kind/).check()
+  await expect(page.getByText('Rules saved')).toBeVisible()
+
+  // and a cycle entered with the wrong window is corrected rather than deleted and made again,
+  // which would take its work out of it
+  await page.goto('/northstar/settings/tracker/planning')
+  const row = page.getByTestId('cycle-row').filter({ hasText: 'Sprint 25' })
+  await row.getByTestId('cycle-edit').click()
+  await page.getByTestId('cycle-edit-name').fill('Sprint 25 · hardening')
+  await page.getByTestId('cycle-edit-end').fill('2026-09-20')
+  await page.getByTestId('cycle-edit-save').click()
+  await expect(page.getByTestId('cycle-row').filter({ hasText: 'hardening' })).toBeVisible()
+})
+
 test('an import that has already run can still be looked at', async ({ page }) => {
   // `imports.list` answered this from the start and nothing asked it, so leaving the page lost
   // the outcome of an import for good.

@@ -81,6 +81,13 @@ function mutation<T>(fn: (input: T) => Promise<unknown>) {
 const addCycle = mutation((input: { name: string; startAt: string; endAt: string }) =>
   api.cycles.create({ workspaceId, projectId, ...input }),
 )
+const updateCycle = mutation((input: { id: string; name: string; startAt: string; endAt: string }) =>
+  api.cycles.update({
+    workspaceId,
+    id: input.id,
+    patch: { name: input.name, startAt: input.startAt, endAt: input.endAt },
+  }),
+)
 const startCycle = mutation((id: string) => api.cycles.start({ workspaceId, id }))
 /**
  * `rollToCycleId` is sent even when it is null, and that is the point: the server reads an omitted
@@ -260,6 +267,7 @@ const releasedIds = $derived(
         loading={cyclesQuery.isPending}
         editable={canManage}
         oncreate={(input) => addCycle.mutate(input)}
+        onupdate={(input) => updateCycle.mutate(input)}
         onstart={(id) => startCycle.mutate(id)}
         oncomplete={(input) => completeCycle.mutate(input)}
         onremove={(id) => removeCycle.mutate(id)}
