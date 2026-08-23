@@ -37,7 +37,7 @@
     "@kernhq/module-mail": "^0.2.2",
     "@kernhq/module-tracker": "^0.9.2",
     "@kernhq/sdk": "^0.1.1",
-    "@kernhq/ui": "^0.3.0",
+    "@kernhq/ui": "^0.3.1",
     "@lucide/svelte": "^1.33.0",
     "@tanstack/svelte-query": "^6.1.0",
     "better-auth": "^1.7.1",

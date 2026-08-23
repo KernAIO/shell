@@ -124,7 +124,8 @@ test('a comment carries a real mention, and can be edited, replied to and delete
   await expect(page.getByRole('option', { name: /Dan/ })).toBeVisible()
   await box.press('Enter')
   await expect(box).toHaveText('over to @Dan Brekke')
-  await box.press('Enter')
+  // ⌘/Ctrl+Enter posts: plain Enter is a new paragraph in a rich-text composer
+  await box.press('ControlOrMeta+Enter')
 
   // Keep a positional locator: once editing starts the text moves into the editor, and a
   // text filter would stop matching the very comment it is meant to follow.
@@ -139,7 +140,11 @@ test('a comment carries a real mention, and can be edited, replied to and delete
   const editBox = comment.getByRole('textbox', { name: 'Edit your comment' })
   // the composer is a rich-text editor, not an input: it has text, never a value
   await expect(editBox).toHaveText('over to @Dan Brekke')
-  await editBox.fill('over to @Dan Brekke — thanks')
+  // Append rather than fill: `fill` replaces a contenteditable with plain text, which would
+  // delete the mention node this test exists to protect.
+  await editBox.click()
+  await editBox.press('ControlOrMeta+End')
+  await editBox.pressSequentially(' — thanks')
   await comment.getByRole('button', { name: 'Save' }).click()
   await expect(comment).toContainText('thanks')
   await expect(comment.locator('.kern-mention')).toHaveText('@Dan Brekke')
