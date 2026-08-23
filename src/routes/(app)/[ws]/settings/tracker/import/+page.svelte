@@ -10,6 +10,7 @@ import { getTrackerApi } from '$lib/modules/tracker/api'
 import { previewCsv } from '$lib/modules/tracker/csv'
 import { canTracker } from '$lib/modules/tracker/permissions'
 import { trackerKeys } from '$lib/modules/tracker/query'
+import { getLocale } from '$lib/paraglide/runtime'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 
@@ -123,6 +124,33 @@ const cancel = createMutation(() => ({
   onError: (error: Error) => toast.error(error.message),
 }))
 
+/**
+ * What was imported before.
+ *
+ * An import is the one thing here that happens to a project rather than in front of you: it runs,
+ * you navigate away, and afterwards the only question is what it did. `imports.list` answered that
+ * from the start and nothing asked it, so leaving the page lost the outcome for good.
+ */
+const historyQuery = createQuery(() => ({
+  queryKey: [...trackerKeys.projects(workspaceId), 'imports', projectId],
+  queryFn: () => api.imports.list({ workspaceId, projectId }),
+  enabled: Boolean(projectId),
+}))
+/** Newest first: the one somebody is looking for is almost always the last one. */
+const history = $derived(
+  [...(historyQuery.data ?? [])].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+)
+
+const STATUS_LABELS: Record<string, () => string> = {
+  pending: m.tracker_import_pending,
+  running: m.tracker_import_running,
+  completed: m.tracker_import_completed,
+  failed: m.tracker_import_failed,
+  cancelled: m.tracker_import_cancelled,
+}
+const statusLabel = (status: string) => STATUS_LABELS[status]?.() ?? status
+const when = new Intl.DateTimeFormat(getLocale(), { dateStyle: 'medium', timeStyle: 'short' })
+
 /** A title is the one thing an issue cannot be created without. */
 const mappedTitle = $derived(Object.values(mapping).includes('title'))
 const canStart = $derived(Boolean(file) && mappedTitle && canManage && !running)
@@ -212,7 +240,7 @@ const canStart = $derived(Boolean(file) && mappedTitle && canManage && !running)
     {#if job}
       <SettingsSection title={m.tracker_import_progress()}>
         <div class="jrow" data-testid="import-job">
-          <Badge tone={job.status === 'failed' ? 'danger' : undefined}>{job.status}</Badge>
+          <Badge tone={job.status === 'failed' ? 'danger' : undefined}>{statusLabel(job.status)}</Badge>
           <span class="counts">
             {m.tracker_import_counts({
               created: job.progress.created,
@@ -243,10 +271,61 @@ const canStart = $derived(Boolean(file) && mappedTitle && canManage && !running)
         {/if}
       </SettingsSection>
     {/if}
+
+    {#if history.length}
+      <SettingsSection title={m.tracker_import_history()} description={m.tracker_import_history_hint()}>
+        <ul class="history" data-testid="import-history">
+          {#each history as past (past.id)}
+            <li>
+              <button type="button" onclick={() => (jobId = past.id)} data-testid="import-history-row">
+                <Badge tone={past.status === 'failed' ? 'danger' : undefined}>
+                  {statusLabel(past.status)}
+                </Badge>
+                <span class="hwhen">{when.format(new Date(past.createdAt))}</span>
+                <span class="counts">
+                  {m.tracker_import_counts({
+                    created: past.progress.created,
+                    processed: past.progress.processed,
+                    total: past.progress.total,
+                    failed: past.progress.failed,
+                  })}
+                </span>
+              </button>
+            </li>
+          {/each}
+        </ul>
+      </SettingsSection>
+    {/if}
   {/if}
 </SettingsPage>
 
 <style>
+.history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.history button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.history button:hover .hwhen {
+  color: var(--kern-ink-700);
+}
+.hwhen {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--kern-ink-550);
+}
 .state {
   display: grid;
   place-items: center;

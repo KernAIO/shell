@@ -54,16 +54,6 @@ const labelEvery = $derived(Math.max(1, Math.ceil(labels.length / 7)))
       {/each}
     </div>
 
-    <figcaption class="legend">
-      {#each series as s (s.label)}
-        <span class="key">
-          <span class="swatch" class:dashed={s.dashed} style:background="var(--chart-{s.tone})"></span>
-          {s.label}
-        </span>
-      {/each}
-      <span class="scale">{m.tracker_report_max({ value: format(max) })}</span>
-    </figcaption>
-
     <table class="sr-only">
       <caption>{title}</caption>
       <thead>
@@ -81,6 +71,16 @@ const labelEvery = $derived(Math.max(1, Math.ceil(labels.length / 7)))
         {/each}
       </tbody>
     </table>
+
+    <figcaption class="legend">
+      {#each series as s (s.label)}
+        <span class="key">
+          <span class="swatch" class:dashed={s.dashed} style:background="var(--chart-{s.tone})"></span>
+          {s.label}
+        </span>
+      {/each}
+      <span class="scale">{m.tracker_report_max({ value: format(max) })}</span>
+    </figcaption>
   </figure>
 {/if}
 

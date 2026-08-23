@@ -830,7 +830,29 @@ export function createMockTrackerApi() {
     worklogs: [] as Worklog[],
     issueTemplates: [] as IssueTemplate[],
     recurring: [] as RecurringIssue[],
-    imports: [] as ImportJob[],
+    // One finished import, so the history is something the demo shows rather than something that
+    // only appears after you run one yourself.
+    imports: [
+      {
+        id: uid(2900),
+        workspaceId: WORKSPACE,
+        projectId: uid(700),
+        source: 'csv',
+        fileId: uid(2901),
+        mapping: { Summary: 'title', Priority: 'priority' },
+        status: 'completed',
+        progress: { total: 214, processed: 214, created: 211, skipped: 0, failed: 3 },
+        errors: [
+          { row: 42, message: 'Priority "Blocker" is not one of urgent, high, medium, low' },
+          { row: 118, message: 'Title is empty' },
+          { row: 190, message: 'Title is empty' },
+        ],
+        createdBy: ME,
+        startedAt: iso(9 * DAY),
+        finishedAt: iso(9 * DAY - 40_000),
+        createdAt: iso(9 * DAY),
+      },
+    ] as ImportJob[],
     workflows: [
       {
         id: WORKFLOW_ID,
@@ -1709,6 +1731,31 @@ export function createMockTrackerApi() {
         })),
         average: 29,
       }),
+      cfd: async ({ from, to }: Ws & { from: string; to: string }) => {
+        const start = Date.parse(from)
+        const days = Math.max(1, Math.round((Date.parse(to) - start) / DAY) + 1)
+        // Work flows: the backlog drains, in-progress bulges in the middle, done climbs. A flat
+        // demo would make the chart look broken rather than calm.
+        const shape = (i: number) => {
+          const t = days > 1 ? i / (days - 1) : 1
+          return {
+            backlog: Math.round(20 - 12 * t),
+            todo: Math.round(6 + 3 * Math.sin(t * Math.PI)),
+            in_progress: Math.round(3 + 6 * Math.sin(t * Math.PI)),
+            in_review: Math.round(1 + 3 * Math.sin(t * Math.PI * 0.8)),
+            done: Math.round(2 + 22 * t),
+          }
+        }
+        return {
+          statuses: statuses
+            .filter((st) => ['backlog', 'todo', 'in_progress', 'in_review', 'done'].includes(st.id))
+            .map((st) => ({ id: st.id, name: st.name, category: st.category, color: st.color })),
+          points: Array.from({ length: days }, (_, i) => ({
+            date: new Date(start + i * DAY).toISOString().slice(0, 10),
+            counts: shape(i) as Record<string, number>,
+          })),
+        }
+      },
       createdVsResolved: async ({ from, to }: Ws & { from: string; to: string }) => {
         const start = Date.parse(from)
         const days = Math.max(1, Math.round((Date.parse(to) - start) / DAY) + 1)

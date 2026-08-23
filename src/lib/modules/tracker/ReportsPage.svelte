@@ -8,6 +8,7 @@ import * as m from '$msg'
 import { getTrackerApi } from './api'
 import BarChart from './charts/BarChart.svelte'
 import LineChart from './charts/LineChart.svelte'
+import StackedAreaChart from './charts/StackedAreaChart.svelte'
 import { trackerKeys } from './query'
 
 /**
@@ -26,7 +27,7 @@ const slug = $derived(page.params.ws ?? '')
 const workspace = $derived(session.workspaces.find((w) => w.slug === slug))
 const workspaceId = $derived(workspace?.id ?? '')
 
-type Tab = 'burndown' | 'velocity' | 'flow' | 'time'
+type Tab = 'burndown' | 'velocity' | 'flow' | 'cfd' | 'time'
 let tab = $state<Tab>('burndown')
 let selectedProject = $state<string | null>(null)
 
@@ -53,6 +54,12 @@ const cyclesQuery = createQuery(() => ({
 const activeCycle = $derived(
   (cyclesQuery.data ?? []).find((c) => c.status === 'active') ?? (cyclesQuery.data ?? [])[0] ?? null,
 )
+
+const cfdQuery = createQuery(() => ({
+  queryKey: [...trackerKeys.projects(workspaceId), 'cfd', projectId, from, to],
+  queryFn: () => api.reports.cfd({ workspaceId, projectId, from, to }),
+  enabled: tab === 'cfd' && Boolean(projectId),
+}))
 
 const burndownQuery = createQuery(() => ({
   queryKey: [...trackerKeys.projects(workspaceId), 'burndown', activeCycle?.id ?? ''],
@@ -98,6 +105,7 @@ const shortDate = (date: string) => date.slice(5)
           { value: 'burndown', label: m.tracker_report_burndown() },
           { value: 'velocity', label: m.tracker_report_velocity() },
           { value: 'flow', label: m.tracker_report_flow() },
+          { value: 'cfd', label: m.tracker_report_cfd() },
           { value: 'time', label: m.tracker_report_time() },
         ]}
         value={tab}
@@ -200,6 +208,23 @@ const shortDate = (date: string) => date.slice(5)
                 tone: 4,
               },
             ]}
+          />
+        {/if}
+      {:else if tab === 'cfd'}
+        <h2>{m.tracker_report_cfd()}</h2>
+        <p class="what">{m.tracker_report_cfd_hint()}</p>
+        {#if cfdQuery.isPending}
+          <div class="state"><Spinner /></div>
+        {:else if cfdQuery.data}
+          <StackedAreaChart
+            title={m.tracker_report_cfd()}
+            labels={cfdQuery.data.points.map((p) => shortDate(p.date))}
+            series={cfdQuery.data.statuses.map((status, i) => ({
+              label: status.name,
+              values: cfdQuery.data.points.map((p) => p.counts[status.id] ?? 0),
+              // Five chart tones and any number of statuses: they cycle rather than run out.
+              tone: ((i % 5) + 1) as 1 | 2 | 3 | 4 | 5,
+            }))}
           />
         {/if}
       {:else}

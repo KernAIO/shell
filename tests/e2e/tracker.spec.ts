@@ -412,6 +412,33 @@ test('a project can be given components, versions and labels', async ({ page }) 
   await expect(components.locator('[data-item="Realtime gateway"]')).toHaveCount(0)
 })
 
+test('an import that has already run can still be looked at', async ({ page }) => {
+  // `imports.list` answered this from the start and nothing asked it, so leaving the page lost
+  // the outcome of an import for good.
+  await page.goto('/northstar/settings/tracker/import')
+  const history = page.getByTestId('import-history')
+  await expect(history).toContainText('Finished')
+  await expect(history).toContainText('211 created')
+
+  // opening one shows the rows it could not bring in, which is the only actionable part
+  await history.getByTestId('import-history-row').first().click()
+  await expect(page.getByTestId('import-job')).toBeVisible()
+  await expect(page.getByText(/Priority "Blocker" is not one of/)).toBeVisible()
+  await expect(page.getByText('row 42')).toBeVisible()
+})
+
+test('flow over time stacks each status into a band', async ({ page }) => {
+  // `reports.cfd` was the one report with a server and no tab.
+  await page.goto('/northstar/tracker/reports')
+  await page.getByRole('radio', { name: 'Flow over time' }).click()
+  const panel = page.getByTestId('report-cfd')
+  await expect(panel.getByRole('img', { name: 'Flow over time' })).toBeVisible()
+
+  // the numbers are there for anyone the picture does not reach
+  await expect(panel.getByRole('table')).toContainText('Backlog')
+  await expect(panel.getByRole('table')).toContainText('Done')
+})
+
 test('what was made in a hurry can be corrected afterwards', async ({ page }) => {
   // `views.update`, `worklogs.update` and `fields.archive` all had a server and no control, so a
   // view named badly kept its name, a mistyped hour stayed mistyped, and a field nobody used any
@@ -759,7 +786,7 @@ test('an issue can be set to repeat, and the schedule says what it will do', asy
 
 test('a spreadsheet is mapped column by column before anything is imported', async ({ page }) => {
   await page.goto('/northstar/settings/tracker/import')
-  await expect(page.getByRole('heading', { name: 'Import' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Import', exact: true })).toBeVisible()
 
   // the file is read in the browser, so the mapping offers its real columns and real values
   await page.getByTestId('import-file').setInputFiles({

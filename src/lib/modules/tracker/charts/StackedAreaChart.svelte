@@ -1,27 +1,34 @@
 <script lang="ts">
 import * as m from '$msg'
-import { barLayout, gridLines, niceMax, type Series } from './chart'
+import { areaPath, gridLines, niceMax, type Series, stackSeries } from './chart'
 
 /**
- * Grouped bars — one group per period, one bar per series.
+ * Bands stacked on each other over time — a cumulative flow diagram.
  *
- * Same rules as the line chart: the design system's colours, no library, and the numbers given as a
- * table for anyone the picture does not reach.
+ * The point of a CFD is the width of each band, not its height: a widening "In progress" band is
+ * work piling up faster than it is finished, which is the thing a team wants to see and the reason
+ * a set of separate lines will not do.
+ *
+ * Same trade as the other charts: no chart library, and the numbers repeated as a table for anyone
+ * the picture does not reach.
  */
 interface Props {
   series: Series[]
   labels: string[]
   title: string
-  format?: (value: number) => string
   height?: number
 }
-let { series, labels, title, format = (v) => String(Math.round(v)), height = 160 }: Props = $props()
+let { series, labels, title, height = 180 }: Props = $props()
 
 const WIDTH = 640
-const max = $derived(niceMax(series.flatMap((s) => s.values)))
+const stacked = $derived(stackSeries(series.map((s) => s.values)))
+/** The top band is the total, so the scale comes from it rather than from the tallest band. */
+const max = $derived(niceMax(stacked.at(-1) ?? []))
 const lines = $derived(gridLines(max))
-const layout = $derived(barLayout(labels.length, series.length, WIDTH))
 const hasData = $derived(series.some((s) => s.values.some((v) => v > 0)))
+const labelEvery = $derived(Math.max(1, Math.ceil(labels.length / 7)))
+/** What sits under each band: the one below it, or the floor for the first. */
+const floors = $derived(stacked.map((_, i) => (i === 0 ? stacked[0]!.map(() => 0) : stacked[i - 1]!)))
 </script>
 
 {#if !hasData}
@@ -33,23 +40,21 @@ const hasData = $derived(series.some((s) => s.values.some((v) => v > 0)))
         {@const y = height - (value / max) * height}
         <line x1="0" x2={WIDTH} y1={y} y2={y} class="grid" />
       {/each}
-      {#each labels as label, group (label + group)}
-        {#each series as s, i (s.label)}
-          {@const value = Math.max(0, s.values[group] ?? 0)}
-          {@const barHeight = (value / max) * height}
-          <rect
-            x={group * layout.groupWidth + layout.gap / 2 + i * layout.barWidth}
-            y={height - barHeight}
-            width={Math.max(1, layout.barWidth - 1)}
-            height={barHeight}
-            style:fill="var(--chart-{s.tone})"
-          />
-        {/each}
+      <!-- Bottom band first. Each path is closed between its own floor and its own top, so the
+           order only decides which edge sits on top where they meet. -->
+      {#each series as s, i (s.label)}
+        <path
+          d={areaPath(stacked[i] ?? [], floors[i] ?? [], max, WIDTH, height)}
+          class="band"
+          style:fill="var(--chart-{s.tone})"
+        />
       {/each}
     </svg>
 
     <div class="axis" aria-hidden="true">
-      {#each labels as label, i (label + i)}<span>{label}</span>{/each}
+      {#each labels as label, i (label + i)}
+        <span class:hidden={i % labelEvery !== 0}>{label}</span>
+      {/each}
     </div>
 
     <table class="sr-only">
@@ -64,7 +69,7 @@ const hasData = $derived(series.some((s) => s.values.some((v) => v > 0)))
         {#each labels as label, i (label + i)}
           <tr>
             <th scope="row">{label}</th>
-            {#each series as s (s.label)}<td>{format(s.values[i] ?? 0)}</td>{/each}
+            {#each series as s (s.label)}<td>{s.values[i] ?? 0}</td>{/each}
           </tr>
         {/each}
       </tbody>
@@ -77,7 +82,7 @@ const hasData = $derived(series.some((s) => s.values.some((v) => v > 0)))
           {s.label}
         </span>
       {/each}
-      <span class="scale">{m.tracker_report_max({ value: format(max) })}</span>
+      <span class="scale">{m.tracker_report_max({ value: String(max) })}</span>
     </figcaption>
   </figure>
 {/if}
@@ -89,28 +94,33 @@ const hasData = $derived(series.some((s) => s.values.some((v) => v > 0)))
 svg {
   width: 100%;
   height: auto;
+  overflow: visible;
 }
 .grid {
   stroke: var(--kern-border-hairline);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
+.band {
+  stroke: none;
+  opacity: 0.85;
+}
 .axis {
-  /*
-   * Left to right whatever the page direction is. The SVG is drawn left to right and does not
-   * flip, so a mirrored axis would put the earliest date under the latest point — the labels and
-   * the line would disagree. A time axis reads the same way in every locale.
-   */
+  /* Left to right whatever the page direction is; see LineChart for why. */
   direction: ltr;
   display: flex;
-  justify-content: space-around;
+  justify-content: space-between;
   margin-top: 4px;
   font-size: 11px;
   color: var(--kern-ink-400);
 }
+.axis .hidden {
+  visibility: hidden;
+}
 .legend {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
   margin-top: 8px;
   font-size: 12px;

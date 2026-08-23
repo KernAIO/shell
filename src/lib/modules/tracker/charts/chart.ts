@@ -71,3 +71,52 @@ export function barLayout(
   const barWidth = perGroup > 0 ? Math.max(2, (groupWidth - gap) / perGroup) : groupWidth
   return { groupWidth, barWidth, gap }
 }
+
+/**
+ * Running totals for a stacked chart: each band's top is everything below it plus itself.
+ *
+ * Stacking is done here rather than in the component because getting it wrong is invisible — the
+ * chart still draws, it just tells a different story, with bands that overlap or a total that does
+ * not match the counts.
+ */
+export function stackSeries(series: number[][]): number[][] {
+  const length = Math.max(0, ...series.map((s) => s.length))
+  const running = new Array<number>(length).fill(0)
+  return series.map((values) =>
+    running.map((carried, i) => {
+      const next = carried + Math.max(0, values[i] ?? 0)
+      running[i] = next
+      return next
+    }),
+  )
+}
+
+/**
+ * A closed path for one band of a stacked area: along its own top, back along the band below it.
+ *
+ * `lower` is the band beneath — all zeroes for the first one. Drawing the return leg backwards is
+ * what closes the shape; forwards would fold it over itself into a bow tie.
+ */
+export function areaPath(
+  upper: number[],
+  lower: number[],
+  max: number,
+  width: number,
+  height: number,
+): string {
+  if (upper.length === 0) return ''
+  const y = (value: number) => height - (Math.max(0, value) / max) * height
+  const step = upper.length > 1 ? width / (upper.length - 1) : 0
+  // One point has no width to sweep, so the band is drawn as a full-width slab instead of a
+  // zero-area sliver nobody can see.
+  const x = (i: number) => (upper.length > 1 ? i * step : i === 0 ? 0 : width)
+  const top = upper.map((value, i) => `${i === 0 ? 'M' : 'L'} ${x(i)} ${y(value)}`).join(' ')
+  const bottom = [...lower]
+    .map((value, i) => ({ value, i }))
+    .reverse()
+    .map(({ value, i }) => `L ${x(i)} ${y(value)}`)
+    .join(' ')
+  if (upper.length === 1)
+    return `M 0 ${y(upper[0]!)} L ${width} ${y(upper[0]!)} L ${width} ${y(lower[0] ?? 0)} L 0 ${y(lower[0] ?? 0)} Z`
+  return `${top} ${bottom} Z`
+}
