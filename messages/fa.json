@@ -63,14 +63,32 @@
   "admin_updates_running": "نسخه",
   "admin_updates_settle": "صبر پس از انتشار",
   "admin_updates_settle_day": "۱ روز",
-  "admin_updates_settle_days": "{count} روز",
+  "admin_updates_settle_days": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} روز",
+        "countPlural=other": "{n} روز"
+      }
+    }
+  ],
   "admin_updates_settle_hint": "یک انتشار چه مدت باید بیرون آمده باشد تا این نمونه خودش آن را بگیرد.",
   "admin_updates_settle_none": "بی‌درنگ بگیر",
   "admin_updates_timezone": "منطقه‌ی زمانی",
   "admin_updates_timezone_hint": "بازه در این منطقه خوانده می‌شود، نه منطقه‌ی سرور.",
   "admin_updates_title": "به‌روزرسانی‌ها",
   "admin_updates_unavailable": "به‌روزرسانی‌ها بررسی نمی‌شوند",
-  "admin_updates_unchanged": "{count} ماژول روی همان نسخه‌ی فعلی می‌مانند.",
+  "admin_updates_unchanged": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} ماژول روی همان نسخه‌ای می‌مانند که هستند.",
+        "countPlural=other": "{n} ماژول روی همان نسخه‌ای می‌مانند که هستند."
+      }
+    }
+  ],
   "admin_updates_up_to_date": "به‌روز",
   "admin_updates_window": "بازه‌ی به‌روزرسانی",
   "admin_updates_window_hint": "ارتقا فقط درون این بازه آغاز می‌شود. می‌تواند از نیمه‌شب بگذرد.",
@@ -259,7 +277,16 @@
   "billing_subtitle": "اینکه این فضای کاری روی چه طرحی است و چه اندازه از آن را به کار می‌برد.",
   "billing_suspended_hint": "تا وقتی اشتراک این فضای کاری به‌روز نشود، فقط خواندنی است. چیزی حذف نشده است.",
   "billing_title": "پرداخت",
-  "billing_trial_days_left": "{count} روز مانده",
+  "billing_trial_days_left": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} روز مانده",
+        "countPlural=other": "{n} روز مانده"
+      }
+    }
+  ],
   "billing_trial_ends_today": "امروز تمام می‌شود",
   "billing_unlimited": "بی‌حد",
   "billing_usage_of": "{used} از {limit}",
@@ -327,7 +354,16 @@
   "chat_link_copy_failed": "کپی کردن پیوند ممکن نشد",
   "chat_load_older": "بارگذاری پیام‌های قدیمی‌تر",
   "chat_member_count_one": "۱ عضو",
-  "chat_members_count": "{count} عضو",
+  "chat_members_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} عضو",
+        "countPlural=other": "{n} عضو"
+      }
+    }
+  ],
   "chat_mention": "اشاره به کسی",
   "chat_mention_empty": "کسی مطابقت ندارد",
   "chat_mention_loading": "در حال یافتن افراد…",
@@ -367,14 +403,32 @@
   "chat_recording_video": "در حال ضبط پیام ویدیویی",
   "chat_recording_voice": "در حال ضبط پیام صوتی",
   "chat_remove_attachment": "حذف پیوست",
-  "chat_replies": "{count} پاسخ",
+  "chat_replies": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} پاسخ",
+        "countPlural=other": "{n} پاسخ"
+      }
+    }
+  ],
   "chat_reply": "پاسخ در رشته",
   "chat_retry": "تلاش دوباره",
   "chat_save": "ذخیره",
   "chat_search_empty": "چیزی پیدا نشد",
   "chat_search_placeholder": "جستجو در این فضا",
   "chat_search_result_one": "۱ نتیجه",
-  "chat_search_results": "{count} نتیجه",
+  "chat_search_results": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} نتیجه",
+        "countPlural=other": "{n} نتیجه"
+      }
+    }
+  ],
   "chat_searching": "در حال جستجو…",
   "chat_send": "ارسال",
   "chat_slash": "دستور اسلش",
@@ -418,7 +472,16 @@
   "groups_edit_members": "ویرایش اعضا",
   "groups_empty": "با گروه‌ها می‌توانید هم‌زمان به چند نفر اشاره یا دسترسی بدهید.",
   "groups_handle": "شناسه",
-  "groups_members": "{count} عضو",
+  "groups_members": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} عضو",
+        "countPlural=other": "{n} عضو"
+      }
+    }
+  ],
   "groups_name": "نام گروه",
   "groups_new": "گروه جدید",
   "groups_title": "گروه‌ها",
@@ -483,8 +546,26 @@
   "invite_revoked": "دعوت لغو شد",
   "invite_role": "نقش",
   "invite_send": "ارسال دعوت‌ها",
-  "invite_sent": "{count} دعوت ارسال شد",
-  "invite_shares_with_you": "{count} فضای کاری مشترک با شما",
+  "invite_sent": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} دعوت فرستاده شد",
+        "countPlural=other": "{n} دعوت فرستاده شد"
+      }
+    }
+  ],
+  "invite_shares_with_you": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} فضای کاری با شما مشترک دارد",
+        "countPlural=other": "{n} فضای کاری با شما مشترک دارد"
+      }
+    }
+  ],
   "invite_sign_in_first": "برای پذیرش، وارد شوید یا حساب بسازید.",
   "invite_title": "پیوستن به {workspace}",
   "invite_wrong_account": "با {current} وارد شده‌اید. این دعوت برای {email} است.",
@@ -538,7 +619,16 @@
   "members_col_role": "نقش",
   "members_col_status": "وضعیت",
   "members_copy_email": "رونوشت نشانی ایمیل",
-  "members_count": "{count} عضو",
+  "members_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} عضو",
+        "countPlural=other": "{n} عضو"
+      }
+    }
+  ],
   "members_edit_title": "ویرایش عنوان شغلی",
   "members_empty": "کسی با این جست‌وجو پیدا نشد",
   "members_invite": "دعوت افراد",
@@ -586,9 +676,27 @@
   "modules_group_enabled": "فعال",
   "modules_group_included": "همیشه فعال",
   "modules_group_included_hint": "کرن برای کار کردن به این‌ها نیاز دارد و نمی‌توان خاموششان کرد.",
-  "modules_meta_events": "{count} رویداد",
+  "modules_meta_events": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} رویداد",
+        "countPlural=other": "{n} رویداد"
+      }
+    }
+  ],
   "modules_meta_objects": "{count} نوع شیء",
-  "modules_meta_permissions": "{count} دسترسی",
+  "modules_meta_permissions": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} دسترسی",
+        "countPlural=other": "{n} دسترسی"
+      }
+    }
+  ],
   "modules_min_kernel": "نیازمند کرن {version}",
   "modules_moves_to": "در کرن {release} به {version} می‌رود",
   "modules_no_settings": "این ماژول تنظیمات فضای کاری ندارد.",
@@ -690,7 +798,16 @@
   "roles_name": "نام نقش",
   "roles_new": "نقش جدید",
   "roles_page_hint": "نقش، مجموعه‌ای نام‌دار از دسترسی‌هاست. ماژول‌ها دسترسی‌های خود را ثبت می‌کنند، پس این فهرست با فعال‌کردن آن‌ها بزرگ‌تر می‌شود.",
-  "roles_permission_count": "{count} دسترسی",
+  "roles_permission_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} دسترسی",
+        "countPlural=other": "{n} دسترسی"
+      }
+    }
+  ],
   "roles_permissions_of": "دسترسی‌ها",
   "roles_title": "نقش‌ها و دسترسی‌ها",
   "roles_updated": "نقش به‌روزرسانی شد",
@@ -774,7 +891,16 @@
   "tracker_attachment_remove": "حذف این فایل",
   "tracker_attachments": "پیوست‌ها",
   "tracker_attachments_empty": "هنوز فایلی نیست",
-  "tracker_bulk_done": "{count} کار به‌روزرسانی شد",
+  "tracker_bulk_done": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} کار به‌روز شد",
+        "countPlural=other": "{n} کار به‌روز شد"
+      }
+    }
+  ],
   "tracker_bulk_urgent": "علامت‌گذاری فوری",
   "tracker_cat_backlog": "بک‌لاگ",
   "tracker_cat_cancelled": "لغوشده",
@@ -948,7 +1074,16 @@
   "tracker_issue_move": "انتقال به پروژه",
   "tracker_issue_moved": "منتقل شد — اکنون {key} است",
   "tracker_issue_unarchive": "خروج از بایگانی",
-  "tracker_issues_count": "{count} کار",
+  "tracker_issues_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} کار",
+        "countPlural=other": "{n} کار"
+      }
+    }
+  ],
   "tracker_kql_clear": "پاک کردن پرس‌وجو",
   "tracker_kql_label": "پرس‌وجو (KQL)",
   "tracker_kql_placeholder": "status = in_progress and assignee = currentUser()",
@@ -1000,7 +1135,16 @@
   "tracker_planning_cycles_empty": "هنوز چرخه‌ای نیست.",
   "tracker_planning_cycles_hint": "بازه‌های مشخص کار — یک اسپرینت، یک تکرار، یک هفته. هر بار یکی فعال است.",
   "tracker_planning_done_of": "{done} از {total} انجام شد",
-  "tracker_planning_issue_count": "{count} مورد",
+  "tracker_planning_issue_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} کار",
+        "countPlural=other": "{n} کار"
+      }
+    }
+  ],
   "tracker_planning_label_add": "افزودن برچسب",
   "tracker_planning_labels": "برچسب‌ها",
   "tracker_planning_labels_empty": "هنوز برچسبی نیست",
@@ -1015,7 +1159,16 @@
   "tracker_planning_versions": "نسخه‌ها",
   "tracker_planning_versions_empty": "هنوز نسخه‌ای نیست",
   "tracker_planning_versions_hint": "آنچه منتشر می‌کنید و آنچه منتشر شده.",
-  "tracker_points": "{count} امتیاز",
+  "tracker_points": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} امتیاز",
+        "countPlural=other": "{n} امتیاز"
+      }
+    }
+  ],
   "tracker_preset_active": "جاری",
   "tracker_preset_all": "همه",
   "tracker_preset_assigned": "واگذارشده",
@@ -1063,7 +1216,16 @@
   "tracker_project_visibility": "دیده‌شدن",
   "tracker_project_visible_private": "تنها اعضای آن",
   "tracker_project_visible_workspace": "همه در فضای کاری",
-  "tracker_project_weeks": "{count} هفته",
+  "tracker_project_weeks": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} هفته",
+        "countPlural=other": "{n} هفته"
+      }
+    }
+  ],
   "tracker_recur_at": "{when} ساعت {time}",
   "tracker_recur_day": "روز",
   "tracker_recur_day_of_month": "روز {day}",
@@ -1156,7 +1318,16 @@
   "tracker_submit_hint": "⌘⏎ برای ساختن",
   "tracker_template_empty": "هنوز الگویی نیست",
   "tracker_template_hint": "نقطهٔ شروعی برای موردهایی که بارها ساخته می‌شوند.",
-  "tracker_template_subitems": "{count} زیرمورد می‌سازد",
+  "tracker_template_subitems": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} زیرمورد می‌سازد",
+        "countPlural=other": "{n} زیرمورد می‌سازد"
+      }
+    }
+  ],
   "tracker_template_title": "الگوهای مورد",
   "tracker_time_discard": "دور انداختن",
   "tracker_time_edit": "تغییر این ثبت",
@@ -1226,7 +1397,16 @@
   "tracker_watch": "دنبال کردن",
   "tracker_watching": "دنبال می‌کنید · {count}",
   "tracker_wip_exceeded": "بیش از سقف کار هم‌زمان",
-  "tracker_workflow_asks": "اول {count} فیلد می‌پرسد",
+  "tracker_workflow_asks": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "نخست {n} فیلد می‌خواهد",
+        "countPlural=other": "نخست {n} فیلد می‌خواهد"
+      }
+    }
+  ],
   "tracker_workflow_from_any": "هر جا",
   "tracker_workflow_invalid": "گردش کار ذخیره نشد — ایراد آن در پایین آمده است.",
   "tracker_workflow_move_down": "انتقال {name} به عقب‌تر",
@@ -1241,7 +1421,16 @@
   "tracker_workflow_start_from_hint": "هر گردش کاری از یکی از این‌ها آغاز می‌شود. گردش کار خالی هیچ گذاری ندارد، پس هیچ کاری در آن حرکت نمی‌کند.",
   "tracker_workflow_status_add": "نام وضعیت",
   "tracker_workflow_status_add_hint": "وضعیت تازه از هر وضعیت دیگری قابل دسترسی است و به هر وضعیتی می‌رود. پس از به‌کارگیری، آن را در گذرهایش محدود کنید.",
-  "tracker_workflow_status_count": "{count} وضعیت",
+  "tracker_workflow_status_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} وضعیت",
+        "countPlural=other": "{n} وضعیت"
+      }
+    }
+  ],
   "tracker_workflow_statuses": "وضعیت‌ها",
   "tracker_workflow_statuses_hint": "نامشان را عوض کنید یا ترتیبشان را. هر مورد با شناسه به وضعیت اشاره می‌کند، پس تغییر نام چیزی را جابه‌جا نمی‌کند.",
   "tracker_workflow_statuses_in": "وضعیت‌های {name}",

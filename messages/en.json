@@ -63,14 +63,32 @@
   "admin_updates_running": "Version",
   "admin_updates_settle": "Wait after release",
   "admin_updates_settle_day": "1 day",
-  "admin_updates_settle_days": "{count} days",
+  "admin_updates_settle_days": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} day",
+        "countPlural=other": "{n} days"
+      }
+    }
+  ],
   "admin_updates_settle_hint": "How long a release must be out before this instance takes it on its own.",
   "admin_updates_settle_none": "Take it immediately",
   "admin_updates_timezone": "Time zone",
   "admin_updates_timezone_hint": "The window is read in this zone, not the server's.",
   "admin_updates_title": "Updates",
   "admin_updates_unavailable": "Updates cannot be checked",
-  "admin_updates_unchanged": "{count} modules stay on the version they are on.",
+  "admin_updates_unchanged": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} module stays on the version it is on.",
+        "countPlural=other": "{n} modules stay on the version they are on."
+      }
+    }
+  ],
   "admin_updates_up_to_date": "Up to date",
   "admin_updates_window": "Update window",
   "admin_updates_window_hint": "An upgrade only starts inside this window. It may cross midnight.",
@@ -259,7 +277,16 @@
   "billing_subtitle": "What this workspace is on, and what it is using.",
   "billing_suspended_hint": "This workspace is read-only until its subscription is current. Nothing has been deleted.",
   "billing_title": "Billing",
-  "billing_trial_days_left": "{count} days left",
+  "billing_trial_days_left": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} day left",
+        "countPlural=other": "{n} days left"
+      }
+    }
+  ],
   "billing_trial_ends_today": "Ends today",
   "billing_unlimited": "Unlimited",
   "billing_usage_of": "{used} of {limit}",
@@ -327,7 +354,16 @@
   "chat_link_copy_failed": "Could not copy the link",
   "chat_load_older": "Load earlier messages",
   "chat_member_count_one": "1 member",
-  "chat_members_count": "{count} members",
+  "chat_members_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} member",
+        "countPlural=other": "{n} members"
+      }
+    }
+  ],
   "chat_mention": "Mention someone",
   "chat_mention_empty": "Nobody matches",
   "chat_mention_loading": "Finding people…",
@@ -367,14 +403,32 @@
   "chat_recording_video": "Recording a video message",
   "chat_recording_voice": "Recording a voice message",
   "chat_remove_attachment": "Remove attachment",
-  "chat_replies": "{count} replies",
+  "chat_replies": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} reply",
+        "countPlural=other": "{n} replies"
+      }
+    }
+  ],
   "chat_reply": "Reply in thread",
   "chat_retry": "Try again",
   "chat_save": "Save",
   "chat_search_empty": "Nothing found",
   "chat_search_placeholder": "Search this space",
   "chat_search_result_one": "1 result",
-  "chat_search_results": "{count} results",
+  "chat_search_results": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} result",
+        "countPlural=other": "{n} results"
+      }
+    }
+  ],
   "chat_searching": "Searching…",
   "chat_send": "Send",
   "chat_slash": "Slash command",
@@ -418,7 +472,16 @@
   "groups_edit_members": "Edit members",
   "groups_empty": "Groups let you @mention and grant permissions to many people at once.",
   "groups_handle": "Handle",
-  "groups_members": "{count} members",
+  "groups_members": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} member",
+        "countPlural=other": "{n} members"
+      }
+    }
+  ],
   "groups_name": "Group name",
   "groups_new": "New group",
   "groups_title": "Groups",
@@ -483,8 +546,26 @@
   "invite_revoked": "Invitation revoked",
   "invite_role": "Role",
   "invite_send": "Send invitations",
-  "invite_sent": "{count} invitations sent",
-  "invite_shares_with_you": "shares {count} workspaces with you",
+  "invite_sent": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} invitation sent",
+        "countPlural=other": "{n} invitations sent"
+      }
+    }
+  ],
+  "invite_shares_with_you": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "shares {n} workspace with you",
+        "countPlural=other": "shares {n} workspaces with you"
+      }
+    }
+  ],
   "invite_sign_in_first": "Sign in or create an account to accept.",
   "invite_title": "Join {workspace}",
   "invite_wrong_account": "Signed in as {current}. This invite is for {email}.",
@@ -538,7 +619,16 @@
   "members_col_role": "Role",
   "members_col_status": "Status",
   "members_copy_email": "Copy email address",
-  "members_count": "{count} members",
+  "members_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} member",
+        "countPlural=other": "{n} members"
+      }
+    }
+  ],
   "members_edit_title": "Edit job title",
   "members_empty": "No one matches that search",
   "members_invite": "Invite people",
@@ -586,9 +676,27 @@
   "modules_group_enabled": "Enabled",
   "modules_group_included": "Always included",
   "modules_group_included_hint": "Kern needs these to run, so they cannot be turned off.",
-  "modules_meta_events": "{count} events",
+  "modules_meta_events": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} event",
+        "countPlural=other": "{n} events"
+      }
+    }
+  ],
   "modules_meta_objects": "{count} object types",
-  "modules_meta_permissions": "{count} permissions",
+  "modules_meta_permissions": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} permission",
+        "countPlural=other": "{n} permissions"
+      }
+    }
+  ],
   "modules_min_kernel": "Needs Kern {version}",
   "modules_moves_to": "Moves to {version} in Kern {release}",
   "modules_no_settings": "This module has no workspace settings.",
@@ -690,7 +798,16 @@
   "roles_name": "Role name",
   "roles_new": "New role",
   "roles_page_hint": "A role is a named set of permissions. Modules register their own, so this list grows as you enable them.",
-  "roles_permission_count": "{count} permissions",
+  "roles_permission_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} permission",
+        "countPlural=other": "{n} permissions"
+      }
+    }
+  ],
   "roles_permissions_of": "Permissions",
   "roles_title": "Roles & permissions",
   "roles_updated": "Role updated",
@@ -774,7 +891,16 @@
   "tracker_attachment_remove": "Remove this file",
   "tracker_attachments": "Attachments",
   "tracker_attachments_empty": "No files yet",
-  "tracker_bulk_done": "Updated {count} issues",
+  "tracker_bulk_done": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Updated {n} issue",
+        "countPlural=other": "Updated {n} issues"
+      }
+    }
+  ],
   "tracker_bulk_urgent": "Mark urgent",
   "tracker_cat_backlog": "Backlog",
   "tracker_cat_cancelled": "Cancelled",
@@ -948,7 +1074,16 @@
   "tracker_issue_move": "Move to project",
   "tracker_issue_moved": "Moved — it is now {key}",
   "tracker_issue_unarchive": "Unarchive",
-  "tracker_issues_count": "{count} issues",
+  "tracker_issues_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} issue",
+        "countPlural=other": "{n} issues"
+      }
+    }
+  ],
   "tracker_kql_clear": "Clear the query",
   "tracker_kql_label": "Query (KQL)",
   "tracker_kql_placeholder": "status = in_progress and assignee = currentUser()",
@@ -1000,7 +1135,16 @@
   "tracker_planning_cycles_empty": "No cycles yet.",
   "tracker_planning_cycles_hint": "Fixed windows of work — a sprint, an iteration, a week. One runs at a time.",
   "tracker_planning_done_of": "{done} of {total} done",
-  "tracker_planning_issue_count": "{count} issues",
+  "tracker_planning_issue_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} issue",
+        "countPlural=other": "{n} issues"
+      }
+    }
+  ],
   "tracker_planning_label_add": "Add a label",
   "tracker_planning_labels": "Labels",
   "tracker_planning_labels_empty": "No labels yet",
@@ -1015,7 +1159,16 @@
   "tracker_planning_versions": "Versions",
   "tracker_planning_versions_empty": "No versions yet",
   "tracker_planning_versions_hint": "What you are shipping, and what shipped already.",
-  "tracker_points": "{count} pts",
+  "tracker_points": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} pt",
+        "countPlural=other": "{n} pts"
+      }
+    }
+  ],
   "tracker_preset_active": "Active",
   "tracker_preset_all": "All",
   "tracker_preset_assigned": "Assigned",
@@ -1063,7 +1216,16 @@
   "tracker_project_visibility": "Visibility",
   "tracker_project_visible_private": "Only its members",
   "tracker_project_visible_workspace": "Everyone in the workspace",
-  "tracker_project_weeks": "{count} weeks",
+  "tracker_project_weeks": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} week",
+        "countPlural=other": "{n} weeks"
+      }
+    }
+  ],
   "tracker_recur_at": "{when} at {time}",
   "tracker_recur_day": "day",
   "tracker_recur_day_of_month": "the {day}",
@@ -1156,7 +1318,16 @@
   "tracker_submit_hint": "⌘⏎ to create",
   "tracker_template_empty": "No templates yet",
   "tracker_template_hint": "A starting point for the issues somebody raises again and again.",
-  "tracker_template_subitems": "creates {count} sub-issue(s)",
+  "tracker_template_subitems": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "creates {n} sub-issue",
+        "countPlural=other": "creates {n} sub-issues"
+      }
+    }
+  ],
   "tracker_template_title": "Issue templates",
   "tracker_time_discard": "Throw it away",
   "tracker_time_edit": "Change this entry",
@@ -1226,7 +1397,16 @@
   "tracker_watch": "Watch",
   "tracker_watching": "Watching · {count}",
   "tracker_wip_exceeded": "Over the work-in-progress limit",
-  "tracker_workflow_asks": "Asks for {count} field(s) first",
+  "tracker_workflow_asks": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Asks for {n} field first",
+        "countPlural=other": "Asks for {n} fields first"
+      }
+    }
+  ],
   "tracker_workflow_from_any": "anywhere",
   "tracker_workflow_invalid": "The workflow was not saved — see what is wrong below.",
   "tracker_workflow_move_down": "Move {name} later",
@@ -1241,7 +1421,16 @@
   "tracker_workflow_start_from_hint": "Every workflow starts from one of these. An empty one has no transitions, so no work could move through it.",
   "tracker_workflow_status_add": "Status name",
   "tracker_workflow_status_add_hint": "A new status can be reached from any other and left for any other. Narrow that in its transitions once it is in use.",
-  "tracker_workflow_status_count": "{count} statuses",
+  "tracker_workflow_status_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} status",
+        "countPlural=other": "{n} statuses"
+      }
+    }
+  ],
   "tracker_workflow_statuses": "Statuses",
   "tracker_workflow_statuses_hint": "Rename them or change their order. An issue points at a status by id, so renaming one never moves anything.",
   "tracker_workflow_statuses_in": "Statuses in {name}",

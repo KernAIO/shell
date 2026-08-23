@@ -12,7 +12,20 @@
   "members_cannot_change_own_role": "لا يمكنك تغيير دورك بنفسك",
   "members_change_role": "تغيير الدور",
   "members_copy_email": "نسخ البريد الإلكتروني",
-  "members_count": "{count} أعضاء",
+  "members_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=zero": "لا أعضاء",
+        "countPlural=one": "عضو واحد",
+        "countPlural=two": "عضوان",
+        "countPlural=few": "{n} أعضاء",
+        "countPlural=many": "{n} عضواً",
+        "countPlural=other": "{n} عضو"
+      }
+    }
+  ],
   "members_edit_title": "تعديل المسمى الوظيفي",
   "members_empty": "لا أحد يطابق هذا البحث",
   "members_last_owner": "يجب أن تحتفظ مساحة العمل بمالك واحد على الأقل",
@@ -38,9 +51,35 @@
   "modules_group_enabled": "مفعّلة",
   "modules_group_included": "مضمّنة دائمًا",
   "modules_group_included_hint": "يحتاجها كيرن للعمل، لذا لا يمكن إيقافها.",
-  "modules_meta_events": "{count} أحداث",
+  "modules_meta_events": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=zero": "لا أحداث",
+        "countPlural=one": "حدث واحد",
+        "countPlural=two": "حدثان",
+        "countPlural=few": "{n} أحداث",
+        "countPlural=many": "{n} حدثاً",
+        "countPlural=other": "{n} حدث"
+      }
+    }
+  ],
   "modules_meta_objects": "{count} أنواع كائنات",
-  "modules_meta_permissions": "{count} أذونات",
+  "modules_meta_permissions": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=zero": "لا أذونات",
+        "countPlural=one": "إذن واحد",
+        "countPlural=two": "إذنان",
+        "countPlural=few": "{n} أذونات",
+        "countPlural=many": "{n} إذناً",
+        "countPlural=other": "{n} إذن"
+      }
+    }
+  ],
   "modules_none_match": "لا توجد وحدات تطابق «{query}».",
   "modules_page_hint": "فعّل الميزات لمساحة العمل هذه. كل ما تضيفه الوحدة — التنقل والأذونات والبحث — يظهر فقط حيث تكون مفعّلة.",
   "modules_read_only": "يمكنك رؤية الوحدات المستخدمة، لكن لا يغيّرها إلا مديرو مساحة العمل.",
@@ -57,13 +96,39 @@
   "roles_builtin_member": "يعمل داخل مساحة العمل ويدعو غيره",
   "roles_builtin_owner": "تحكّم كامل، بما في ذلك حذف مساحة العمل",
   "roles_page_hint": "الدور مجموعة أذونات لها اسم. تسجّل الوحدات أذوناتها، فتكبر هذه القائمة كلما فعّلت المزيد.",
-  "roles_permission_count": "{count} أذونات",
+  "roles_permission_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=zero": "لا أذونات",
+        "countPlural=one": "إذن واحد",
+        "countPlural=two": "إذنان",
+        "countPlural=few": "{n} أذونات",
+        "countPlural=many": "{n} إذناً",
+        "countPlural=other": "{n} إذن"
+      }
+    }
+  ],
   "security_page_hint": "تحمي هذه الإعدادات حسابك في كل مكان تستخدم فيه كيرن، لا في مساحة العمل هذه فقط.",
   "security_passkey_hint": "يحل محل كلمة المرور على الأجهزة التي تدعمه.",
   "tracker_activity": "النشاط",
   "tracker_add_reaction": "إضافة تفاعل",
   "tracker_all_issues": "كل المهام",
-  "tracker_bulk_done": "تم تحديث {count} مهمة",
+  "tracker_bulk_done": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=zero": "لم يتم تحديث أي مهمة",
+        "countPlural=one": "تم تحديث مهمة واحدة",
+        "countPlural=two": "تم تحديث مهمتين",
+        "countPlural=few": "تم تحديث {n} مهام",
+        "countPlural=many": "تم تحديث {n} مهمة",
+        "countPlural=other": "تم تحديث {n} مهمة"
+      }
+    }
+  ],
   "tracker_bulk_urgent": "تعليم كعاجل",
   "tracker_cmd_by_project": "تجميع المهام حسب المشروع",
   "tracker_cmd_my_issues": "مهامي",
@@ -106,7 +171,20 @@
   "tracker_group_priority": "الأولوية",
   "tracker_group_project": "المشروع",
   "tracker_group_status": "الحالة",
-  "tracker_issues_count": "{count} مهمة",
+  "tracker_issues_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=zero": "لا مهام",
+        "countPlural=one": "مهمة واحدة",
+        "countPlural=two": "مهمتان",
+        "countPlural=few": "{n} مهام",
+        "countPlural=many": "{n} مهمة",
+        "countPlural=other": "{n} مهمة"
+      }
+    }
+  ],
   "tracker_kql_clear": "مسح الاستعلام",
   "tracker_kql_label": "استعلام (KQL)",
   "tracker_kql_placeholder": "status = in_progress and assignee = currentUser()",
@@ -119,7 +197,20 @@
   "tracker_no_label": "بدون وسم",
   "tracker_no_milestone": "بدون معلم",
   "tracker_no_permission": "ليس لديك إذن لتغيير هذا",
-  "tracker_points": "{count} نقطة",
+  "tracker_points": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=zero": "لا نقاط",
+        "countPlural=one": "نقطة واحدة",
+        "countPlural=two": "نقطتان",
+        "countPlural=few": "{n} نقاط",
+        "countPlural=many": "{n} نقطة",
+        "countPlural=other": "{n} نقطة"
+      }
+    }
+  ],
   "tracker_preset_active": "نشطة",
   "tracker_preset_all": "الكل",
   "tracker_preset_assigned": "موكلة إليّ",

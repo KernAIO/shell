@@ -44,8 +44,36 @@ const SAME_AS_ENGLISH_IS_FINE = new Set([
 ])
 
 const strip = (o) => Object.fromEntries(Object.entries(o).filter(([k]) => !k.startsWith('$')))
+/**
+ * A message is either a string or a one-element array carrying `match` — the plugin's variant form.
+ * Its placeholders are the union of every branch's, so the comparison with English still works.
+ */
+const branches = (v) => (Array.isArray(v) ? Object.values(v[0]?.match ?? {}) : [v])
 const placeholders = (v) =>
-  typeof v === 'string' ? [...v.matchAll(/\{([^}]+)\}/g)].map((m) => m[1]).sort() : []
+  [
+    ...new Set(
+      branches(v)
+        .filter((b) => typeof b === 'string')
+        .flatMap((b) => [...b.matchAll(/\{([^}]+)\}/g)].map((m) => m[1])),
+    ),
+  ].sort()
+
+/**
+ * Which plural categories a variant answers for, against the ones its locale actually uses.
+ *
+ * This is the one failure worse than falling back to English: when no branch matches, Paraglide
+ * returns the message *key*, so the reader sees `tracker_issues_count` on screen. Arabic uses six
+ * categories, so a translator who writes the `one`/`other` pair that English and German need breaks
+ * every count from two upwards — while 1 still looks correct.
+ */
+const isPluralVariant = (v) => Array.isArray(v) && Boolean(v[0]?.selectors?.[0]?.endsWith('Plural'))
+const coveredCategories = (v) =>
+  new Set(
+    Object.keys(v[0]?.match ?? {})
+      .map((m) => m.split('=')[1]?.trim())
+      .filter(Boolean),
+  )
+const neededCategories = (locale) => new Set(new Intl.PluralRules(locale).resolvedOptions().pluralCategories)
 
 const base = strip(read(`messages/${BASE}.json`))
 const baseKeys = Object.keys(base)
@@ -77,11 +105,22 @@ for (const locale of LOCALES) {
     .filter((k) => k in other)
     .filter((k) => String(placeholders(base[k])) !== String(placeholders(other[k])))
   const untranslated = baseKeys.filter(
-    (k) => k in other && other[k] === base[k] && !SAME_AS_ENGLISH_IS_FINE.has(k),
+    (k) =>
+      k in other && JSON.stringify(other[k]) === JSON.stringify(base[k]) && !SAME_AS_ENGLISH_IS_FINE.has(k),
   )
+  const shortPlurals = []
+  for (const k of baseKeys) {
+    if (!(k in other) || !isPluralVariant(other[k])) continue
+    const short = [...neededCategories(locale)].filter((c) => !coveredCategories(other[k]).has(c))
+    if (short.length) shortPlurals.push(`${k} — no ${short.join(', ')}`)
+  }
 
   // A placeholder that changed name or vanished is a runtime bug in any locale, shipped or not.
-  const fatal = mismatched.length > 0 || orphans.length > 0 || (REQUIRED.has(locale) && missing.length > 0)
+  const fatal =
+    mismatched.length > 0 ||
+    orphans.length > 0 ||
+    shortPlurals.length > 0 ||
+    (REQUIRED.has(locale) && missing.length > 0)
   if (fatal) failed = true
 
   const mark = fatal ? '✗' : REQUIRED.has(locale) ? '✓' : '·'
@@ -92,6 +131,7 @@ for (const locale of LOCALES) {
       (orphans.length ? `  ${orphans.length} orphaned` : '') +
       (mismatched.length ? `  ${mismatched.length} placeholder mismatch` : '') +
       (untranslated.length ? `  ${untranslated.length} still English` : '') +
+      (shortPlurals.length ? `  ${shortPlurals.length} incomplete plural` : '') +
       (REQUIRED.has(locale) ? '' : '  — not required yet'),
   )
   for (const k of orphans) lines.push(`      orphaned: ${k} — not in ${BASE}.json`)
@@ -99,6 +139,8 @@ for (const locale of LOCALES) {
     lines.push(
       `      ${k}: ${BASE} has {${placeholders(base[k])}}, ${locale} has {${placeholders(other[k])}}`,
     )
+  for (const pl of shortPlurals)
+    lines.push(`      incomplete plural: ${pl} — a ${locale} reader would see the key name`)
   for (const k of untranslated.slice(0, 12)) lines.push(`      still English: ${k}`)
   if (untranslated.length > 12) lines.push(`      … and ${untranslated.length - 12} more still English`)
 }

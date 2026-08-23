@@ -12,7 +12,16 @@
   "members_cannot_change_own_role": "Sie können Ihre eigene Rolle nicht ändern",
   "members_change_role": "Rolle ändern",
   "members_copy_email": "E-Mail-Adresse kopieren",
-  "members_count": "{count} Mitglieder",
+  "members_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} Mitglied",
+        "countPlural=other": "{n} Mitglieder"
+      }
+    }
+  ],
   "members_edit_title": "Position bearbeiten",
   "members_empty": "Niemand passt zu dieser Suche",
   "members_last_owner": "Ein Workspace braucht mindestens einen Eigentümer",
@@ -38,9 +47,27 @@
   "modules_group_enabled": "Aktiviert",
   "modules_group_included": "Immer enthalten",
   "modules_group_included_hint": "Kern benötigt diese Module und sie lassen sich nicht abschalten.",
-  "modules_meta_events": "{count} Ereignisse",
+  "modules_meta_events": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} Ereignis",
+        "countPlural=other": "{n} Ereignisse"
+      }
+    }
+  ],
   "modules_meta_objects": "{count} Objekttypen",
-  "modules_meta_permissions": "{count} Berechtigungen",
+  "modules_meta_permissions": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} Berechtigung",
+        "countPlural=other": "{n} Berechtigungen"
+      }
+    }
+  ],
   "modules_none_match": "Keine Module passen zu „{query}“.",
   "modules_page_hint": "Funktionen für diesen Workspace aktivieren. Was ein Modul mitbringt — Navigation, Berechtigungen, Suche — erscheint nur dort, wo es aktiviert ist.",
   "modules_read_only": "Sie sehen, welche Module genutzt werden; ändern können sie nur Workspace-Admins.",
@@ -57,13 +84,31 @@
   "roles_builtin_member": "Arbeitet im Workspace und lädt andere ein",
   "roles_builtin_owner": "Volle Kontrolle, einschließlich Löschen des Workspace",
   "roles_page_hint": "Eine Rolle ist ein benannter Satz von Berechtigungen. Module bringen eigene mit, daher wächst diese Liste beim Aktivieren.",
-  "roles_permission_count": "{count} Berechtigungen",
+  "roles_permission_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} Berechtigung",
+        "countPlural=other": "{n} Berechtigungen"
+      }
+    }
+  ],
   "security_page_hint": "Diese Einstellungen schützen Ihr Konto überall in Kern, nicht nur in diesem Workspace.",
   "security_passkey_hint": "Ersetzt auf unterstützten Geräten Ihr Passwort.",
   "tracker_activity": "Aktivität",
   "tracker_add_reaction": "Reaktion hinzufügen",
   "tracker_all_issues": "Alle Vorgänge",
-  "tracker_bulk_done": "{count} Vorgänge aktualisiert",
+  "tracker_bulk_done": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} Vorgang aktualisiert",
+        "countPlural=other": "{n} Vorgänge aktualisiert"
+      }
+    }
+  ],
   "tracker_bulk_urgent": "Als dringend markieren",
   "tracker_cmd_by_project": "Vorgänge nach Projekt gruppieren",
   "tracker_cmd_my_issues": "Meine Vorgänge",
@@ -106,7 +151,16 @@
   "tracker_group_priority": "Priorität",
   "tracker_group_project": "Projekt",
   "tracker_group_status": "Status",
-  "tracker_issues_count": "{count} Vorgänge",
+  "tracker_issues_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} Vorgang",
+        "countPlural=other": "{n} Vorgänge"
+      }
+    }
+  ],
   "tracker_kql_clear": "Abfrage löschen",
   "tracker_kql_label": "Abfrage (KQL)",
   "tracker_kql_placeholder": "status = in_progress and assignee = currentUser()",
@@ -119,7 +173,16 @@
   "tracker_no_label": "Kein Label",
   "tracker_no_milestone": "Kein Meilenstein",
   "tracker_no_permission": "Sie dürfen das nicht ändern",
-  "tracker_points": "{count} Pkt.",
+  "tracker_points": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} Pkt.",
+        "countPlural=other": "{n} Pkt."
+      }
+    }
+  ],
   "tracker_preset_active": "Aktiv",
   "tracker_preset_all": "Alle",
   "tracker_preset_assigned": "Zugewiesen",
