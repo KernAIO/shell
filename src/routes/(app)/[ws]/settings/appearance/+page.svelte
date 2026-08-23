@@ -1,9 +1,10 @@
 <script lang="ts">
-import { Icon, Select } from '@kernhq/ui'
+import { Icon, Select, Switch } from '@kernhq/ui'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsRow from '$lib/components/settings/SettingsRow.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
 import { getLocale, locales, setLocale } from '$lib/paraglide/runtime'
+import { prefs } from '$lib/state/prefs.svelte'
 import { type ThemeChoice, theme } from '$lib/state/theme.svelte'
 import * as m from '$msg'
 
@@ -19,6 +20,7 @@ const localeNames: Record<string, string> = {
   fa: 'فارسی',
   ar: 'العربية',
   de: 'Deutsch',
+  tr: 'Türkçe',
 }
 const localeOptions = locales.map((code) => ({ value: code, label: localeNames[code] ?? code }))
 </script>
@@ -66,6 +68,25 @@ const localeOptions = locales.map((code) => ({ value: code, label: localeNames[c
         </button>
       {/each}
     </div>
+  </SettingsSection>
+
+  <SettingsSection title={m.appearance_interface()} description={m.appearance_interface_hint()}>
+    <SettingsRow label={m.appearance_tabbar()} hint={m.appearance_tabbar_hint()} for="tabbar" first>
+      <Switch
+        id="tabbar"
+        checked={prefs.tabBar}
+        onCheckedChange={(v) => prefs.set('tabBar', v)}
+      />
+    </SettingsRow>
+    <SettingsRow label={m.appearance_clock()} hint={m.appearance_clock_hint()} for="clock">
+      <!-- the clock lives in the strip, so it has nowhere to be while the strip is off -->
+      <Switch
+        id="clock"
+        checked={prefs.clock}
+        disabled={!prefs.tabBar}
+        onCheckedChange={(v) => prefs.set('clock', v)}
+      />
+    </SettingsRow>
   </SettingsSection>
 
   <SettingsSection title={m.language()} description={m.appearance_language_hint()}>
