@@ -1764,5 +1764,19 @@
         "countPlural=other": "{n} kişi daha burada"
       }
     }
-  ]
+  ],
+  "quire_history": "Sürüm geçmişi",
+  "quire_history_error": "Geçmiş yüklenemedi",
+  "quire_history_empty": "Henüz kayıt yok",
+  "quire_history_empty_desc": "Sürümler sayfa yazılırken ve her yayımlamada saklanır.",
+  "quire_version_live": "Okuyucuların gördüğü",
+  "quire_version_published": "Yayımlandı",
+  "quire_version_restored": "Geri yüklendi",
+  "quire_version_imported": "İçe aktarıldı",
+  "quire_version_auto": "Yazarken",
+  "quire_restore": "Geri yükle",
+  "quire_restoring": "Geri yükleniyor…",
+  "quire_publish": "Yayımla",
+  "quire_revert": "Taslağı at",
+  "quire_unpublished": "Bu taslakta okuyucuların henüz göremediği değişiklikler var"
 }

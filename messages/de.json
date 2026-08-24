@@ -1764,5 +1764,19 @@
         "countPlural=other": "{n} weitere Personen hier"
       }
     }
-  ]
+  ],
+  "quire_history": "Versionsverlauf",
+  "quire_history_error": "Der Verlauf konnte nicht geladen werden",
+  "quire_history_empty": "Noch nichts gespeichert",
+  "quire_history_empty_desc": "Versionen entstehen beim Schreiben und bei jeder Veröffentlichung.",
+  "quire_version_live": "Was Lesende sehen",
+  "quire_version_published": "Veröffentlicht",
+  "quire_version_restored": "Wiederhergestellt",
+  "quire_version_imported": "Importiert",
+  "quire_version_auto": "Beim Schreiben",
+  "quire_restore": "Wiederherstellen",
+  "quire_restoring": "Wird wiederhergestellt…",
+  "quire_publish": "Veröffentlichen",
+  "quire_revert": "Entwurf verwerfen",
+  "quire_unpublished": "Dieser Entwurf hat Änderungen, die Lesende noch nicht sehen"
 }

@@ -1764,5 +1764,19 @@
         "countPlural=other": "{n} others here"
       }
     }
-  ]
+  ],
+  "quire_history": "Version history",
+  "quire_history_error": "The history could not be loaded",
+  "quire_history_empty": "Nothing saved yet",
+  "quire_history_empty_desc": "Versions are kept as the page is written, and whenever it is published.",
+  "quire_version_live": "What readers see",
+  "quire_version_published": "Published",
+  "quire_version_restored": "Restored",
+  "quire_version_imported": "Imported",
+  "quire_version_auto": "While writing",
+  "quire_restore": "Restore",
+  "quire_restoring": "Restoring…",
+  "quire_publish": "Publish",
+  "quire_revert": "Discard the draft",
+  "quire_unpublished": "This draft has changes readers cannot see yet"
 }

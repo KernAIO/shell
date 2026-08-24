@@ -18,6 +18,7 @@ import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 import { getQuireApi } from './api'
 import PageEditor from './components/PageEditor.svelte'
+import VersionHistory from './components/VersionHistory.svelte'
 import { canQuire } from './permissions'
 import { quireKeys } from './query'
 
@@ -53,6 +54,8 @@ let title = $state('')
 let dirty = $state(false)
 let titleEl = $state<HTMLInputElement | null>(null)
 let peers = $state<CollabPeer[]>([])
+let historyOpen = $state(false)
+let busy = $state(false)
 
 /**
  * A page created from the sidebar arrives with no title, and the only thing anybody wants to do next
@@ -93,6 +96,33 @@ async function archive(archived: boolean) {
   await api.pages.archive({ workspaceId, pageId, archived })
   await client.invalidateQueries({ queryKey: quireKeys.page(workspaceId, pageId) })
   await client.invalidateQueries({ queryKey: quireKeys.tree(workspaceId, doc.spaceId) })
+}
+
+/**
+ * A page has a published face and a draft; a live doc has neither. Everything below is therefore
+ * only offered for a `page` — a live doc with a "publish" button would be a control that does
+ * nothing, which is worse than an absent one.
+ */
+async function publish() {
+  if (!doc || busy) return
+  busy = true
+  try {
+    await api.publishing.publish({ workspaceId, pageId, label: null })
+    await client.invalidateQueries({ queryKey: quireKeys.page(workspaceId, pageId) })
+  } finally {
+    busy = false
+  }
+}
+
+async function revert() {
+  if (!doc || busy) return
+  busy = true
+  try {
+    await api.publishing.revert({ workspaceId, pageId })
+    await client.invalidateQueries({ queryKey: quireKeys.page(workspaceId, pageId) })
+  } finally {
+    busy = false
+  }
 }
 
 async function trash() {
@@ -144,6 +174,23 @@ async function trash() {
       <DropdownMenu
         items={[
           {
+            id: 'history',
+            label: m.quire_history(),
+            icon: 'rotate-ccw',
+            onSelect: () => (historyOpen = true),
+          },
+          ...(doc.kind === 'page' && canQuire('pageEdit')
+            ? [
+                {
+                  id: 'publish',
+                  label: m.quire_publish(),
+                  icon: 'circle-check',
+                  disabled: busy,
+                  onSelect: () => void publish(),
+                },
+              ]
+            : []),
+          {
             id: 'archive',
             label: doc.archivedAt ? m.quire_unarchive() : m.quire_archive(),
             icon: 'archive',
@@ -180,11 +227,32 @@ async function trash() {
       {/if}
     </div>
 
+    {#if doc.kind === 'page' && doc.hasUnpublishedChanges}
+      <div class="banner" role="status">
+        <Icon name="circle-alert" size={15} />
+        <span>{m.quire_unpublished()}</span>
+        <span class="spacer"></span>
+        <Button size="sm" variant="secondary" disabled={busy} onclick={revert}>{m.quire_revert()}</Button>
+        {#if canQuire('pageEdit')}
+          <Button size="sm" disabled={busy} onclick={publish}>{m.quire_publish()}</Button>
+        {/if}
+      </div>
+    {/if}
+
     <div class="body">
       <PageEditor {doc} onpeers={(p) => (peers = p)} />
     </div>
   {/if}
 </Page>
+
+{#if doc}
+  <VersionHistory
+    bind:open={historyOpen}
+    {workspaceId}
+    {pageId}
+    publishedVersionId={doc.publishedVersionId}
+  />
+{/if}
 
 <style>
 .gap {
@@ -229,5 +297,23 @@ async function trash() {
 }
 .body {
   margin-block-start: 22px;
+}
+/*
+ * Above the body rather than beside the title: it is about what a reader currently sees, which is
+ * a statement about the text underneath it.
+ */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-block-start: 18px;
+  padding: 10px 12px;
+  border-radius: var(--kern-r-lg);
+  background: var(--kern-warning-tint);
+  color: var(--kern-ink-700);
+  font-size: 13px;
+}
+.spacer {
+  flex: 1;
 }
 </style>

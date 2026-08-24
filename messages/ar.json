@@ -1864,5 +1864,19 @@
         "countPlural=other": "{n} شخص آخر هنا"
       }
     }
-  ]
+  ],
+  "quire_history": "سجل النسخ",
+  "quire_history_error": "تعذّر تحميل السجل",
+  "quire_history_empty": "لم يُحفظ شيء بعد",
+  "quire_history_empty_desc": "تُحفظ النسخ أثناء كتابة الصفحة، وعند كل نشر.",
+  "quire_version_live": "ما يراه القرّاء",
+  "quire_version_published": "نُشرت",
+  "quire_version_restored": "استُعيدت",
+  "quire_version_imported": "مستوردة",
+  "quire_version_auto": "أثناء الكتابة",
+  "quire_restore": "استعادة",
+  "quire_restoring": "جارٍ الاستعادة…",
+  "quire_publish": "نشر",
+  "quire_revert": "تجاهل المسودة",
+  "quire_unpublished": "تحتوي هذه المسودة على تغييرات لا يراها القرّاء بعد"
 }

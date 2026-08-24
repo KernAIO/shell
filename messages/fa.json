@@ -1764,5 +1764,19 @@
         "countPlural=other": "{n} نفر دیگر اینجا هستند"
       }
     }
-  ]
+  ],
+  "quire_history": "تاریخچهٔ نسخه‌ها",
+  "quire_history_error": "تاریخچه بارگذاری نشد",
+  "quire_history_empty": "هنوز چیزی ذخیره نشده",
+  "quire_history_empty_desc": "نسخه‌ها همان‌طور که صفحه نوشته می‌شود و هر بار که منتشر شود نگه داشته می‌شوند.",
+  "quire_version_live": "آنچه خوانندگان می‌بینند",
+  "quire_version_published": "منتشر شد",
+  "quire_version_restored": "بازگردانده شد",
+  "quire_version_imported": "وارد شد",
+  "quire_version_auto": "هنگام نوشتن",
+  "quire_restore": "بازگرداندن",
+  "quire_restoring": "در حال بازگرداندن…",
+  "quire_publish": "انتشار",
+  "quire_revert": "دور انداختن پیش‌نویس",
+  "quire_unpublished": "این پیش‌نویس تغییرهایی دارد که خوانندگان هنوز نمی‌بینند"
 }
