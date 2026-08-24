@@ -87,7 +87,12 @@ pnpm test:e2e   # the interface, driven in a real browser against demo data
 ## Contributing
 
 Read [CONTRIBUTING.md](CONTRIBUTING.md), [DESIGN.md](DESIGN.md) and [CLAUDE.md](CLAUDE.md).
-Licence: [AGPL-3.0](LICENSE).
+
+## Licence
+
+[AGPL-3.0-only](LICENSE). This repository is part of the Kern product.
+The Kern framework you build modules against is Apache-2.0 — see
+[LICENSING.md](https://github.com/KernAIO/kern/blob/main/LICENSING.md).
 
 ---
 
