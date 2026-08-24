@@ -1709,8 +1709,6 @@
   "quire_cmd_open": "Open Quire",
   "quire_collapse": "Collapse",
   "quire_edited_ago": "Edited {when}",
-  "quire_editor_pending": "The editor is not here yet",
-  "quire_editor_pending_desc": "Spaces and pages work. Writing inside a page arrives with the collaborative editor.",
   "quire_expand": "Expand",
   "quire_kind_live": "Live doc",
   "quire_move_to_trash": "Move to trash",
@@ -1751,5 +1749,20 @@
   "quire_visibility_open": "Everyone in the workspace",
   "quire_visibility_private": "Only people you add",
   "quire_visibility_restricted": "Members, page by page",
-  "quire_page_actions": "Page actions"
+  "quire_page_actions": "Page actions",
+  "quire_editor_placeholder": "Write something…",
+  "quire_editor_mock": "Not connected to the collaboration service",
+  "quire_editor_mock_desc": "This is the demo interface, which has no server behind it. Writing here would not be saved.",
+  "quire_editor_no_session": "You are not signed in",
+  "quire_editor_no_session_desc": "Sign in again to write in this page.",
+  "quire_people_here": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} other person here",
+        "countPlural=other": "{n} others here"
+      }
+    }
+  ]
 }

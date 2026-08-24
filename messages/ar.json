@@ -1805,8 +1805,6 @@
   "quire_cmd_open": "فتح Quire",
   "quire_collapse": "طي",
   "quire_edited_ago": "عُدّلت {when}",
-  "quire_editor_pending": "المحرر ليس جاهزًا بعد",
-  "quire_editor_pending_desc": "المساحات والصفحات تعمل. أما الكتابة داخل الصفحة فتأتي مع المحرر التشاركي.",
   "quire_expand": "توسيع",
   "quire_kind_live": "مستند حي",
   "quire_move_to_trash": "نقل إلى المهملات",
@@ -1847,5 +1845,24 @@
   "quire_visibility_open": "كل من في مساحة العمل",
   "quire_visibility_private": "فقط من تضيفهم",
   "quire_visibility_restricted": "الأعضاء، صفحةً صفحة",
-  "quire_page_actions": "إجراءات الصفحة"
+  "quire_page_actions": "إجراءات الصفحة",
+  "quire_editor_placeholder": "اكتب شيئًا…",
+  "quire_editor_mock": "غير متصل بخدمة التعاون",
+  "quire_editor_mock_desc": "هذه واجهة العرض التجريبي، ولا يوجد خادم خلفها. لن يُحفظ ما تكتبه هنا.",
+  "quire_editor_no_session": "لم تسجّل الدخول",
+  "quire_editor_no_session_desc": "سجّل الدخول مرة أخرى للكتابة في هذه الصفحة.",
+  "quire_people_here": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=zero": "لا أحد آخر هنا",
+        "countPlural=one": "شخص آخر واحد هنا",
+        "countPlural=two": "شخصان آخران هنا",
+        "countPlural=few": "{n} أشخاص آخرين هنا",
+        "countPlural=many": "{n} شخصًا آخر هنا",
+        "countPlural=other": "{n} شخص آخر هنا"
+      }
+    }
+  ]
 }

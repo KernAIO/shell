@@ -1709,8 +1709,6 @@
   "quire_cmd_open": "باز کردن Quire",
   "quire_collapse": "بستن",
   "quire_edited_ago": "ویرایش {when}",
-  "quire_editor_pending": "ویرایشگر هنوز آماده نیست",
-  "quire_editor_pending_desc": "فضاها و صفحه‌ها کار می‌کنند. نوشتن درون صفحه با ویرایشگر مشترک می‌آید.",
   "quire_expand": "باز کردن",
   "quire_kind_live": "سند زنده",
   "quire_move_to_trash": "انتقال به زباله‌دان",
@@ -1751,5 +1749,20 @@
   "quire_visibility_open": "همهٔ اعضای فضای کاری",
   "quire_visibility_private": "فقط کسانی که اضافه می‌کنید",
   "quire_visibility_restricted": "اعضا، صفحه به صفحه",
-  "quire_page_actions": "کنش‌های صفحه"
+  "quire_page_actions": "کنش‌های صفحه",
+  "quire_editor_placeholder": "چیزی بنویسید…",
+  "quire_editor_mock": "به سرویس همکاری وصل نیست",
+  "quire_editor_mock_desc": "این نسخهٔ نمایشی است و سروری پشت آن نیست. آنچه اینجا بنویسید ذخیره نمی‌شود.",
+  "quire_editor_no_session": "وارد نشده‌اید",
+  "quire_editor_no_session_desc": "برای نوشتن در این صفحه دوباره وارد شوید.",
+  "quire_people_here": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} نفر دیگر اینجاست",
+        "countPlural=other": "{n} نفر دیگر اینجا هستند"
+      }
+    }
+  ]
 }

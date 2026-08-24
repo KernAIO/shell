@@ -1709,8 +1709,6 @@
   "quire_cmd_open": "Quire’ı aç",
   "quire_collapse": "Daralt",
   "quire_edited_ago": "{when} düzenlendi",
-  "quire_editor_pending": "Düzenleyici henüz yok",
-  "quire_editor_pending_desc": "Alanlar ve sayfalar çalışıyor. Sayfa içinde yazmak, ortak düzenleyiciyle birlikte gelecek.",
   "quire_expand": "Genişlet",
   "quire_kind_live": "Canlı belge",
   "quire_move_to_trash": "Çöp kutusuna taşı",
@@ -1751,5 +1749,20 @@
   "quire_visibility_open": "Çalışma alanındaki herkes",
   "quire_visibility_private": "Yalnızca eklediğiniz kişiler",
   "quire_visibility_restricted": "Üyeler, sayfa sayfa",
-  "quire_page_actions": "Sayfa işlemleri"
+  "quire_page_actions": "Sayfa işlemleri",
+  "quire_editor_placeholder": "Bir şeyler yazın…",
+  "quire_editor_mock": "İş birliği hizmetine bağlı değil",
+  "quire_editor_mock_desc": "Bu, arkasında sunucu olmayan tanıtım arayüzü. Burada yazdıklarınız kaydedilmez.",
+  "quire_editor_no_session": "Oturum açmadınız",
+  "quire_editor_no_session_desc": "Bu sayfada yazmak için yeniden oturum açın.",
+  "quire_people_here": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} kişi daha burada",
+        "countPlural=other": "{n} kişi daha burada"
+      }
+    }
+  ]
 }

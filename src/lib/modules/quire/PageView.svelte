@@ -1,5 +1,15 @@
 <script lang="ts">
-import { Avatar, Button, DropdownMenu, EmptyState, Icon, IconButton, Page, Skeleton } from '@kernhq/ui'
+import {
+  Avatar,
+  Button,
+  type CollabPeer,
+  DropdownMenu,
+  EmptyState,
+  Icon,
+  IconButton,
+  Page,
+  Skeleton,
+} from '@kernhq/ui'
 import { createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { page as pageState } from '$app/state'
@@ -7,6 +17,7 @@ import { relativeTime } from '$lib/format'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 import { getQuireApi } from './api'
+import PageEditor from './components/PageEditor.svelte'
 import { canQuire } from './permissions'
 import { quireKeys } from './query'
 
@@ -41,6 +52,7 @@ const editable = $derived(canQuire('pageEdit'))
 let title = $state('')
 let dirty = $state(false)
 let titleEl = $state<HTMLInputElement | null>(null)
+let peers = $state<CollabPeer[]>([])
 
 /**
  * A page created from the sidebar arrives with no title, and the only thing anybody wants to do next
@@ -163,14 +175,13 @@ async function trash() {
       {#if doc.archivedAt}
         <span class="chip"><Icon name="archive" size={12} /> {m.quire_archived()}</span>
       {/if}
+      {#if peers.length > 0}
+        <span class="chip">{m.quire_people_here({ count: peers.length })}</span>
+      {/if}
     </div>
 
     <div class="body">
-      <EmptyState
-        icon="square-pen"
-        title={m.quire_editor_pending()}
-        description={m.quire_editor_pending_desc()}
-      />
+      <PageEditor {doc} onpeers={(p) => (peers = p)} />
     </div>
   {/if}
 </Page>

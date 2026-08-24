@@ -1709,8 +1709,6 @@
   "quire_cmd_open": "Quire öffnen",
   "quire_collapse": "Zuklappen",
   "quire_edited_ago": "Bearbeitet {when}",
-  "quire_editor_pending": "Der Editor fehlt noch",
-  "quire_editor_pending_desc": "Bereiche und Seiten funktionieren. Das Schreiben in einer Seite kommt mit dem kollaborativen Editor.",
   "quire_expand": "Aufklappen",
   "quire_kind_live": "Live-Dokument",
   "quire_move_to_trash": "In den Papierkorb",
@@ -1751,5 +1749,20 @@
   "quire_visibility_open": "Alle im Workspace",
   "quire_visibility_private": "Nur wer hinzugefügt wird",
   "quire_visibility_restricted": "Mitglieder, Seite für Seite",
-  "quire_page_actions": "Seitenaktionen"
+  "quire_page_actions": "Seitenaktionen",
+  "quire_editor_placeholder": "Schreib etwas…",
+  "quire_editor_mock": "Nicht mit dem Kollaborationsdienst verbunden",
+  "quire_editor_mock_desc": "Dies ist die Demo-Oberfläche, hinter der kein Server steht. Was du hier schreibst, wird nicht gespeichert.",
+  "quire_editor_no_session": "Du bist nicht angemeldet",
+  "quire_editor_no_session_desc": "Melde dich erneut an, um in dieser Seite zu schreiben.",
+  "quire_people_here": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} weitere Person hier",
+        "countPlural=other": "{n} weitere Personen hier"
+      }
+    }
+  ]
 }
