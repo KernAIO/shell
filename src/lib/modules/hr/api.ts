@@ -17,9 +17,11 @@ let cached: HrApi | null = null
 
 export function getHrApi(): HrApi {
   if (cached) return cached
-  cached = isMock() ? (createMockHrApi() as unknown as HrApi) : createHrClient({
-    baseUrl: env.PUBLIC_API_URL || (browser ? window.location.origin : 'http://localhost:4000'),
-  })
+  cached = isMock()
+    ? (createMockHrApi() as unknown as HrApi)
+    : createHrClient({
+        baseUrl: env.PUBLIC_API_URL || (browser ? window.location.origin : 'http://localhost:4000'),
+      })
   return cached
 }
 

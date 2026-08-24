@@ -17,9 +17,11 @@ let cached: QuireApi | null = null
 
 export function getQuireApi(): QuireApi {
   if (cached) return cached
-  cached = isMock() ? (createMockQuireApi() as unknown as QuireApi) : createQuireClient({
-    baseUrl: env.PUBLIC_API_URL || (browser ? window.location.origin : 'http://localhost:4000'),
-  })
+  cached = isMock()
+    ? (createMockQuireApi() as unknown as QuireApi)
+    : createQuireClient({
+        baseUrl: env.PUBLIC_API_URL || (browser ? window.location.origin : 'http://localhost:4000'),
+      })
   return cached
 }
 
