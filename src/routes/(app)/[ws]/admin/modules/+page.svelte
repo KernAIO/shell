@@ -41,6 +41,27 @@ const modules = $derived.by(() => {
 })
 
 const totalProblems = $derived((reports.data ?? []).reduce((n, r) => n + r.problems.length, 0))
+
+/**
+ * The six words the card counts, each with the sentence that says what it is.
+ *
+ * They are jargon on their own — "callable" and "subscriptions" in particular say nothing about
+ * which direction the traffic goes — so the same list draws the legend at the top of the page and
+ * the row on every card, and neither can drift from the other.
+ */
+type ModuleReport = NonNullable<typeof reports.data>[number]
+const STATS: { label: () => string; hint: () => string; of: (r: ModuleReport) => number }[] = [
+  { label: m.dev_modules_procedures, hint: m.dev_modules_procedures_hint, of: (r) => r.procedures.length },
+  { label: m.dev_modules_permissions, hint: m.dev_modules_permissions_hint, of: (r) => r.permissions.length },
+  { label: m.dev_modules_events, hint: m.dev_modules_events_hint, of: (r) => r.events.length },
+  { label: m.dev_modules_jobs, hint: m.dev_modules_jobs_hint, of: (r) => r.jobs.length },
+  {
+    label: m.dev_modules_subscriptions,
+    hint: m.dev_modules_subscriptions_hint,
+    of: (r) => r.subscriptions.length,
+  },
+  { label: m.dev_modules_callable, hint: m.dev_modules_callable_hint, of: (r) => r.callable.length },
+]
 </script>
 
 <SettingsPage title={m.dev_modules_title()} description={m.dev_modules_desc()}>
@@ -67,26 +88,50 @@ const totalProblems = $derived((reports.data ?? []).reduce((n, r) => n + r.probl
   {:else}
     {#if totalProblems > 0}
       <!-- Said once at the top, because the point of this screen is that you do not have to hunt. -->
-      <p class="summary">
+      <p class="problem-count">
         <Icon name="circle-alert" size={14} />
         {m.dev_modules_problem_count({ count: formatCount(totalProblems) })}
       </p>
     {/if}
 
+    <!--
+      Said once for the page rather than as six tooltips per card: it is reference material somebody
+      reads on their first visit and never again, and one control is one tab stop instead of sixty.
+    -->
+    <details class="legend">
+      <summary>
+        <svg class="caret" width="9" height="9" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M8 5l9 7-9 7z" fill="currentColor" />
+        </svg>
+        {m.dev_modules_legend()}
+      </summary>
+      <dl>
+        {#each STATS as stat (stat.label)}
+          <div><dt>{stat.label()}</dt><dd>{stat.hint()}</dd></div>
+        {/each}
+      </dl>
+    </details>
+
     {#each modules as report (report.id)}
       <SettingsSection>
-        <header class="head">
+        <!-- One flow with one gap, so the rhythm inside a card cannot drift as blocks are added. -->
+        <div class="card">
+          <header class="head">
           <span class="name">{report.name}</span>
           <code>{report.id}</code>
           <Badge tone="grey" variant="chip">{report.version}</Badge>
           {#if report.host}<Badge tone="grey" variant="chip">{report.host}</Badge>{/if}
-          {#if report.problems.length === 0}
-            <Badge tone="done" variant="chip">{m.dev_modules_ok()}</Badge>
-          {:else}
-            <Badge tone="danger" variant="chip">
-              {m.dev_modules_problems({ count: formatCount(report.problems.length) })}
-            </Badge>
-          {/if}
+          <!-- The one thing somebody scans a column of cards for, so it sits at the same edge on
+               every one rather than wherever the chips before it happen to end. -->
+          <span class="verdict">
+            {#if report.problems.length === 0}
+              <Badge tone="done" variant="chip">{m.dev_modules_ok()}</Badge>
+            {:else}
+              <Badge tone="danger" variant="chip">
+                {m.dev_modules_problems({ count: formatCount(report.problems.length) })}
+              </Badge>
+            {/if}
+          </span>
         </header>
 
         {#if report.problems.length}
@@ -98,12 +143,13 @@ const totalProblems = $derived((reports.data ?? []).reduce((n, r) => n + r.probl
         {/if}
 
         <dl class="counts">
-          <div><dt>{m.dev_modules_procedures()}</dt><dd>{formatCount(report.procedures.length)}</dd></div>
-          <div><dt>{m.dev_modules_permissions()}</dt><dd>{formatCount(report.permissions.length)}</dd></div>
-          <div><dt>{m.dev_modules_events()}</dt><dd>{formatCount(report.events.length)}</dd></div>
-          <div><dt>{m.dev_modules_jobs()}</dt><dd>{formatCount(report.jobs.length)}</dd></div>
-          <div><dt>{m.dev_modules_subscriptions()}</dt><dd>{formatCount(report.subscriptions.length)}</dd></div>
-          <div><dt>{m.dev_modules_callable()}</dt><dd>{formatCount(report.callable.length)}</dd></div>
+          {#each STATS as stat (stat.label)}
+            {@const value = stat.of(report)}
+            <div class:zero={value === 0}>
+              <dt>{stat.label()}</dt>
+              <dd>{formatCount(value)}</dd>
+            </div>
+          {/each}
         </dl>
 
         {#if report.public.length}
@@ -152,7 +198,8 @@ const totalProblems = $derived((reports.data ?? []).reduce((n, r) => n + r.probl
               {/each}
             </tbody>
           </table>
-        </details>
+          </details>
+        </div>
       </SettingsSection>
     {/each}
   {/if}
@@ -167,20 +214,45 @@ const totalProblems = $derived((reports.data ?? []).reduce((n, r) => n + r.probl
     font-size: 13px;
     color: var(--kern-danger);
   }
-  .summary {
+  .problem-count {
     display: flex;
     align-items: center;
     gap: 6px;
-    margin-block-end: 12px;
     font-size: 13px;
     color: var(--kern-danger);
+  }
+  .legend dl {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 5px 14px;
+    margin-block-start: 10px;
+    padding-inline-start: 15px;
+  }
+  .legend div {
+    display: contents;
+  }
+  .legend dt {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--kern-ink-700);
+  }
+  .legend dd {
+    font-size: 12px;
+    line-height: 1.5;
+    color: var(--kern-ink-500);
+  }
+  .card {
+    display: grid;
+    gap: 13px;
   }
   .head {
     display: flex;
     align-items: center;
     gap: 8px;
     flex-wrap: wrap;
-    margin-block-end: 10px;
+  }
+  .verdict {
+    margin-inline-start: auto;
   }
   .name {
     font-size: 13.5px;
@@ -195,7 +267,6 @@ const totalProblems = $derived((reports.data ?? []).reduce((n, r) => n + r.probl
   .problems {
     display: grid;
     gap: 4px;
-    margin-block-end: 10px;
   }
   .problems li {
     display: flex;
@@ -204,32 +275,41 @@ const totalProblems = $derived((reports.data ?? []).reduce((n, r) => n + r.probl
     font-size: 12.5px;
     color: var(--kern-danger);
   }
+  /*
+    Six equal columns rather than a flex row: packed left, the widths came from how long each label
+    happened to be, so no two cards lined up and the far half of every card was empty. It folds to
+    fewer columns below roughly 640px of card.
+  */
   .counts {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 18px;
-    margin-block-end: 10px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(94px, 1fr));
+    gap: 12px 10px;
   }
   .counts div {
     display: grid;
     gap: 2px;
+    min-width: 0;
   }
-  dt {
+  .counts dt {
     font-size: 11.5px;
     color: var(--kern-ink-450);
   }
-  dd {
+  .counts dd {
     font-size: 15px;
     font-weight: 600;
     color: var(--kern-ink-900);
     font-variant-numeric: tabular-nums;
+  }
+  /* A row of zeros should not compete with the counts that carry something. */
+  .counts .zero dd {
+    color: var(--kern-ink-330);
+    font-weight: 500;
   }
   .public {
     display: flex;
     align-items: center;
     gap: 6px;
     flex-wrap: wrap;
-    margin-block-end: 10px;
     font-size: 12.5px;
     color: var(--kern-ink-500);
   }

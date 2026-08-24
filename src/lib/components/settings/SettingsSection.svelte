@@ -42,7 +42,11 @@ let { title, description, action, footer, flush = false, tone = 'default', child
     </header>
   {/if}
 
-  <div class={flush ? '' : 'px-[18px] pb-[18px]'}>{@render children()}</div>
+  <!--
+    With a title the header supplies the top padding; without one the body is the first thing in the
+    card and has to supply its own, or the content sits against the border with 18px below it.
+  -->
+  <div class={flush ? '' : title ? 'px-[18px] pb-[18px]' : 'p-[18px]'}>{@render children()}</div>
 
   {#if footer}
     <footer
