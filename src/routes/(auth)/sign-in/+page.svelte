@@ -1,110 +1,161 @@
 <script lang="ts">
-import { Button, Card, Field, Input, Separator, toast } from '@kernhq/ui'
+import { Button, Field, Input, Separator } from '@kernhq/ui'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
-import { auth, authDisabled, socialProviders } from '$lib/auth/client'
+import { auth, authDisabled, landingFor, socialProviders } from '$lib/auth/client'
+import AuthAlert from '$lib/components/auth/AuthAlert.svelte'
+import PasswordField from '$lib/components/auth/PasswordField.svelte'
+import ProviderButton from '$lib/components/auth/ProviderButton.svelte'
 import * as m from '$msg'
 
 let email = $state('')
 let password = $state('')
-let busy = $state(false)
+let busy = $state<null | 'password' | 'magic' | 'passkey'>(null)
 let magicSent = $state(false)
 let error = $state<string | null>(null)
 
 const next = $derived(page.url.searchParams.get('next') ?? '/')
+const landing = $derived(landingFor(next))
 const providers = socialProviders()
+
+/**
+ * A passkey button is only honest where the browser can answer it. Safari on an old macOS, a
+ * hardened build with WebAuthn off, and any non-browser context all lack it, and offering a button
+ * that throws is worse than not offering one.
+ */
+const passkeys = typeof window !== 'undefined' && 'PublicKeyCredential' in window
 
 async function signIn(e: SubmitEvent) {
   e.preventDefault()
-  if (authDisabled()) return void goto(next)
-  busy = true
+  if (authDisabled()) return void goto(landing)
+  busy = 'password'
   error = null
   const res = await auth.signIn.email({ email, password })
-  busy = false
+  busy = null
   if (res.error) {
     // a second factor is not a failure: continue the flow instead of showing an error
     if ((res.data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect)
-      return void goto('/two-factor')
+      return void goto(`/two-factor?next=${encodeURIComponent(next)}`)
     error = res.error.message ?? m.auth_invalid_credentials()
     return
   }
-  await goto(next)
+  await goto(landing)
 }
 
 async function sendMagicLink() {
   if (!email) {
-    error = m.auth_invalid_credentials()
+    error = m.auth_email_required()
+    document.getElementById('email')?.focus()
     return
   }
-  busy = true
-  const res = await auth.signIn.magicLink({ email, callbackURL: next })
-  busy = false
+  busy = 'magic'
+  error = null
+  const res = await auth.signIn.magicLink({ email, callbackURL: landing })
+  busy = null
   if (res.error) {
     error = res.error.message ?? m.error_generic()
     return
   }
   magicSent = true
-  toast.success(m.auth_magic_link_sent({ email }))
 }
 
-async function social(provider: 'google' | 'github' | 'microsoft') {
-  await auth.signIn.social({ provider, callbackURL: next })
+async function signInWithPasskey() {
+  busy = 'passkey'
+  error = null
+  const res = await auth.signIn.passkey()
+  busy = null
+  if (res?.error) {
+    error = res.error.message ?? m.error_generic()
+    return
+  }
+  await goto(landing)
 }
 </script>
 
 <svelte:head><title>{m.auth_sign_in()} · Kern</title></svelte:head>
 
-<Card class="p-6">
-  <h1 class="text-[17px] font-semibold tracking-[-0.02em] text-[var(--kern-ink-900)]">{m.auth_sign_in()}</h1>
-  <p class="mt-1 text-[13px] text-[var(--kern-ink-500)]">{m.auth_welcome_back()}</p>
+<h1>{m.auth_sign_in()}</h1>
+<p class="sub">{m.auth_welcome_back()}</p>
 
+<div class="stack">
   {#if magicSent}
-    <p class="mt-5 rounded-[10px] bg-[var(--kern-success-tint)] px-3 py-2.5 text-[13px] text-[var(--kern-success)]">
-      {m.auth_magic_link_sent({ email })}
-    </p>
+    <AuthAlert tone="success">{m.auth_magic_link_sent({ email })}</AuthAlert>
+  {/if}
+  {#if error}
+    <AuthAlert tone="danger">{error}</AuthAlert>
   {/if}
 
-  <form class="mt-5 grid gap-3.5" onsubmit={signIn}>
+  <form class="stack" onsubmit={signIn}>
     <Field label={m.auth_email()} id="email">
       <Input id="email" type="email" bind:value={email} autocomplete="email" required placeholder="you@example.com" />
     </Field>
-    <Field label={m.auth_password()} id="password">
-      <Input id="password" type="password" bind:value={password} autocomplete="current-password" required />
-    </Field>
 
-    {#if error}
-      <p role="alert" class="text-[12.5px] text-[var(--kern-danger)]">{error}</p>
-    {/if}
+    <PasswordField id="password" label={m.auth_password()} bind:value={password} autocomplete="current-password">
+      {#snippet aside()}
+        <a class="link" href="/forgot">{m.auth_forgot_password()}</a>
+      {/snippet}
+    </PasswordField>
 
-    <Button type="submit" loading={busy} class="mt-1 w-full">{m.auth_sign_in()}</Button>
+    <Button type="submit" loading={busy === 'password'} disabled={busy !== null} block size="lg">
+      {m.auth_sign_in()}
+    </Button>
   </form>
 
-  <div class="mt-3 flex items-center justify-between text-[12.5px]">
-    <button type="button" class="text-[var(--kern-accent)] hover:underline" onclick={sendMagicLink}>
-      {m.auth_magic_link()}
-    </button>
-    <a href="/forgot" class="text-[var(--kern-ink-500)] hover:text-[var(--kern-ink-900)]">
-      {m.auth_forgot_password()}
-    </a>
+  <div class="or">
+    <Separator />
+    <span>{m.auth_or()}</span>
+    <Separator />
   </div>
 
-  {#if providers.length}
-    <div class="my-5 flex items-center gap-3">
-      <Separator class="flex-1" />
-      <span class="text-[11.5px] uppercase tracking-wide text-[var(--kern-ink-400)]">{m.auth_or()}</span>
-      <Separator class="flex-1" />
-    </div>
-    <div class="grid gap-2">
-      {#each providers as provider (provider)}
-        <Button variant="secondary" class="w-full" onclick={() => social(provider)}>
-          {m.auth_continue_with({ provider: provider.charAt(0).toUpperCase() + provider.slice(1) })}
-        </Button>
-      {/each}
-    </div>
-  {/if}
-</Card>
+  <div class="alts">
+    {#if passkeys}
+      <Button
+        variant="white"
+        icon="key-round"
+        block
+        size="lg"
+        loading={busy === 'passkey'}
+        disabled={busy !== null}
+        onclick={signInWithPasskey}
+      >
+        {m.auth_passkey()}
+      </Button>
+    {/if}
+    <Button
+      variant="white"
+      icon="mail"
+      block
+      size="lg"
+      loading={busy === 'magic'}
+      disabled={busy !== null}
+      onclick={sendMagicLink}
+    >
+      {m.auth_magic_link()}
+    </Button>
+    {#each providers as provider (provider)}
+      <ProviderButton
+        {provider}
+        disabled={busy !== null}
+        onclick={() => auth.signIn.social({ provider, callbackURL: landing })}
+      />
+    {/each}
+  </div>
+</div>
 
-<p class="mt-4 text-center text-[13px] text-[var(--kern-ink-500)]">
+<p class="foot">
   {m.auth_no_account()}
-  <a href="/sign-up" class="text-[var(--kern-accent)] hover:underline">{m.auth_sign_up()}</a>
+  <a class="link" href="/sign-up{next === '/' ? '' : `?next=${encodeURIComponent(next)}`}">{m.auth_sign_up()}</a>
 </p>
+
+<style>
+  h1 { margin: 0; font-size: 25px; font-weight: 600; line-height: 1.1; letter-spacing: -0.025em; color: var(--kern-ink-900); }
+  .sub { margin: 6px 0 24px; font-size: 13.5px; color: var(--kern-ink-500); }
+  .stack { display: grid; gap: 14px; }
+  .or { display: flex; align-items: center; gap: 12px; margin: 4px 0; }
+  .or :global(.ksep) { flex: 1; }
+  .or span { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kern-ink-350); }
+  .alts { display: grid; gap: 8px; }
+  .foot { margin: 24px 0 0; text-align: center; font-size: 13px; color: var(--kern-ink-500); }
+  .link { color: var(--kern-accent-text); }
+  .link:hover { color: var(--kern-accent-deep); text-decoration: underline; }
+</style>

@@ -38,3 +38,13 @@ export async function signOut() {
   await auth.signOut()
   if (browser) window.location.href = '/sign-in'
 }
+
+/**
+ * Where a successful sign-in lands.
+ *
+ * A deep link the user was bounced from wins — they asked for that page. Otherwise the workspace
+ * chooser decides: it forwards straight through when there is one workspace (or none), and asks
+ * when there are several, which is the one moment a person actually knows which one they want.
+ */
+export const CHOOSE_WORKSPACE = '/workspaces'
+export const landingFor = (next: string) => (next === '/' ? CHOOSE_WORKSPACE : next)

@@ -1,8 +1,11 @@
 <script lang="ts">
-import { Button, Card, Field, Input, Separator } from '@kernhq/ui'
+import { Button, Field, Input, Separator } from '@kernhq/ui'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
-import { auth, authDisabled, socialProviders } from '$lib/auth/client'
+import { auth, authDisabled, landingFor, socialProviders } from '$lib/auth/client'
+import AuthAlert from '$lib/components/auth/AuthAlert.svelte'
+import PasswordField from '$lib/components/auth/PasswordField.svelte'
+import ProviderButton from '$lib/components/auth/ProviderButton.svelte'
 import * as m from '$msg'
 
 let name = $state('')
@@ -13,7 +16,11 @@ let busy = $state(false)
 let error = $state<string | null>(null)
 
 const next = $derived(page.url.searchParams.get('next') ?? '/')
+const landing = $derived(landingFor(next))
 const providers = socialProviders()
+
+// only complain once there is something to compare — not while the second box is still being typed
+const mismatch = $derived(confirm.length > 0 && password !== confirm ? m.auth_password_mismatch() : null)
 
 async function submit(e: SubmitEvent) {
   e.preventDefault()
@@ -21,7 +28,7 @@ async function submit(e: SubmitEvent) {
     error = m.auth_password_mismatch()
     return
   }
-  if (authDisabled()) return void goto(next)
+  if (authDisabled()) return void goto(landing)
   busy = true
   error = null
   const res = await auth.signUp.email({ name, email, password })
@@ -30,54 +37,75 @@ async function submit(e: SubmitEvent) {
     error = res.error.message ?? m.error_generic()
     return
   }
-  await goto(next)
+  await goto(landing)
 }
 </script>
 
 <svelte:head><title>{m.auth_sign_up()} · Kern</title></svelte:head>
 
-<Card class="p-6">
-  <h1 class="text-[17px] font-semibold tracking-[-0.02em] text-[var(--kern-ink-900)]">{m.auth_sign_up()}</h1>
-  <p class="mt-1 text-[13px] text-[var(--kern-ink-500)]">{m.auth_create_account_subtitle()}</p>
+<h1>{m.auth_sign_up()}</h1>
+<p class="sub">{m.auth_create_account_subtitle()}</p>
 
-  <form class="mt-5 grid gap-3.5" onsubmit={submit}>
+<div class="stack">
+  {#if error}
+    <AuthAlert tone="danger">{error}</AuthAlert>
+  {/if}
+
+  <form class="stack" onsubmit={submit}>
     <Field label={m.auth_name()} id="name">
-      <Input id="name" bind:value={name} autocomplete="name" required />
+      <Input id="name" bind:value={name} autocomplete="name" required placeholder="Ada Lovelace" />
     </Field>
     <Field label={m.auth_email()} id="email">
-      <Input id="email" type="email" bind:value={email} autocomplete="email" required />
-    </Field>
-    <Field label={m.auth_password()} id="password">
-      <Input id="password" type="password" bind:value={password} autocomplete="new-password" required minlength={8} />
-    </Field>
-    <Field label={m.auth_confirm_password()} id="confirm">
-      <Input id="confirm" type="password" bind:value={confirm} autocomplete="new-password" required />
+      <Input id="email" type="email" bind:value={email} autocomplete="email" required placeholder="you@example.com" />
     </Field>
 
-    {#if error}<p role="alert" class="text-[12.5px] text-[var(--kern-danger)]">{error}</p>{/if}
+    <PasswordField id="password" label={m.auth_password()} bind:value={password} autocomplete="new-password" meter />
+    <PasswordField
+      id="confirm"
+      label={m.auth_confirm_password()}
+      bind:value={confirm}
+      autocomplete="new-password"
+      error={mismatch}
+    />
 
-    <Button type="submit" loading={busy} class="mt-1 w-full">{m.auth_sign_up()}</Button>
+    <Button type="submit" loading={busy} disabled={mismatch !== null} block size="lg">{m.auth_sign_up()}</Button>
   </form>
 
-  <p class="mt-3 text-[12px] leading-relaxed text-[var(--kern-ink-400)]">{m.auth_terms_note()}</p>
+  <p class="terms">{m.auth_terms_note()}</p>
 
   {#if providers.length}
-    <div class="my-5 flex items-center gap-3">
-      <Separator class="flex-1" />
-      <span class="text-[11.5px] uppercase tracking-wide text-[var(--kern-ink-400)]">{m.auth_or()}</span>
-      <Separator class="flex-1" />
+    <div class="or">
+      <Separator />
+      <span>{m.auth_or()}</span>
+      <Separator />
     </div>
-    <div class="grid gap-2">
+    <div class="alts">
       {#each providers as provider (provider)}
-        <Button variant="secondary" class="w-full" onclick={() => auth.signIn.social({ provider, callbackURL: next })}>
-          {m.auth_continue_with({ provider: provider.charAt(0).toUpperCase() + provider.slice(1) })}
-        </Button>
+        <ProviderButton
+          {provider}
+          disabled={busy}
+          onclick={() => auth.signIn.social({ provider, callbackURL: landing })}
+        />
       {/each}
     </div>
   {/if}
-</Card>
+</div>
 
-<p class="mt-4 text-center text-[13px] text-[var(--kern-ink-500)]">
+<p class="foot">
   {m.auth_have_account()}
-  <a href="/sign-in" class="text-[var(--kern-accent)] hover:underline">{m.auth_sign_in()}</a>
+  <a class="link" href="/sign-in{next === '/' ? '' : `?next=${encodeURIComponent(next)}`}">{m.auth_sign_in()}</a>
 </p>
+
+<style>
+  h1 { margin: 0; font-size: 25px; font-weight: 600; line-height: 1.1; letter-spacing: -0.025em; color: var(--kern-ink-900); }
+  .sub { margin: 6px 0 24px; font-size: 13.5px; color: var(--kern-ink-500); }
+  .stack { display: grid; gap: 14px; }
+  .terms { margin: 0; font-size: 12px; line-height: 1.55; color: var(--kern-ink-400); text-wrap: pretty; }
+  .or { display: flex; align-items: center; gap: 12px; margin: 4px 0; }
+  .or :global(.ksep) { flex: 1; }
+  .or span { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--kern-ink-350); }
+  .alts { display: grid; gap: 8px; }
+  .foot { margin: 24px 0 0; text-align: center; font-size: 13px; color: var(--kern-ink-500); }
+  .link { color: var(--kern-accent-text); }
+  .link:hover { color: var(--kern-accent-deep); text-decoration: underline; }
+</style>

@@ -299,3 +299,8 @@ in-memory API with demo data — no backend, no database.
   switched off is right, but dropping them *in place* leaves holes where the cards were and the
   board reads as broken rather than tidy. The stored layout is left untouched, so turning the module
   back on restores the arrangement it had.
+- **A top-level route shadows a workspace of the same name.** A workspace lives at `/<slug>` and the
+  app's own pages — `/sign-in`, `/workspaces`, `/onboarding` — sit at that same level, where
+  SvelteKit prefers the static route. A workspace called "workspaces" would then exist and never
+  open, with nothing failing anywhere. Adding a directory to `src/routes` therefore means adding its
+  name to `RESERVED_SLUGS` in core (`src/modules/core/services/workspaces.ts`) in the same change.
