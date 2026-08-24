@@ -17,6 +17,7 @@ import { relativeTime } from '$lib/format'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 import { getQuireApi } from './api'
+import CommentsPanel from './components/CommentsPanel.svelte'
 import PageEditor from './components/PageEditor.svelte'
 import VersionHistory from './components/VersionHistory.svelte'
 import { canQuire } from './permissions'
@@ -56,6 +57,38 @@ let titleEl = $state<HTMLInputElement | null>(null)
 let peers = $state<CollabPeer[]>([])
 let historyOpen = $state(false)
 let busy = $state(false)
+let activeComment = $state<string | null>(null)
+let pendingComment = $state<{ anchor: { from: string; to: string }; quotedText: string } | null>(null)
+
+/**
+ * Anchors for the editor to highlight, from the threads the panel has loaded.
+ *
+ * The panel owns the query; this reads the same cache rather than asking again, so the margin and
+ * the highlights can never disagree about which threads exist.
+ */
+const threads = createQuery(() => ({
+  queryKey: [...quireKeys.page(workspaceId, pageId), 'comments'],
+  enabled: Boolean(workspaceId && pageId),
+  queryFn: () => api.comments.list({ workspaceId, pageId, includeResolved: false }),
+}))
+
+const commentRanges = $derived(
+  (threads.data ?? [])
+    .filter((t) => t.root.anchor)
+    .map((t) => ({ id: t.id, from: t.root.anchor!.from, to: t.root.anchor!.to })),
+)
+
+/**
+ * Threads whose text is gone.
+ *
+ * A relative position resolves to nothing once the content it pointed at is deleted, which is the
+ * whole reason for using one. The panel says so rather than the thread quietly vanishing — that is
+ * exactly when somebody's question matters most.
+ */
+let orphaned = $state(new Set<string>())
+
+/** The margin appears when there is something in it, or when somebody is about to put something there. */
+const showComments = $derived(pendingComment !== null || (threads.data ?? []).length > 0)
 
 /**
  * A page created from the sidebar arrives with no title, and the only thing anybody wants to do next
@@ -133,6 +166,7 @@ async function trash() {
 }
 </script>
 
+<div class="with-margin" class:open={showComments}>
 <Page padding="docs" maxWidth="780px">
   {#if query.isLoading}
     <Skeleton height="36px" />
@@ -173,6 +207,15 @@ async function trash() {
 
       <DropdownMenu
         items={[
+          {
+            id: 'comments',
+            label: m.quire_comments(),
+            icon: 'message-circle',
+            onSelect: () => {
+              // Nothing selected, so this is a remark about the page rather than a piece of it.
+              pendingComment = { anchor: { from: '', to: '' }, quotedText: '' }
+            },
+          },
           {
             id: 'history',
             label: m.quire_history(),
@@ -240,10 +283,33 @@ async function trash() {
     {/if}
 
     <div class="body">
-      <PageEditor {doc} onpeers={(p) => (peers = p)} />
+      <PageEditor
+        {doc}
+        onpeers={(p) => (peers = p)}
+        {commentRanges}
+        {activeComment}
+        onCommentClick={(id) => (activeComment = id)}
+        oncomment={(anchor, quotedText) => {
+          pendingComment = { anchor, quotedText }
+          activeComment = null
+        }}
+      />
     </div>
   {/if}
 </Page>
+
+{#if doc && showComments}
+  <CommentsPanel
+    {workspaceId}
+    {pageId}
+    activeId={activeComment}
+    {orphaned}
+    onFocus={(id) => (activeComment = id)}
+    pending={pendingComment}
+    onPendingHandled={() => (pendingComment = null)}
+  />
+{/if}
+</div>
 
 {#if doc}
   <VersionHistory
@@ -297,6 +363,28 @@ async function trash() {
 }
 .body {
   margin-block-start: 22px;
+}
+/*
+ * The margin is a column beside the page rather than an overlay: a comment is about a specific
+ * sentence, and an overlay covers the sentence you are reading it against.
+ */
+.with-margin {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+}
+.with-margin.open :global(> .kpage) {
+  min-width: 0;
+}
+.with-margin.open > :global(aside) {
+  width: 320px;
+  flex: none;
+}
+@media (max-width: 900px) {
+  .with-margin.open > :global(aside) {
+    width: 260px;
+  }
 }
 /*
  * Above the body rather than beside the title: it is about what a reader currently sees, which is

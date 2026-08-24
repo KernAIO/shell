@@ -1878,5 +1878,14 @@
   "quire_restoring": "جارٍ الاستعادة…",
   "quire_publish": "نشر",
   "quire_revert": "تجاهل المسودة",
-  "quire_unpublished": "تحتوي هذه المسودة على تغييرات لا يراها القرّاء بعد"
+  "quire_unpublished": "تحتوي هذه المسودة على تغييرات لا يراها القرّاء بعد",
+  "quire_comments": "التعليقات",
+  "quire_comments_empty": "لا توجد تعليقات بعد",
+  "quire_comments_empty_desc": "حدّد نصًا لتسأل عنه.",
+  "quire_comment_placeholder": "اسأل عن هذا…",
+  "quire_comment_post": "تعليق",
+  "quire_comment_reply": "رد",
+  "quire_comment_resolve": "إغلاق",
+  "quire_comment_edited": "مُعدّل",
+  "quire_comment_orphaned": "حُذف النص الذي كان هذا بشأنه"
 }

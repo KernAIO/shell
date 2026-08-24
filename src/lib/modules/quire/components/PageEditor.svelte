@@ -1,6 +1,12 @@
 <script lang="ts">
 import { type Page, pageDocumentName } from '@kernhq/module-quire/client'
-import { CollaborativeEditor, type CollabPeer, type CollabStatus, EmptyState } from '@kernhq/ui'
+import {
+  CollaborativeEditor,
+  type CollabPeer,
+  type CollabStatus,
+  type CommentRange,
+  EmptyState,
+} from '@kernhq/ui'
 import { browser } from '$app/environment'
 import { env } from '$env/dynamic/public'
 import { isMock } from '$lib/api/client'
@@ -18,8 +24,20 @@ interface Props {
   doc: Page
   onpeers?: (peers: CollabPeer[]) => void
   onstatus?: (status: CollabStatus) => void
+  commentRanges?: CommentRange[]
+  activeComment?: string | null
+  onCommentClick?: (id: string) => void
+  oncomment?: (anchor: { from: string; to: string }, quotedText: string) => void
 }
-const { doc, onpeers, onstatus }: Props = $props()
+const {
+  doc,
+  onpeers,
+  onstatus,
+  commentRanges = [],
+  activeComment = null,
+  onCommentClick,
+  oncomment,
+}: Props = $props()
 
 const name = $derived(pageDocumentName(doc))
 
@@ -50,6 +68,17 @@ const user = $derived({
   <EmptyState icon="triangle-alert" title={m.quire_editor_no_session()} description={m.quire_editor_no_session_desc()} />
 {:else}
   {#key name}
-    <CollaborativeEditor {url} {name} {user} placeholder={m.quire_editor_placeholder()} {onpeers} {onstatus} />
+    <CollaborativeEditor
+      {url}
+      {name}
+      {user}
+      placeholder={m.quire_editor_placeholder()}
+      {onpeers}
+      {onstatus}
+      {commentRanges}
+      {activeComment}
+      {onCommentClick}
+      {oncomment}
+    />
   {/key}
 {/if}

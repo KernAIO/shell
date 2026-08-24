@@ -16,7 +16,9 @@ export const QUIRE_PERMISSIONS = {
   spaceManage: 'quire.space.manage',
   pageView: 'quire.page.view',
   pageCreate: 'quire.page.create',
+  pageComment: 'quire.page.comment',
   pageEdit: 'quire.page.edit',
+  pagePublish: 'quire.page.publish',
   pageDelete: 'quire.page.delete',
 } as const
 

@@ -1778,5 +1778,14 @@
   "quire_restoring": "در حال بازگرداندن…",
   "quire_publish": "انتشار",
   "quire_revert": "دور انداختن پیش‌نویس",
-  "quire_unpublished": "این پیش‌نویس تغییرهایی دارد که خوانندگان هنوز نمی‌بینند"
+  "quire_unpublished": "این پیش‌نویس تغییرهایی دارد که خوانندگان هنوز نمی‌بینند",
+  "quire_comments": "دیدگاه‌ها",
+  "quire_comments_empty": "هنوز دیدگاهی نیست",
+  "quire_comments_empty_desc": "متنی را انتخاب کنید تا دربارهٔ آن بپرسید.",
+  "quire_comment_placeholder": "دربارهٔ این بپرسید…",
+  "quire_comment_post": "ثبت دیدگاه",
+  "quire_comment_reply": "پاسخ",
+  "quire_comment_resolve": "بستن",
+  "quire_comment_edited": "ویرایش‌شده",
+  "quire_comment_orphaned": "متنی که این دربارهٔ آن بود حذف شده است"
 }

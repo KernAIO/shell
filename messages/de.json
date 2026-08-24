@@ -1778,5 +1778,14 @@
   "quire_restoring": "Wird wiederhergestellt…",
   "quire_publish": "Veröffentlichen",
   "quire_revert": "Entwurf verwerfen",
-  "quire_unpublished": "Dieser Entwurf hat Änderungen, die Lesende noch nicht sehen"
+  "quire_unpublished": "Dieser Entwurf hat Änderungen, die Lesende noch nicht sehen",
+  "quire_comments": "Kommentare",
+  "quire_comments_empty": "Noch keine Kommentare",
+  "quire_comments_empty_desc": "Markiere Text, um dazu etwas zu fragen.",
+  "quire_comment_placeholder": "Frag dazu etwas…",
+  "quire_comment_post": "Kommentieren",
+  "quire_comment_reply": "Antworten",
+  "quire_comment_resolve": "Erledigen",
+  "quire_comment_edited": "bearbeitet",
+  "quire_comment_orphaned": "Der Text, um den es hier ging, wurde gelöscht"
 }

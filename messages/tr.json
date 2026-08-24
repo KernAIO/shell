@@ -1778,5 +1778,14 @@
   "quire_restoring": "Geri yükleniyor…",
   "quire_publish": "Yayımla",
   "quire_revert": "Taslağı at",
-  "quire_unpublished": "Bu taslakta okuyucuların henüz göremediği değişiklikler var"
+  "quire_unpublished": "Bu taslakta okuyucuların henüz göremediği değişiklikler var",
+  "quire_comments": "Yorumlar",
+  "quire_comments_empty": "Henüz yorum yok",
+  "quire_comments_empty_desc": "Hakkında soru sormak için bir metin seçin.",
+  "quire_comment_placeholder": "Bunun hakkında sorun…",
+  "quire_comment_post": "Yorumla",
+  "quire_comment_reply": "Yanıtla",
+  "quire_comment_resolve": "Kapat",
+  "quire_comment_edited": "düzenlendi",
+  "quire_comment_orphaned": "Bunun konusu olan metin silinmiş"
 }

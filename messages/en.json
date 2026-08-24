@@ -1778,5 +1778,14 @@
   "quire_restoring": "Restoring…",
   "quire_publish": "Publish",
   "quire_revert": "Discard the draft",
-  "quire_unpublished": "This draft has changes readers cannot see yet"
+  "quire_unpublished": "This draft has changes readers cannot see yet",
+  "quire_comments": "Comments",
+  "quire_comments_empty": "No comments yet",
+  "quire_comments_empty_desc": "Select some text to ask about it.",
+  "quire_comment_placeholder": "Ask about this…",
+  "quire_comment_post": "Comment",
+  "quire_comment_reply": "Reply",
+  "quire_comment_resolve": "Resolve",
+  "quire_comment_edited": "edited",
+  "quire_comment_orphaned": "The text this was about has been deleted"
 }
