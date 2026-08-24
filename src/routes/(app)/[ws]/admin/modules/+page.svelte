@@ -45,11 +45,9 @@ const totalProblems = $derived((reports.data ?? []).reduce((n, r) => n + r.probl
 
 <SettingsPage title={m.dev_modules_title()} description={m.dev_modules_desc()}>
   {#snippet actions()}
-    <SearchBox
-      placeholder={m.dev_modules_search()}
-      value={filter}
-      oninput={(e) => (filter = (e.currentTarget as HTMLInputElement).value)}
-    />
+    <!-- Wide enough for the longest translation of the placeholder; it says it searches procedures
+         too, and a clipped placeholder would hide exactly that half. -->
+    <SearchBox bind:value={filter} placeholder={m.dev_modules_search()} width="280px" />
   {/snippet}
 
   {#if reports.isPending}
@@ -121,7 +119,12 @@ const totalProblems = $derived((reports.data ?? []).reduce((n, r) => n + r.probl
         {/if}
 
         <details>
-          <summary>{m.dev_modules_show_procedures({ count: formatCount(report.procedures.length) })}</summary>
+          <summary>
+            <svg class="caret" width="9" height="9" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5l9 7-9 7z" fill="currentColor" />
+            </svg>
+            {m.dev_modules_show_procedures({ count: formatCount(report.procedures.length) })}
+          </summary>
           <table>
             <thead>
               <tr>
@@ -231,9 +234,34 @@ const totalProblems = $derived((reports.data ?? []).reduce((n, r) => n + r.probl
     color: var(--kern-ink-500);
   }
   summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: fit-content;
     font-size: 12.5px;
     color: var(--kern-accent-text);
     cursor: pointer;
+  }
+  /* The browser's own marker is a different shape in every engine; the product's disclosure
+     triangle is the one in group headers. */
+  summary::marker,
+  summary::-webkit-details-marker {
+    content: '';
+    display: none;
+  }
+  .caret {
+    flex: none;
+    color: var(--kern-ink-350);
+    transition: transform var(--kern-dur-fast);
+  }
+  details[open] .caret {
+    transform: rotate(90deg);
+  }
+  :global([dir='rtl']) .caret {
+    transform: rotate(180deg);
+  }
+  :global([dir='rtl']) details[open] .caret {
+    transform: rotate(90deg);
   }
   table {
     width: 100%;
