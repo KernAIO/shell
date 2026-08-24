@@ -5,6 +5,9 @@ import type {
   SvelteWidgetDefinition,
 } from '@kernhq/ui'
 
+import { hasCapability } from './capabilities'
+
+export { capabilitiesOf } from './capabilities'
 export { segmentOf } from './segment'
 
 import { billingClientModule } from './billing/client'
@@ -38,6 +41,15 @@ export function getModule(id: string): ClientModule | undefined {
 
 export interface NavContext {
   enabled: Set<string>
+  /**
+   * Capabilities this workspace has on, as `<moduleId>.<capabilityId>`.
+   *
+   * Optional because most call sites predate capabilities and every module without them is
+   * unaffected either way: a contribution that declares no `capability` is never filtered on one.
+   * Where it *is* passed, it must be the set the server resolved — the same answer
+   * `requiresCapability` enforces — or the shell offers a row whose API answers 404.
+   */
+  capabilities?: Set<string>
   can(permission: string): boolean
 }
 
@@ -47,6 +59,7 @@ export function navigationFor(ctx: NavContext): Array<ClientNavItem & { moduleId
     .filter((m) => ctx.enabled.has(m.id))
     .flatMap((m) => (m.nav ?? []).map((item) => ({ ...item, moduleId: m.id })))
     .filter((item) => !item.permission || ctx.can(item.permission))
+    .filter((item) => hasCapability(ctx.capabilities, item.moduleId, item.capability))
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100))
 }
 
@@ -71,6 +84,7 @@ export function sidebarsFor(ctx: NavContext & { segment: string }): SidebarEntry
     .flatMap((mod) => (mod.sidebar ?? []).map((s) => ({ ...s, moduleId: mod.id })))
     .filter((s) => s.match.includes(ctx.segment))
     .filter((s) => !s.permission || ctx.can(s.permission))
+    .filter((s) => hasCapability(ctx.capabilities, s.moduleId, s.capability))
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100) || a.id.localeCompare(b.id))
 }
 
@@ -91,6 +105,7 @@ export function widgetsFor(ctx: NavContext): WidgetEntry[] {
     .filter((mod) => ctx.enabled.has(mod.id))
     .flatMap((mod) => (mod.widgets ?? []).map((w) => ({ ...w, moduleId: mod.id, moduleName: mod.name })))
     .filter((w) => !w.permission || ctx.can(w.permission))
+    .filter((w) => hasCapability(ctx.capabilities, w.moduleId, w.capability))
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100) || a.id.localeCompare(b.id))
 }
 
@@ -111,6 +126,7 @@ export function commandsFor(ctx: NavContext) {
     .filter((m) => ctx.enabled.has(m.id))
     .flatMap((m) => (m.commands ?? []).map((c) => ({ ...c, moduleId: m.id })))
     .filter((c) => !c.permission || ctx.can(c.permission))
+    .filter((c) => hasCapability(ctx.capabilities, c.moduleId, c.capability))
 }
 
 // Composition happens here, at build time. Importing a module's client and registering it is the only
@@ -129,6 +145,7 @@ export interface ModuleSettingsLink {
   label: string
   icon?: string
   permission?: string
+  capability?: string
   order: number
 }
 
@@ -155,6 +172,10 @@ export function settingsLinksFor(ctx: NavContext): ModuleSettingsLink[] {
  * workspace: an operator looking at what every workspace is billed must still see the screen when
  * the workspace they happen to be standing in has that module switched off. The console's layout
  * gates the whole area on the instance-admin flag, which is the check that matters here.
+ *
+ * For the same reason an instance page must not declare a `capability`: capabilities are a
+ * workspace's choice, and there is no workspace here to ask. One declared anyway is filtered out,
+ * which is the safe direction but a silent one — do not do it.
  */
 export function instanceLinksFor(ctx: Pick<NavContext, 'can'>): ModuleSettingsLink[] {
   return pagesForScope('instance', modules, { enabled: new Set(), can: ctx.can })
@@ -176,9 +197,11 @@ function pagesForScope(
           label: p.label,
           icon: p.icon,
           permission: p.permission,
+          capability: p.capability,
           order: p.order ?? 100,
         })),
     )
     .filter((link) => !link.permission || ctx.can(link.permission))
+    .filter((link) => hasCapability(ctx.capabilities, link.moduleId, link.capability))
     .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
 }

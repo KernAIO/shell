@@ -4,7 +4,7 @@ import { Command, type CommandItem, toast } from '@kernhq/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { getApi } from '$lib/api/client'
-import { commandsFor } from '$lib/modules/registry'
+import { capabilitiesOf, commandsFor } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
 import { theme } from '$lib/state/theme.svelte'
@@ -43,6 +43,8 @@ const modules = createQuery(() => ({
 const enabledModules = $derived(
   new Set((modules.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
 )
+/** …and the sub-features inside them, so a command for a capability nobody enabled is not offered. */
+const enabledCapabilities = $derived(capabilitiesOf(modules.data ?? []))
 
 /** What a module command is handed when it runs. Hrefs are workspace-relative, as in `nav`. */
 const clientContext = (): ClientContext => ({
@@ -50,6 +52,7 @@ const clientContext = (): ClientContext => ({
   workspaceSlug,
   userId: session.user?.id ?? null,
   permissions: session.permissions,
+  capabilities: enabledCapabilities,
   navigate: (href) => go(href),
   openPalette: (q) => {
     query = q ?? ''
@@ -123,7 +126,11 @@ const commands: CommandItem[] = $derived([
       open = false
     },
   },
-  ...commandsFor({ enabled: enabledModules, can: (p) => session.can(p) }).map((c) => ({
+  ...commandsFor({
+    enabled: enabledModules,
+    capabilities: enabledCapabilities,
+    can: (p) => session.can(p),
+  }).map((c) => ({
     id: c.id,
     label: c.label,
     icon: c.icon,

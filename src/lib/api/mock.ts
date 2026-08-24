@@ -7,7 +7,18 @@
  * throws loudly rather than silently returning empty data.
  */
 
+import { type CapabilityDef, resolveCapabilities } from '@kernhq/contracts'
 import { mockObjectUrl } from '$lib/files/mock-storage'
+
+/**
+ * Capabilities each module declares, mirroring what its server half declares.
+ *
+ * Empty for every module that has none — which is all of them until one grows some. A module missing
+ * from here is not a bug; a module whose entry disagrees with its server's is, and it shows up as a
+ * nav row that works in `dev:mock` and 404s against core.
+ */
+const MODULE_CAPABILITIES: Record<string, CapabilityDef[]> = {}
+const capabilityDefs = (moduleId: string): CapabilityDef[] => MODULE_CAPABILITIES[moduleId] ?? []
 
 const now = Date.now()
 const iso = (msAgo = 0) => new Date(now - msAgo).toISOString()
@@ -417,6 +428,7 @@ const manifestOf = (m: (typeof moduleManifests)[number]) => ({
   icon: m.icon,
   core: m.core,
   dependsOn: m.dependsOn,
+  capabilities: capabilityDefs(m.id),
   permissions: Array.from({ length: m.permissionCount }, (_, i) => ({
     key: `${m.id}.permission.${i}`,
     label: `${m.name} permission ${i + 1}`,
@@ -476,6 +488,8 @@ export function createMockApi() {
     workspaces: clone(workspaces),
     members: clone(members),
     enabled: new Map<string, Set<string>>(),
+    /** `<workspaceId>:<moduleId>` → what the switchboard stored; absent means "never touched". */
+    capabilities: new Map<string, Record<string, boolean>>(),
     invitations: [] as Array<Record<string, unknown>>,
     dashboards: new Map<
       string,
@@ -525,6 +539,16 @@ export function createMockApi() {
     }
     return set
   }
+  /**
+   * Capabilities a workspace has switched, by module, and the set that follows from them.
+   *
+   * Resolved through the same `resolveCapabilities` the server uses rather than a mock of its own:
+   * the whole value of the mock is that a screen behaves here the way it behaves against core, and a
+   * second implementation of the dependency closure is exactly how that stops being true.
+   */
+  const capabilitiesFor = (workspaceId: string, moduleId: string) => [
+    ...resolveCapabilities(capabilityDefs(moduleId), state.capabilities.get(`${workspaceId}:${moduleId}`)),
+  ]
   const summary = (w: (typeof workspaces)[number]) => {
     const unread = state.notifications.filter(
       (n) => n.workspaceId === w.id && !n.readAt && !n.archivedAt,
@@ -769,6 +793,7 @@ export function createMockApi() {
               enabled: m.core || on.has(m.id),
               settings: {},
               installedVersion: m.version,
+              capabilities: capabilitiesFor(workspaceId, m.id),
             },
           }))
         },

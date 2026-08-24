@@ -29,7 +29,7 @@ import OfflineBanner from '$lib/components/OfflineBanner.svelte'
 import WorkspaceTabs from '$lib/components/WorkspaceTabs.svelte'
 import { formatCount } from '$lib/format'
 import ModuleSidebar from '$lib/modules/ModuleSidebar.svelte'
-import { navigationFor, segmentOf, sidebarsFor } from '$lib/modules/registry'
+import { capabilitiesOf, navigationFor, segmentOf, sidebarsFor } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { realtime } from '$lib/realtime.svelte'
 import { prefs } from '$lib/state/prefs.svelte'
@@ -96,7 +96,18 @@ $effect(() => {
 const enabledModules = $derived(
   new Set((modules.data ?? []).filter((entry) => entry.state.enabled).map((entry) => entry.manifest.id)),
 )
-const moduleNav = $derived(navigationFor({ enabled: enabledModules, can: (p) => session.can(p) }))
+/**
+ * Sub-features this workspace has on, inside the modules it has on. A module is all-or-nothing; a
+ * capability is the switch below it, and the shell filters on both so a workspace that does not use
+ * a feature never meets it — not greyed out, not there.
+ */
+const enabledCapabilities = $derived(capabilitiesOf(modules.data ?? []))
+const navContext = $derived({
+  enabled: enabledModules,
+  capabilities: enabledCapabilities,
+  can: (p: string) => session.can(p),
+})
+const moduleNav = $derived(navigationFor(navContext))
 
 const segment = $derived(segmentOf(page.url.pathname, slug))
 /**
@@ -104,7 +115,7 @@ const segment = $derived(segmentOf(page.url.pathname, slug))
  * modules claim this path segment and hands them the column — including the home sidebar, where
  * core contributes the inbox row and the tracker contributes its presets.
  */
-const sidebars = $derived(sidebarsFor({ enabled: enabledModules, can: (p) => session.can(p), segment }))
+const sidebars = $derived(sidebarsFor({ ...navContext, segment }))
 const sidebarControls = $derived(sidebars.filter((entry) => entry.controls))
 
 const badgeFor = (id: string) => realtime.badges[id]?.unread ?? workspaceById(id)?.unread ?? 0

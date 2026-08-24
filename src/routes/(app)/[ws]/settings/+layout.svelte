@@ -3,7 +3,7 @@ import { Avatar, Icon, SectionLabel } from '@kernhq/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
-import { settingsLinksFor } from '$lib/modules/registry'
+import { capabilitiesOf, settingsLinksFor } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
@@ -65,6 +65,7 @@ const modulesQuery = createQuery(() => ({
 const moduleLinks = $derived(
   settingsLinksFor({
     enabled: new Set((modulesQuery.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
+    capabilities: capabilitiesOf(modulesQuery.data ?? []),
     can: (permission: string) => session.can(permission),
   }).map((link) => ({
     // A page whose id is its module's id is that module's main settings page and lives at

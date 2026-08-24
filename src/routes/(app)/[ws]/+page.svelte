@@ -13,7 +13,7 @@ import { DEFAULT_PRESET_ID, expandPreset, PRESETS } from '$lib/dashboard/presets
 import WidgetPicker from '$lib/dashboard/WidgetPicker.svelte'
 import WidgetSettingsSheet from '$lib/dashboard/WidgetSettingsSheet.svelte'
 import { today } from '$lib/format'
-import { widgetsFor } from '$lib/modules/registry'
+import { capabilitiesOf, widgetsFor } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
@@ -55,21 +55,29 @@ const settingsQuery = createQuery(() => ({
   enabled: Boolean(workspaceId) && editingWorkspace,
 }))
 
+const enabled = $derived(
+  new Set((modules.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
+)
+/**
+ * A widget behind a capability the workspace switched off leaves the picker *and* any layout that
+ * already placed it — `known()` below is what the frame asks, so a card for a capability since
+ * turned off offers to remove itself rather than drawing blank.
+ */
+const capabilities = $derived(capabilitiesOf(modules.data ?? []))
+
 const ctx = $derived<ClientContext>({
   workspaceId: workspaceId || null,
   workspaceSlug: slug,
   userId: session.user?.id ?? null,
   permissions: new Set<string>(),
+  capabilities,
   navigate: (href) => void goto(href),
   openPalette: () => {},
   toast: () => {},
   api,
 })
 
-const enabled = $derived(
-  new Set((modules.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
-)
-const widgets = $derived(widgetsFor({ enabled, can: (permission) => session.can(permission) }))
+const widgets = $derived(widgetsFor({ enabled, capabilities, can: (permission) => session.can(permission) }))
 const known = $derived((id: string) => widgets.some((w) => w.id === id))
 
 const canManage = $derived(session.can('core.workspace.manage'))
