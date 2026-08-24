@@ -297,6 +297,19 @@ const moduleManifests = [
     hasSettings: true,
   },
   {
+    id: 'quire',
+    name: 'Quire',
+    version: '0.2.0',
+    description: 'Spaces, nested pages and documents a team writes together',
+    icon: 'scroll-text',
+    core: false,
+    dependsOn: ['core'],
+    permissionCount: 6,
+    eventCount: 10,
+    objectTypeCount: 2,
+    hasSettings: false,
+  },
+  {
     id: 'tracker',
     name: 'Issues',
     version: '0.1.0',
@@ -534,7 +547,7 @@ export function createMockApi() {
   const enabledFor = (workspaceId: string) => {
     let set = state.enabled.get(workspaceId)
     if (!set) {
-      set = new Set(['core', 'chat', 'tracker', 'mail', 'billing'])
+      set = new Set(['core', 'chat', 'tracker', 'quire', 'mail', 'billing'])
       state.enabled.set(workspaceId, set)
     }
     return set

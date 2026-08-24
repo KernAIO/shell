@@ -14,6 +14,7 @@ import { billingClientModule } from './billing/client'
 import { chatClientModule } from './chat/client'
 import { coreClientModule } from './core/client'
 import { mailClientModule } from './mail/client'
+import { quireClientModule } from './quire/client'
 import { trackerClientModule } from './tracker/client'
 
 /**
@@ -135,6 +136,7 @@ export function commandsFor(ctx: NavContext) {
 registerModule(coreClientModule)
 registerModule(trackerClientModule)
 registerModule(chatClientModule)
+registerModule(quireClientModule)
 registerModule(mailClientModule)
 registerModule(billingClientModule)
 

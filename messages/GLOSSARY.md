@@ -28,6 +28,10 @@ side. A glossary row is what stops the second word being invented.
 | label | برچسب | تسمية | Label | Etiket | |
 | field | فیلد | حقل | Feld | Alan | a custom field |
 | view | نما | عرض | Ansicht | Görünüm | a saved query |
+| space | فضا | مساحة | Bereich | Alan | a Quire collection of pages — not «فضای کاری», which is the workspace |
+| page | صفحه | صفحة | Seite | Sayfa | one document in a space |
+| live doc | سند زنده | مستند حي | Live-Dokument | Canlı belge | a page with no draft: what you type is what a reader sees |
+| trash | زباله‌دان | المهملات | Papierkorb | Çöp kutusu | reversible; «بایگانی» is the archive, which is not the same |
 | board | تخته | لوحة | Board | Pano | |
 | channel | کانال | قناة | Kanal | Kanal | |
 | plan | طرح | خطة | Tarif | Tarife | billing |
