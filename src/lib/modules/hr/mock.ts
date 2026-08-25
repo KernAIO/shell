@@ -123,6 +123,68 @@ export function createMockHrApi() {
         return person(found, workspaceId)
       },
       me: async ({ workspaceId }: { workspaceId: string }) => person(PEOPLE[0]!, workspaceId),
+      create: async (input: {
+        workspaceId: string
+        displayName: string
+        workEmail?: string | null
+        employeeNo?: string | null
+        hiredOn?: string | null
+        officeId?: string | null
+        employmentType?: string
+      }) => {
+        const added = {
+          id: crypto.randomUUID(),
+          displayName: input.displayName,
+          workEmail: input.workEmail ?? '',
+          status: 'active' as const,
+          timezone: 'Europe/Istanbul',
+          officeId: input.officeId ?? OFFICES[0]!.id,
+          employeeNo: input.employeeNo ?? `E-${PEOPLE.length + 1}`,
+        }
+        PEOPLE.push(added)
+        return person(added, input.workspaceId)
+      },
+      update: async (input: {
+        workspaceId: string
+        personId: string
+        displayName?: string
+        workEmail?: string | null
+        personalEmail?: string | null
+        phone?: string | null
+      }) => {
+        const found = PEOPLE.find((p) => p.id === input.personId) ?? PEOPLE[0]!
+        if (input.displayName) found.displayName = input.displayName
+        if (input.workEmail !== undefined) found.workEmail = input.workEmail ?? ''
+        return {
+          ...person(found, input.workspaceId),
+          personalEmail: input.personalEmail ?? null,
+          phone: input.phone ?? null,
+        }
+      },
+      offboard: async (input: { workspaceId: string; personId: string; on: string }) => {
+        const found = PEOPLE.find((p) => p.id === input.personId) ?? PEOPLE[0]!
+        return { ...person(found, input.workspaceId), terminatedOn: input.on, status: 'terminated' as const }
+      },
+    },
+
+    employment: {
+      current: async ({ workspaceId, personId }: { workspaceId: string; personId: string }) => ({
+        id: '01920000-0000-7000-8000-00000000ee01',
+        workspaceId,
+        personId,
+        effectiveFrom: day(-400),
+        effectiveTo: null,
+        orgUnitId: null,
+        positionId: null,
+        legalEntityId: null,
+        costCenterId: null,
+        managerPersonId: PEOPLE[1]?.id ?? null,
+        employmentType: 'full_time' as const,
+        fte: 1,
+        contractHoursWeek: 40,
+        reason: null,
+        createdAt: iso(),
+      }),
     },
 
     offices: {
@@ -209,6 +271,63 @@ export function createMockHrApi() {
           items: leaveRequests.map((r) => ({ ...r, workspaceId })),
           nextCursor: null,
         }),
+        simulate: async ({
+          startsOn,
+          endsOn,
+        }: {
+          workspaceId: string
+          leaveTypeId: string
+          startsOn: string
+          endsOn: string
+        }) => {
+          const from = Date.parse(`${startsOn}T00:00:00Z`)
+          const to = Date.parse(`${endsOn}T00:00:00Z`)
+          const workingDays = Math.max(1, Math.round((to - from) / 86_400_000) + 1)
+          const minutes = workingDays * 480
+          return {
+            workingDays,
+            minutes,
+            days: [],
+            balanceBeforeMinutes: 20 * 480,
+            balanceAfterMinutes: 20 * 480 - minutes,
+            blockers: minutes > 20 * 480 ? [{ code: 'insufficient', message: 'Not enough balance' }] : [],
+          }
+        },
+        create: async (input: {
+          workspaceId: string
+          leaveTypeId: string
+          startsOn: string
+          endsOn: string
+          reason?: string | null
+        }) => {
+          const row = {
+            id: crypto.randomUUID(),
+            workspaceId: input.workspaceId,
+            personId: PEOPLE[0]!.id,
+            leaveTypeId: input.leaveTypeId,
+            startsOn: input.startsOn,
+            endsOn: input.endsOn,
+            startPart: 'full',
+            endPart: 'full',
+            hours: null,
+            workingDays: 1,
+            minutes: 480,
+            status: 'pending',
+            reason: input.reason ?? null,
+            documentFileId: null,
+            approvalRequestId: null,
+            decidedAt: null,
+            createdAt: iso(),
+            updatedAt: iso(),
+          }
+          leaveRequests.push(row)
+          return row
+        },
+        cancel: async ({ requestId }: { workspaceId: string; requestId: string }) => {
+          const row = leaveRequests.find((r) => r.id === requestId) ?? leaveRequests[0]!
+          row.status = 'cancelled'
+          return { ...row }
+        },
       },
       team: {
         calendar: async () =>

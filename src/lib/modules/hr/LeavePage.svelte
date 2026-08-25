@@ -1,10 +1,12 @@
 <script lang="ts">
-import { Badge, Button, Card, EmptyState, Page, PageHeader, Skeleton, StatTile } from '@kernhq/ui'
-import { createQuery } from '@tanstack/svelte-query'
+import { Badge, Button, Card, EmptyState, Page, PageHeader, Skeleton, StatTile, toast } from '@kernhq/ui'
+import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page as pageState } from '$app/state'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 import { getHrApi } from './api'
+import LeaveRequestDialog from './components/LeaveRequestDialog.svelte'
+import { canHr } from './permissions'
 import { formatDays, hrKeys } from './query'
 
 /**
@@ -16,10 +18,12 @@ import { formatDays, hrKeys } from './query'
  * they do not have and finds out at approval.
  */
 const api = getHrApi()
+const queryClient = useQueryClient()
 
 const workspaceSlug = $derived(pageState.params.ws ?? '')
 const workspace = $derived(session.workspaces.find((w) => w.slug === workspaceSlug))
 const workspaceId = $derived(workspace?.id ?? '')
+const requesting = $derived(pageState.url.searchParams.get('new') === '1')
 
 const balanceQuery = createQuery(() => ({
   queryKey: hrKeys.leaveBalance(workspaceId, undefined),
@@ -34,6 +38,17 @@ const requestsQuery = createQuery(() => ({
   queryFn: () => api.leave.requests.list({ workspaceId, limit: 50 }),
 }))
 const requests = $derived(requestsQuery.data?.items ?? [])
+
+const cancel = createMutation(() => ({
+  mutationFn: (requestId: string) => api.leave.requests.cancel({ workspaceId, requestId }),
+  onSuccess: () => {
+    toast.success(m.hr_leave_cancelled_toast())
+    void queryClient.invalidateQueries({ queryKey: ['hr', 'leave-balance'] })
+    void queryClient.invalidateQueries({ queryKey: ['hr', 'leave-requests'] })
+    void queryClient.invalidateQueries({ queryKey: ['hr', 'leave-calendar'] })
+  },
+  onError: (error: Error) => toast.error(error.message),
+}))
 
 const statusLabel = (s: string) =>
   s === 'pending'
@@ -59,6 +74,8 @@ function range(from: string, to: string): string {
   const fmt = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' })
   return fmt.formatRange(new Date(`${from}T00:00:00`), new Date(`${to}T00:00:00`))
 }
+
+const canCancel = (status: string) => canHr('leaveRequest') && (status === 'pending' || status === 'approved')
 </script>
 
 <PageHeader
@@ -66,7 +83,9 @@ function range(from: string, to: string): string {
   title={m.hr_leave_title()}
 >
   {#snippet actions()}
-    <Button size="sm" href={`/${workspaceSlug}/hr/leave?new=1`}>{m.hr_request_leave()}</Button>
+    {#if canHr('leaveRequest')}
+      <Button size="sm" href={`/${workspaceSlug}/hr/leave?new=1`}>{m.hr_request_leave()}</Button>
+    {/if}
   {/snippet}
 </PageHeader>
 
@@ -99,6 +118,14 @@ function range(from: string, to: string): string {
               <span class="dates">{range(request.startsOn, request.endsOn)}</span>
               <span class="meta">{formatDays(request.workingDays)} {m.hr_days()}</span>
               <Badge tone={statusTone(request.status)}>{statusLabel(request.status)}</Badge>
+              {#if canCancel(request.status)}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  disabled={cancel.isPending}
+                  onclick={() => cancel.mutate(request.id)}>{m.hr_cancel_request()}</Button
+                >
+              {/if}
             </div>
           </Card>
         </li>
@@ -106,6 +133,8 @@ function range(from: string, to: string): string {
     </ul>
   {/if}
 </Page>
+
+<LeaveRequestDialog open={requesting} {workspaceId} {workspaceSlug} />
 
 <style>
 .tiles {

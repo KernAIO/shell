@@ -35,7 +35,10 @@ side. A glossary row is what stops the second word being invented.
 | board | تخته | لوحة | Board | Pano | |
 | channel | کانال | قناة | Kanal | Kanal | |
 | plan | طرح | خطة | Tarif | Tarife | billing |
-| seat | کاربر | مستخدم | Nutzer | Kullanıcı | never «صندلی» — it is a person, not furniture |
+| person | فرد | شخص | Person | Kişi | an employee record, not a Kern user account |
+| leave | مرخصی | إجازة | Abwesenheit | İzin | time off |
+| office | دفتر | مكتب | Standort | Ofis | a place of work |
+| attendance | حضور | حضور | Anwesenheit | Devam | clock in/out |
 
 ## Spelling and orthography
 

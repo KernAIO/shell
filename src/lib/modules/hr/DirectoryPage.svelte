@@ -16,11 +16,15 @@ import {
 } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page as pageState } from '$app/state'
+import { getApi } from '$lib/api/client'
+import { capabilitiesOf } from '$lib/modules/registry'
+import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 import { getHrApi } from './api'
+import PersonFormDialog from './components/PersonFormDialog.svelte'
 import PersonPanel from './components/PersonPanel.svelte'
-import { canHr } from './permissions'
+import { canHr, HR_CAPABILITIES } from './permissions'
 import { formatDays, hrKeys } from './query'
 
 /**
@@ -35,6 +39,7 @@ import { formatDays, hrKeys } from './query'
  * one office is also the answer to "can I call them now".
  */
 const api = getHrApi()
+const core = getApi()
 const queryClient = useQueryClient()
 
 const workspaceSlug = $derived(pageState.params.ws ?? '')
@@ -44,6 +49,14 @@ const workspaceId = $derived(workspace?.id ?? '')
 let search = $state('')
 let officeTab = $state('all')
 const selected = $derived(pageState.url.searchParams.get('person'))
+const creating = $derived(pageState.url.searchParams.get('new') === '1')
+
+const modulesQuery = createQuery(() => ({
+  queryKey: keys.modules(workspaceId),
+  enabled: Boolean(workspaceId),
+  queryFn: () => core.workspaces.modules.list({ workspaceId }),
+}))
+const showOffices = $derived(capabilitiesOf(modulesQuery.data ?? []).has(`hr.${HR_CAPABILITIES.offices}`))
 
 /** Debounced: every keystroke would otherwise be a request, and the term is part of the cache key. */
 let debounced = $state('')
@@ -57,7 +70,7 @@ $effect(() => {
 
 const officesQuery = createQuery(() => ({
   queryKey: hrKeys.offices(workspaceId),
-  enabled: Boolean(workspaceId) && canHr('officeView'),
+  enabled: Boolean(workspaceId) && showOffices && canHr('officeView'),
   queryFn: () => api.offices.list({ workspaceId, includeArchived: false }),
 }))
 const offices = $derived(officesQuery.data ?? [])
@@ -280,6 +293,14 @@ const started = (iso: string | null) =>
 {#if selected}
   <PersonPanel personId={selected} {workspaceId} {workspaceSlug} />
 {/if}
+
+<PersonFormDialog
+  open={creating}
+  {workspaceId}
+  {workspaceSlug}
+  {offices}
+  showOffice={showOffices}
+/>
 
 <style>
 /* §3.12: four stat tiles, then a 1fr / 320px split, gap 20. */
