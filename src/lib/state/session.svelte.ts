@@ -1,41 +1,12 @@
-import type { core } from '@kernhq/contracts'
-
 /**
- * The signed-in user, their workspaces and the permissions they hold in the workspace they are
- * looking at. Loaded once per navigation by the layout and shared through context.
+ * The session moved into `@kernhq/ui`, and this re-export is why nothing had to be rewritten.
+ *
+ * It belongs in the framework because a module's own screens gate on `can()`, and a module cannot
+ * import the app. Keep importing it from `$lib/state/session.svelte` inside the shell — the app's
+ * own screens have no reason to name the framework package for something this central — but a
+ * module client imports it from `@kernhq/ui`.
+ *
+ * One instance in the tree, guaranteed by `pnpm.overrides` pinning `@kernhq/ui`. Two copies would
+ * mean the shell and a module disagreeing about who the user is.
  */
-class SessionState {
-  user = $state<core.User | null>(null)
-  workspaces = $state<core.WorkspaceSummary[]>([])
-  permissions = $state<Set<string>>(new Set())
-  role = $state<string>('member')
-  ready = $state(false)
-
-  get signedIn() {
-    return this.user !== null
-  }
-
-  can(permission: string) {
-    return this.user?.instanceAdmin === true || this.role === 'owner' || this.permissions.has(permission)
-  }
-
-  setSession(user: core.User | null, workspaces: core.WorkspaceSummary[]) {
-    this.user = user
-    this.workspaces = workspaces
-    this.ready = true
-  }
-
-  setPermissions(role: string, permissions: string[]) {
-    this.role = role
-    this.permissions = new Set(permissions)
-  }
-
-  clear() {
-    this.user = null
-    this.workspaces = []
-    this.permissions = new Set()
-    this.ready = true
-  }
-}
-
-export const session = new SessionState()
+export { session } from '@kernhq/ui'
