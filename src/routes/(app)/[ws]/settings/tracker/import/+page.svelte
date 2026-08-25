@@ -174,6 +174,7 @@ const canStart = $derived(Boolean(file) && mappedTitle && canManage && !running)
       <input
         type="file"
         accept=".csv,text/csv"
+        aria-label={m.tracker_import_file()}
         data-testid="import-file"
         onchange={(e) => {
           void chooseFile(e.currentTarget.files)

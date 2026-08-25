@@ -299,6 +299,43 @@ in-memory API with demo data — no backend, no database.
   switched off is right, but dropping them *in place* leaves holes where the cards were and the
   board reads as broken rather than tidy. The stored layout is left untouched, so turning the module
   back on restores the arrangement it had.
+- **`tests/e2e/ux.spec.ts` is what stops the interface looking like a prototype.** It sweeps every
+  route in light/dark and LTR/RTL against `ux-audit.ts`: contrast, accessible names, WCAG 2.5.8
+  target size, pointer affordance, a level-1 heading, sideways scroll, keyboard focus rings, and
+  anything the page throws while rendering. It found 408 contrast failures, 146 undersized targets
+  and 85 unnamed controls the first time it ran, none of which failed a build. Add a route to
+  `ROUTES` when you add a route, and read a failure as a defect rather than as a strict test.
+- **The identity colours were defined twice, and the copy nobody read was the one in CSS.**
+  `IDENTITY_COLORS` in `@kernhq/ui/utils.ts` held literal hexes while `--kern-av-*` held the same
+  palette in `tokens.css`; every avatar took its ground from the array, so darkening the tokens so
+  white initials clear 4.5:1 changed nothing on screen. The array now names the tokens
+  (`var(--kern-av-3)`) — a colour in a `style` attribute can be a `var()`, so there is no reason for
+  a second copy. Look for this shape before tuning any token: **change it, then confirm on the
+  running page that the pixel moved.**
+- **`node scripts/check-tokens.mjs` (in `pnpm lint`) is what catches a token that does not exist.**
+  A wrong `var(--kern-…)` name is dropped silently: a gap becomes 0, a font-size inherits, muted
+  text renders in the default ink. The whole HR module was written against a `--kern-space-*` /
+  `--kern-text-*` vocabulary that was never defined — there is no spacing or type token scale, the
+  design system uses literal px on the 2px grid in DESIGN.md §1.4. A fallback
+  (`var(--kern-text-faint, #9a9285)`) hides the same mistake behind a value that looks deliberate,
+  so the check reports those too.
+- **A component you forgot to import renders as a silent unknown element.** `<SettingsPage>` without
+  its import compiled, built and shipped — as a literal `<settingspage>` tag with no styles, no
+  heading and no `<title>`. Nothing failed. If a wrapper appears to have no effect, check the import
+  before the component.
+- **A duplicate key in an `{#each}` is a *render* error, and it looks like loading.** `moduleManifests`
+  in `src/lib/api/mock.ts` carried `id: 'hr'` twice, so every list keyed by module id threw
+  `each_key_duplicate`, Svelte stopped mid-paint, and four admin screens sat on their skeletons for
+  ever. `ux.spec.ts` now fails on anything the page throws, which is how this class gets caught.
+- **A counter declared in a component's `<script>` is per instance, not per page.** `let nextId = 0`
+  for generating label ids restarted at 0 in every `Checkbox`, so three of them shared `kcb-l0` and
+  `getByLabel('Show archived')` matched all three. Use `$props.id()` — and it must be the entire
+  initialiser of its own `const`, because the compiler rejects it inside a template literal.
+  `svelte-package` does not compile, so that error only appears in the *consumer's* build.
+- **`<svelte:head>` cannot sit inside an `{#if}`.** Put the block inside the head instead. And a page
+  that renders `SettingsPage` or `PageHeader` must not add a second `<svelte:head><title>` — both
+  reach the document, the browser keeps the first, and the page's own would look right in the source
+  and never appear.
 - **A top-level route shadows a workspace of the same name.** A workspace lives at `/<slug>` and the
   app's own pages — `/sign-in`, `/workspaces`, `/onboarding` — sit at that same level, where
   SvelteKit prefers the static route. A workspace called "workspaces" would then exist and never

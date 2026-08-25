@@ -38,7 +38,7 @@ async function openNotification(n: { id: string; url: string | null }) {
       <IconButton icon="bell" label={m.notifications()} />
       {#if unread}
         <span
-          class="pointer-events-none absolute -end-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--kern-accent)] px-1 font-[var(--kern-font-mono)] text-[10px] leading-none text-white"
+          class="pointer-events-none absolute -end-0.5 -top-0.5 grid h-4 min-w-4 place-items-center rounded-full bg-[var(--kern-accent-badge-bg)] px-1 font-[var(--kern-font-mono)] text-[10px] leading-none text-[var(--kern-accent-badge-fg)]"
         >
           {unread > 99 ? '99+' : unread}
         </span>

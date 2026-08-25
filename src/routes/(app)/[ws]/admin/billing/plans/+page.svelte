@@ -195,6 +195,8 @@ const intervalOptions = $derived([
 ])
 </script>
 
+<svelte:head><title>{m.billing_admin_plans_title()} · {m.nav_admin()}</title></svelte:head>
+
 <div class="grid gap-5">
   <header class="flex flex-wrap items-start justify-between gap-3">
     <div class="grid gap-1">

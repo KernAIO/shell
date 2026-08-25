@@ -124,7 +124,6 @@ const BUILTIN = [
 ]
 </script>
 
-<svelte:head><title>{m.roles_title()} · {m.settings_title()}</title></svelte:head>
 
 <SettingsPage title={m.roles_title()} description={m.roles_page_hint()}>
   {#snippet actions()}

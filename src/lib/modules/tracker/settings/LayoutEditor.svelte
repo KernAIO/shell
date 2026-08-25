@@ -230,7 +230,12 @@ header {
 }
 .drop li.pinned {
   cursor: default;
-  opacity: 0.75;
+  /*
+   * Muted by colour, not by `opacity`. A row at 0.75 fades its text against the page it sits on —
+   * the required marker inside it dropped to 3.2:1, which is a readability failure rather than a
+   * visual hint — and opacity fades everything by the same amount whatever its starting contrast.
+   */
+  color: var(--kern-ink-450);
 }
 .drop li.placeholder {
   justify-content: center;

@@ -404,6 +404,8 @@ li {
   grid-column: 1 / -1;
 }
 .date {
+  /* the whole field opens a picker; a date input does not take free text, so it is not a caret */
+  cursor: pointer;
   width: 100%;
   padding: 4px 8px;
   border: 1px solid var(--kern-border);

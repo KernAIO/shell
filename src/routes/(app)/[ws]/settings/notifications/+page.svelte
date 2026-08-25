@@ -89,7 +89,6 @@ const grouped = $derived.by(() => {
 })
 </script>
 
-<svelte:head><title>{m.settings_notifications()} · {m.settings_title()}</title></svelte:head>
 
 <SettingsPage title={m.notif_settings_title()} description={m.notif_settings_hint()}>
   {#if types.isPending || settings.isPending}

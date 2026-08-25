@@ -285,7 +285,6 @@ function togglePicked(id: string) {
 const canSendInvite = $derived(inviteMode === 'email' ? inviteEmails.trim().length > 0 : picked.size > 0)
 </script>
 
-<svelte:head><title>{m.members_title()} · {m.settings_title()}</title></svelte:head>
 
 <SettingsPage title={m.members_title()} description={m.members_count({ count: all.length })}>
   {#snippet actions()}

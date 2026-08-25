@@ -91,9 +91,8 @@ async function copyCommand(command: string) {
 }
 </script>
 
-<svelte:head><title>{m.admin_updates_title()} · {m.nav_admin()}</title></svelte:head>
 
-<SettingsPage title={m.admin_updates_title()} description={m.admin_updates_hint()}>
+<SettingsPage title={m.admin_updates_title()} description={m.admin_updates_hint()} section={m.nav_admin()}>
   {#snippet children()}
     {#if status.isLoading}
       <Skeleton class="h-[120px] w-full rounded-[10px]" />

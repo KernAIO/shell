@@ -176,6 +176,8 @@ const planOptions = $derived([
 ])
 </script>
 
+<svelte:head><title>{m.billing_admin_subscriptions_title()} · {m.nav_admin()}</title></svelte:head>
+
 <div class="grid gap-5">
   <header class="grid gap-1">
     <h1 class="text-[20px] font-medium text-[var(--kern-ink-900)]">{m.billing_admin_subscriptions_title()}</h1>

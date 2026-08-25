@@ -119,6 +119,8 @@ const reload = () => {
 }
 </script>
 
+<svelte:head><title>{m.billing_title()} · {m.settings_title()}</title></svelte:head>
+
 <!-- `limit` is already formatted by the caller: bytes have to arrive as "50 GB", never as the
      number itself, and a snippet that took a number could not tell the two apart. -->
 {#snippet meter(label: string, used: string, limit: string | null, ratio: number | null)}

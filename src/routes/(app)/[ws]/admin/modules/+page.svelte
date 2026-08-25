@@ -64,7 +64,7 @@ const STATS: { label: () => string; hint: () => string; of: (r: ModuleReport) =>
 ]
 </script>
 
-<SettingsPage title={m.dev_modules_title()} description={m.dev_modules_desc()}>
+<SettingsPage title={m.dev_modules_title()} description={m.dev_modules_desc()} section={m.nav_admin()}>
   {#snippet actions()}
     <!-- Wide enough for the longest translation of the placeholder; it says it searches procedures
          too, and a clipped placeholder would hide exactly that half. -->

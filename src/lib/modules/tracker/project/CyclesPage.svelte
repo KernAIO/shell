@@ -454,6 +454,8 @@ const menuFor = (cycle: Cycle): MenuItem[] => [
   color: var(--kern-ink-550);
 }
 .date {
+  /* the whole field opens a picker; a date input does not take free text, so it is not a caret */
+  cursor: pointer;
   height: 36px;
   padding: 0 12px;
   border: 1px solid var(--kern-border-strong);

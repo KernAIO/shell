@@ -49,7 +49,6 @@ const here = Intl.DateTimeFormat().resolvedOptions().timeZone
 const zoneOptions = $derived(timezoneOptions(timezoneList([here]), m.profile_timezone_yours()))
 </script>
 
-<svelte:head><title>{m.profile_title()} · {m.settings_title()}</title></svelte:head>
 
 <SettingsPage title={m.profile_title()} description={m.profile_hint()}>
   <SettingsSection>

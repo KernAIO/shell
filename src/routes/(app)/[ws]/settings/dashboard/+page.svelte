@@ -174,6 +174,15 @@ const presetUnused = $derived(policy === 'default' && hasWorkspaceLayout)
     font-size: 12.5px;
     color: var(--kern-ink-500);
   }
+  /* the whole row is the target, so the radio inside it points too rather than showing an arrow */
+  .mode,
+  .mode input[type='radio'] {
+    cursor: pointer;
+  }
+  .mode:has(input:disabled),
+  .mode input[type='radio']:disabled {
+    cursor: not-allowed;
+  }
   .sr {
     position: absolute;
     width: 1px;

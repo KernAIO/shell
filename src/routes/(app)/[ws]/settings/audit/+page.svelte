@@ -49,7 +49,6 @@ const describe = (e: NonNullable<typeof events.data>['items'][number]) => {
 }
 </script>
 
-<svelte:head><title>{m.audit_title()} · {m.settings_title()}</title></svelte:head>
 
 <SettingsPage title={m.audit_title()}>
   {#snippet actions()}

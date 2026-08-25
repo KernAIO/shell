@@ -55,7 +55,6 @@ const create = createMutation(() => ({
 }))
 </script>
 
-<svelte:head><title>{m.groups_title()} · {m.settings_title()}</title></svelte:head>
 
 <SettingsPage title={m.groups_title()} description={m.groups_empty()}>
   {#snippet actions()}

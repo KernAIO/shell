@@ -44,7 +44,6 @@ async function addPasskey() {
 }
 </script>
 
-<svelte:head><title>{m.security_title()} · {m.settings_title()}</title></svelte:head>
 
 <SettingsPage title={m.security_title()} description={m.security_page_hint()}>
   <SettingsSection title={m.security_password()}>

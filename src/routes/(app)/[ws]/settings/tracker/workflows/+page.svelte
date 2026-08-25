@@ -288,6 +288,7 @@ const from = (t: { from: string | string[] }) =>
               {#if canManage}
                 <Input
                   value={status.name}
+                  aria-label={m.tracker_status_name()}
                   data-status={status.id}
                   oninput={(e: Event) => rename(status.id, (e.currentTarget as HTMLInputElement).value)}
                 />

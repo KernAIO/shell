@@ -111,7 +111,6 @@ const contributions = (e: Entry) =>
   ].filter((v) => v !== null)
 </script>
 
-<svelte:head><title>{m.modules_title()} · {m.settings_title()}</title></svelte:head>
 
 {#snippet card(entry: Entry, kind: 'core' | 'on' | 'off')}
   {@const blockedBy = kind === 'on' ? dependants(entry.manifest.id) : []}
@@ -207,6 +206,7 @@ const contributions = (e: Entry) =>
               checked={entry.state.enabled}
               disabled={!canManage || setEnabled.isPending || blockedBy.length > 0}
               onCheckedChange={(next) => request(entry, next)}
+              ariaLabel={entry.manifest.name}
             />
           {/key}
         {/if}

@@ -44,7 +44,6 @@ const integrations: Integration[] = [
 ]
 </script>
 
-<svelte:head><title>{m.integrations_title()} · {m.settings_title()}</title></svelte:head>
 
 <SettingsPage title={m.integrations_title()} description={m.integrations_body()}>
   <SettingsSection flush>

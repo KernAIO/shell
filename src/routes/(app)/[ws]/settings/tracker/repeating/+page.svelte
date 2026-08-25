@@ -178,7 +178,7 @@ const when = (iso: string | null) => (iso ? iso.slice(0, 16).replace('T', ' ') :
               ]}
               onValueChange={(v: string) => (freq = v as RecurrenceRule['freq'])}
             />
-            <Input bind:value={at} type="time" />
+            <Input bind:value={at} type="time" aria-label={m.tracker_repeat_at()} />
             <Button size="sm" disabled={!newName.trim()} onclick={add} data-testid="recurring-add">
               {m.add()}
             </Button>

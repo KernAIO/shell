@@ -25,7 +25,6 @@ const localeNames: Record<string, string> = {
 const localeOptions = locales.map((code) => ({ value: code, label: localeNames[code] ?? code }))
 </script>
 
-<svelte:head><title>{m.settings_appearance()} · {m.settings_title()}</title></svelte:head>
 
 <SettingsPage title={m.appearance_title()} description={m.appearance_hint()}>
   <SettingsSection title={m.theme()}>

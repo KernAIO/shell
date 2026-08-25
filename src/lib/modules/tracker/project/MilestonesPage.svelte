@@ -320,6 +320,8 @@ const menuFor = (milestone: Milestone): MenuItem[] => [
 }
 /* The one native control the kit does not wrap; it borrows the input's shape. */
 .date {
+  /* the whole field opens a picker; a date input does not take free text, so it is not a caret */
+  cursor: pointer;
   height: 36px;
   padding: 0 12px;
   border: 1px solid var(--kern-border-strong);

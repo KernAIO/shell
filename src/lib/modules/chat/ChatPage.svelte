@@ -127,6 +127,12 @@ const selectChannel = (channelId: string) =>
     {#if !store}
       <div class="center"><Skeleton width="220px" height="14px" /></div>
     {:else if !channel}
+      <!--
+        With a conversation open the header's name is the page's heading. With none open there was
+        no heading at all, so the screen had nothing naming it — the design has no title bar here on
+        purpose, which makes this the one case where the name is for assistive technology only.
+      -->
+      <h1 class="sr-only">{m.chat_title()}</h1>
       <div class="center">
         <EmptyState
           icon="message-circle"

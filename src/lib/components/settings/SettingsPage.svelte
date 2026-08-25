@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from 'svelte'
+import * as m from '$msg'
 
 /**
  * Frame for a settings page: title, one line of context, and the accent measure rule that marks the
@@ -8,11 +9,24 @@ import type { Snippet } from 'svelte'
 interface Props {
   title: string
   description?: string
+  /** what this page sits under in the browser tab — "Settings" unless the page says otherwise */
+  section?: string
   actions?: Snippet
   children: Snippet
 }
-let { title, description, actions, children }: Props = $props()
+let { title, description, section, actions, children }: Props = $props()
 </script>
+
+<!--
+  The frame already knows the page's name, so it names the browser tab too — there is one source for
+  it rather than a `<svelte:head>` each page has to remember. Twenty-four settings and module pages
+  shipped with an empty `<title>`: a blank tab, a blank history entry, a bookmark nobody could read.
+
+  Do not add a second `<svelte:head><title>` in a page that uses this frame. Two `<title>` elements
+  both reach the document and the browser keeps the first, which is this one — so the page's own
+  would look right in the source and never appear.
+-->
+<svelte:head><title>{title} · {section ?? m.settings_title()}</title></svelte:head>
 
 <div class="mx-auto grid w-full max-w-[760px] gap-5">
   <header class="grid gap-3">

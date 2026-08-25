@@ -89,7 +89,6 @@ const roleOptions = [
 ]
 </script>
 
-<svelte:head><title>{m.settings_general()} · {m.settings_title()}</title></svelte:head>
 
 <SettingsPage title={m.settings_general()} description={m.settings_general_desc()}>
   {#if workspace.isPending}
