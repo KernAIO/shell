@@ -1,7 +1,6 @@
 <script lang="ts">
 import type { Attachment, Comment as IssueComment } from '@kernhq/module-tracker/client'
-import { Avatar, DropdownMenu, Icon, IconButton, type MenuItem } from '@kernhq/ui'
-import EmojiPicker from '$lib/components/EmojiPicker.svelte'
+import { Avatar, DropdownMenu, EmojiPicker, Icon, IconButton, type MenuItem } from '@kernhq/ui'
 import { QUICK_REACTIONS } from '$lib/emoji'
 import { relativeTime } from '$lib/format'
 import { session } from '$lib/state/session.svelte'

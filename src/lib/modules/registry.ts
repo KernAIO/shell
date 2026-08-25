@@ -12,10 +12,10 @@ export { capabilitiesOf } from './capabilities'
 export { segmentOf } from './segment'
 
 import { billingClientModule } from '@kernhq/module-billing/client'
+import { chatClientModule } from '@kernhq/module-chat/client'
 import { hrClientModule } from '@kernhq/module-hr/client'
 import { mailClientModule } from '@kernhq/module-mail/client'
 import { quireClientModule } from '@kernhq/module-quire/client'
-import { chatClientModule } from './chat/client'
 import { coreClientModule } from './core/client'
 import { trackerClientModule } from './tracker/client'
 

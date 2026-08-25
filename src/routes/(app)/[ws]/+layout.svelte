@@ -102,6 +102,9 @@ $effect(() => {
       params: page.params as Record<string, string>,
       search: page.url.searchParams,
       go: (href: string, opts) => void goto(href, opts),
+      // A module names the view it is showing; here that becomes the tab's label.
+      describe: (view) =>
+        tabs.describe(relativeHref(page.url.pathname, page.url.search, page.params.ws ?? ''), view),
     })
   })
 
