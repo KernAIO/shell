@@ -11,11 +11,11 @@ import { hasCapability } from './capabilities'
 export { capabilitiesOf } from './capabilities'
 export { segmentOf } from './segment'
 
+import { mailClientModule } from '@kernhq/module-mail/client'
 import { billingClientModule } from './billing/client'
 import { chatClientModule } from './chat/client'
 import { coreClientModule } from './core/client'
 import { hrClientModule } from './hr/client'
-import { mailClientModule } from './mail/client'
 import { quireClientModule } from './quire/client'
 import { trackerClientModule } from './tracker/client'
 

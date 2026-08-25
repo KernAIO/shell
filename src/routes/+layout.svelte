@@ -3,6 +3,8 @@ import { setHost, setMessageLocale, Toaster, TooltipProvider } from '@kernhq/ui'
 import { QueryClientProvider } from '@tanstack/svelte-query'
 import '@kernhq/ui/styles/index.css'
 import '../app.css'
+import { browser } from '$app/environment'
+import { env } from '$env/dynamic/public'
 import { getApi, isMock } from '$lib/api/client'
 import { putMockObject } from '$lib/files/mock-storage'
 import { loadTimezoneCities } from '$lib/i18n/timezones.svelte'
@@ -19,7 +21,12 @@ const queryClient = createQueryClient()
  * A module's screens reach for these through `@kernhq/ui` rather than importing the app, which they
  * cannot do. Keep it small: every field here is a thing a third-party module may depend on for ever.
  */
-setHost({ api: getApi(), isMock: isMock(), putMockObject })
+setHost({
+  api: getApi(),
+  apiBaseUrl: env.PUBLIC_API_URL || (browser ? window.location.origin : ''),
+  isMock: isMock(),
+  putMockObject,
+})
 
 const RTL = new Set(['fa', 'ar'])
 const locale = $derived(getLocale())

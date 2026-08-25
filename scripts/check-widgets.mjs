@@ -20,6 +20,15 @@ import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const modulesDir = join(root, 'src/lib/modules')
+/**
+ * Module clients live in two places while the UI migration is in flight: still in the app for
+ * modules not yet moved, and in `repos/modules/packages/<id>/src/client` for the ones that have.
+ *
+ * Looking in only one of them is how this check quietly stopped seeing half the product — the
+ * widget count simply got smaller and nothing said why. It reports where it looked, so a drop is
+ * visible rather than silent.
+ */
+const packagesDir = join(root, '..', 'modules', 'packages')
 
 /** `id: 'tracker.issues',` inside a `widgets:` array. */
 const DECLARED = /^\s*id: '([a-z][a-z0-9-]*\.[a-z][a-z0-9-]*)',$/gm
@@ -27,23 +36,47 @@ const DECLARED = /^\s*id: '([a-z][a-z0-9-]*\.[a-z][a-z0-9-]*)',$/gm
 const REFERENCED = /widget: '([^']+)'/g
 
 const declared = new Map()
-for (const mod of readdirSync(modulesDir, { withFileTypes: true })) {
-  if (!mod.isDirectory()) continue
-  const client = join(modulesDir, mod.name, 'client.ts')
-  let source
-  try {
-    source = readFileSync(client, 'utf8')
-  } catch {
-    continue
-  }
+
+/** Pull the ids out of the `widgets:` array of one client-module source file. */
+function collect(source, owner) {
   // Only the ids inside the `widgets:` block. A module's settings pages, nav items and slots all
   // use `id:` too, so the block has to end where the array does — at the first `  ],` in column two.
   const start = source.indexOf('  widgets: [')
-  if (start === -1) continue
+  if (start === -1) return
   const rest = source.slice(start)
   const end = rest.indexOf('\n  ],')
   const block = end === -1 ? rest : rest.slice(0, end)
-  for (const [, id] of block.matchAll(DECLARED)) declared.set(id, mod.name)
+  for (const [, id] of block.matchAll(DECLARED)) declared.set(id, owner)
+}
+
+const read = (path) => {
+  try {
+    return readFileSync(path, 'utf8')
+  } catch {
+    return null
+  }
+}
+
+let inApp = 0
+for (const mod of readdirSync(modulesDir, { withFileTypes: true })) {
+  if (!mod.isDirectory()) continue
+  const source = read(join(modulesDir, mod.name, 'client.ts'))
+  if (source) {
+    collect(source, mod.name)
+    inApp++
+  }
+}
+
+let inPackages = 0
+for (const mod of readdirSync(packagesDir, { withFileTypes: true })) {
+  if (!mod.isDirectory() || mod.name.startsWith('_')) continue
+  const dir = join(packagesDir, mod.name, 'src', 'client')
+  // a migrated module declares its client module in `module.ts`; `index.ts` only re-exports it
+  const source = read(join(dir, 'module.ts')) ?? read(join(dir, 'index.ts'))
+  if (source) {
+    collect(source, mod.name)
+    inPackages++
+  }
 }
 
 const presets = readFileSync(join(root, 'src/lib/dashboard/presets.ts'), 'utf8')
@@ -70,4 +103,7 @@ if (problems.length) {
   process.exit(1)
 }
 
-console.log(`✓ ${declared.size} widgets declared, every preset reference resolves`)
+console.log(
+  `✓ ${declared.size} widgets declared across ${inApp + inPackages} module clients ` +
+    `(${inApp} in the app, ${inPackages} in packages), every preset reference resolves`,
+)
