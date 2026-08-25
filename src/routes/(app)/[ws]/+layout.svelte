@@ -101,7 +101,7 @@ $effect(() => {
       pathname: page.url.pathname,
       params: page.params as Record<string, string>,
       search: page.url.searchParams,
-      go: (href: string) => void goto(href),
+      go: (href: string, opts) => void goto(href, opts),
     })
   })
 
@@ -120,6 +120,15 @@ const enabledModules = $derived(
  * a feature never meets it — not greyed out, not there.
  */
 const enabledCapabilities = $derived(capabilitiesOf(modules.data ?? []))
+
+/**
+ * Publish the resolved capability set to the framework, so a module's own screens can branch on it.
+ *
+ * They used to import `capabilitiesOf` from the shell's registry and run their own copy of this
+ * query — which a module package cannot do, and which meant two components asking the same question
+ * of the same cache for no reason.
+ */
+$effect(() => session.setCapabilities(enabledCapabilities))
 const navContext = $derived({
   enabled: enabledModules,
   capabilities: enabledCapabilities,

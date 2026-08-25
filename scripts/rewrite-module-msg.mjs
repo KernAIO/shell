@@ -126,5 +126,28 @@ for (const file of files) {
   if (write) writeFileSync(file, t)
 }
 
+/**
+ * `t` is a very ordinary name for a local — a map callback, a type parameter, a timestamp — and a
+ * local one shadows the message function this rewrite introduces. The result compiles as
+ * "This expression is not callable" *if* the shadow is a string, and silently does the wrong thing
+ * if it is a function. hr had exactly this: `const typeLabel = (t: string) => t('employment_...')`.
+ *
+ * Detecting it is cheap and renaming it safely is not, so this reports and leaves it.
+ */
+const shadowed = []
+for (const file of files) {
+  const src = readFileSync(file, 'utf8')
+  if (!/\bt\(/.test(src)) continue
+  if (
+    /\((?:[^)]*[,(\s])?t(?:\s*:\s*[A-Za-z<>[\]|\s]+)?\s*\)\s*=>/.test(src) ||
+    /\b(?:const|let|var)\s+t\s*=/.test(src)
+  )
+    shadowed.push(file)
+}
+
 console.log(`${changed}/${files.length} files rewritten${write ? '' : ' (dry run)'}`)
+if (shadowed.length) {
+  console.log('  SHADOWED `t` — a local of that name hides the message function, fix by hand:')
+  for (const f of shadowed) console.log(`    ${f}`)
+}
 if (unresolved.size) console.log(`  UNRESOLVED (left as-is): ${[...unresolved].sort().join(', ')}`)

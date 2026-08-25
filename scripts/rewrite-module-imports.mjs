@@ -57,6 +57,7 @@ for (const file of files) {
   const before = readFileSync(file, 'utf8')
   let t = before
   const intoUi = new Set()
+  let pageAlias = null
 
   // `import { a, b } from '$lib/format'` -> collect a, b and drop the line
   for (const path of FROM_UI) {
@@ -92,6 +93,70 @@ for (const file of files) {
   t = t.replace(new RegExp(`'\\$lib/modules/${id}/([a-zA-Z0-9_-]+)'`, 'g'), `'${up}$1.js'`)
   t = t.replace(new RegExp(`'@kernhq/module-${id}/client'`, 'g'), `'${up}index.js'`)
   t = t.replace(new RegExp(`'@kernhq/module-${id}/contract'`, 'g'), `'${outOfClient}contract.js'`)
+  /**
+   * The router. `goto` becomes `navigation.go`, and everything read off the `page` store comes from
+   * the same singleton — a module package cannot import either alias and be type-checked alone.
+   */
+  if (/from '\$app\/(navigation|state)'/.test(t)) {
+    t = t.replace(/import \{ goto \} from '\$app\/navigation'\n/g, '')
+    t = t.replace(/import \{ page(?: as (\w+))? \} from '\$app\/state'\n/g, (_, alias) => {
+      pageAlias = alias ?? 'page'
+      return ''
+    })
+    t = t.replace(/\bgoto\(/g, 'navigation.go(')
+    if (pageAlias) {
+      const p = pageAlias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      t = t.replace(new RegExp(`\\b${p}\\.params\\.ws \\?\\? ''`, 'g'), 'navigation.workspaceSlug')
+      t = t.replace(new RegExp(`\\b${p}\\.params\\.ws!`, 'g'), 'navigation.workspaceSlug')
+      t = t.replace(
+        new RegExp(`\\b${p}\\.url\\.searchParams\\.get\\('(\\w+)'\\)`, 'g'),
+        'navigation.search.$1',
+      )
+      t = t.replace(new RegExp(`\\b${p}\\.url\\.pathname`, 'g'), 'navigation.pathname')
+      t = t.replace(new RegExp(`\\b${p}\\.params`, 'g'), 'navigation.params')
+    }
+    if (/\bnavigation\./.test(t)) intoUi.add('navigation')
+  }
+
+  // core's API client, and the workspace's resolved capability set, both come from the framework
+  if (/from '\$lib\/api\/client'/.test(t)) {
+    t = t.replace(/import \{([^}]*)\} from '\$lib\/api\/client'\n/g, (_, names) => {
+      for (const n of names
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean)) {
+        if (n === 'getApi') intoUi.add('coreApi')
+        if (n === 'isMock') intoUi.add('getHost')
+      }
+      return ''
+    })
+    t = t.replace(/\bisMock\(\)/g, 'getHost().isMock')
+  }
+  if (/from '\$lib\/modules\/registry'/.test(t)) {
+    t = t.replace(/import \{[^}]*\} from '\$lib\/modules\/registry'\n/g, '')
+    intoUi.add('session')
+  }
+
+  /**
+   * The API origin. Every module carried its own
+   * `env.PUBLIC_API_URL || (browser ? location.origin : 'http://localhost:4200')`, naming the port
+   * of whichever service hosts it — nine copies, nine chances for one to be wrong, and the failure
+   * is a connection refused with no clue which module owned it. The shell knows the origin; ask it.
+   */
+  if (/from '\$env\/dynamic\/public'/.test(t) || /from '\$app\/environment'/.test(t)) {
+    t = t.replace(/import \{ env \} from '\$env\/dynamic\/public'\n/g, '')
+    t = t.replace(/import \{ browser \} from '\$app\/environment'\n/g, '')
+    t = t.replace(
+      /env\.PUBLIC_API_URL \|\| \(browser \? window\.location\.origin : 'http:\/\/localhost:\d+'\)/g,
+      'getHost().apiBaseUrl',
+    )
+    t = t.replace(
+      /env\.PUBLIC_API_URL \|\| \(browser \? location\.origin : 'http:\/\/localhost:\d+'\)/g,
+      'getHost().apiBaseUrl',
+    )
+    if (/getHost\(\)/.test(t)) intoUi.add('getHost')
+  }
+
   // the locale now comes from the framework, not from Paraglide's generated runtime
   if (/getLocale\(\)/.test(t)) {
     t = t.replace(/import \{[^}]*\} from '\$lib\/paraglide\/runtime'\n/g, '')
