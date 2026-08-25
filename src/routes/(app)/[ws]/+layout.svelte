@@ -31,7 +31,7 @@ import { formatCount } from '$lib/format'
 import ModuleSidebar from '$lib/modules/ModuleSidebar.svelte'
 import { capabilitiesOf, navigationFor, segmentOf, sidebarsFor } from '$lib/modules/registry'
 import { keys } from '$lib/query'
-import { realtime } from '$lib/realtime.svelte'
+import { realtime, realtimeUrl } from '$lib/realtime.svelte'
 import { prefs } from '$lib/state/prefs.svelte'
 import { session } from '$lib/state/session.svelte'
 import { relativeHref } from '$lib/state/tabs'
@@ -88,7 +88,8 @@ $effect(() => {
 // looking at still light up its badge in the rail
 $effect(() => {
   if (!me.data || authDisabled()) return
-  realtime.connect(queryClient, () => null)
+  const url = realtimeUrl()
+  if (url) realtime.connect({ url, queryClient, getToken: () => null })
   for (const w of me.data.workspaces) realtime.watchWorkspace(w.id)
   return () => realtime.disconnect()
 })
