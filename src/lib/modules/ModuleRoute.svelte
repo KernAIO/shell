@@ -30,5 +30,13 @@ function load({ moduleId, route }: ResolvedModuleRoute): Promise<{ default: AnyC
 
 {#await load(resolved) then mod}
   {@const Page = mod.default}
-  <Page {workspaceId} {workspaceSlug} />
+  <!--
+    Keyed on the resolved path *and its parameter values*, so navigating from one page of a wiki to
+    another remounts rather than reusing a component whose state belongs to the page you left.
+    Without the key, `/quire/eng/a` -> `/quire/eng/b` keeps the first page's editor and its unsaved
+    text.
+  -->
+  {#key `${resolved.moduleId}:${resolved.route.path}:${Object.values(resolved.params).join('/')}`}
+    <Page {workspaceId} {workspaceSlug} params={resolved.params} rest={resolved.rest} />
+  {/key}
 {/await}

@@ -16,6 +16,7 @@ import {
   SidebarSwitcher,
   Spinner,
   StatusDot,
+  setNavigation,
 } from '@kernhq/ui'
 import { createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { untrack } from 'svelte'
@@ -88,6 +89,22 @@ $effect(() => {
 // looking at still light up its badge in the rail
 $effect(() => {
   if (!me.data || authDisabled()) return
+  /**
+   * Keep the framework's view of the router current.
+   *
+   * Module screens cannot import `$app/navigation` or `$app/state` — a module package is compiled on
+   * its own, where those aliases do not exist — so the shell publishes the location here and modules
+   * read it. Forget this and a module's sidebar stops highlighting the page you are on, silently.
+   */
+  $effect(() => {
+    setNavigation({
+      pathname: page.url.pathname,
+      params: page.params as Record<string, string>,
+      search: page.url.searchParams,
+      go: (href: string) => void goto(href),
+    })
+  })
+
   const url = realtimeUrl()
   if (url) realtime.connect({ url, queryClient, getToken: () => null })
   for (const w of me.data.workspaces) realtime.watchWorkspace(w.id)

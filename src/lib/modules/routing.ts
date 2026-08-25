@@ -8,15 +8,25 @@ export interface ResolvedModuleRoute {
   moduleId: string
   /** path segments after the matched prefix — the module page's own params */
   rest: string[]
+  /** values of the `:name` segments the declaration matched */
+  params: Record<string, string>
 }
 
 /**
  * Route resolution for module-declared pages.
  *
  * Modules declare their screens in the client manifest (`routes:`); this resolves a URL's segments
- * after `/<workspace>` against those declarations — longest prefix wins, so `/tracker/reports/x`
- * resolves tracker's `/tracker/reports` and hands it `['x']`. A path no enabled module claims is
- * `undefined`, and the caller renders the app's own 404.
+ * after `/<workspace>` against those declarations. A path no enabled module claims is `undefined`,
+ * and the caller renders the app's own 404.
+ *
+ * A declaration may name parameters: `/quire/:space/:page` matches `/quire/eng/getting-started` and
+ * hands the component `{ space: 'eng', page: 'getting-started' }`.
+ *
+ * **Specificity, not length, decides.** `/quire/:space` and `/quire/settings` both match
+ * `/quire/settings`, and the literal has to win — otherwise a space called "settings" would shadow
+ * a real page, which is the kind of bug that only appears once a customer names something
+ * unfortunately. So the winner is the declaration with the most literal segments, and length breaks
+ * the tie.
  *
  * The same filters as every other contribution (`navigationFor`, `widgetsFor`, …): a disabled
  * module or switched-off capability resolves to nothing here, and a permission the person lacks
@@ -34,6 +44,9 @@ export function resolveModuleRoute(
 ): ResolvedModuleRoute | undefined {
   const wantScope = opts.scope ?? 'workspace'
   let best: ResolvedModuleRoute | undefined
+  /** How specific a match is: literal segments first, then total length. */
+  let bestScore = -1
+
   const consider = (
     moduleId: string,
     path: string,
@@ -41,14 +54,29 @@ export function resolveModuleRoute(
   ) => {
     const parts = path.split('/').filter(Boolean)
     if (segments.length < parts.length) return
-    if (!parts.every((p, i) => segments[i] === p)) return
+
+    const params: Record<string, string> = {}
+    let literals = 0
+    for (const [i, part] of parts.entries()) {
+      if (part.startsWith(':')) {
+        // A parameter matches one segment and never an empty one: `/quire/:space` must not claim
+        // `/quire`, or the spaces index would render as a space with no key.
+        const value = segments[i]
+        if (!value) return
+        params[part.slice(1)] = value
+        continue
+      }
+      if (segments[i] !== part) return
+      literals++
+    }
+
     if (decl.permission && !opts.can(decl.permission)) return
     if (!hasCapability(opts.capabilities, moduleId, decl.capability)) return
-    // Longest declaration wins regardless of which module made it; ties are impossible in
-    // practice (two modules claiming one segment would be a collision the shell cannot render).
-    if (!best || parts.length > best.route.path.split('/').filter(Boolean).length) {
-      best = { route: { path, ...decl }, moduleId, rest: segments.slice(parts.length) }
-    }
+
+    const score = literals * 1000 + parts.length
+    if (score <= bestScore) return
+    bestScore = score
+    best = { route: { path, ...decl }, moduleId, rest: segments.slice(parts.length), params }
   }
 
   for (const mod of allModules()) {

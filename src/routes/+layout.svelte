@@ -24,6 +24,9 @@ const queryClient = createQueryClient()
 setHost({
   api: getApi(),
   apiBaseUrl: env.PUBLIC_API_URL || (browser ? window.location.origin : ''),
+  collabUrl:
+    env.PUBLIC_COLLAB_URL ||
+    (browser ? `${window.location.origin.replace(/^http/, 'ws')}/collab` : undefined),
   isMock: isMock(),
   putMockObject,
 })

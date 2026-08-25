@@ -109,7 +109,21 @@ for (const file of files) {
         .filter(Boolean))
         names.add(n)
     const line = `import { ${[...names].sort((a, b) => a.localeCompare(b)).join(', ')} } from '@kernhq/ui'`
-    t = existing ? t.replace(existing[0], line) : t.replace(/(<script[^>]*>\n)/, `$1${line}\n`)
+    if (existing) {
+      t = t.replace(existing[0], line)
+    } else if (/<script/.test(t)) {
+      t = t.replace(/(<script[^>]*>\n)/, `$1${line}\n`)
+    } else {
+      /**
+       * A plain `.ts` file has no `<script>` to insert after. Dropping the import silently is worse
+       * than any wrong placement: the file still parses, and the failure surfaces as "Cannot find
+       * name 'session'" in a package nobody was editing.
+       */
+      const lastImport = [...t.matchAll(/^import .*$/gm)].at(-1)
+      t = lastImport
+        ? `${t.slice(0, lastImport.index + lastImport[0].length)}\n${line}${t.slice(lastImport.index + lastImport[0].length)}`
+        : `${line}\n${t}`
+    }
   }
 
   const left = [...t.matchAll(/from '(\$[^']+)'/g)].map((m) => m[1]).filter((p) => p !== '$msg')
