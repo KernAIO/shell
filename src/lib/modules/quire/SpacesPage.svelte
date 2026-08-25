@@ -99,7 +99,12 @@ function open(key: string) {
 <style>
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  /*
+   * `auto-fit`, not `auto-fill`. `auto-fill` keeps the empty tracks, so two spaces in a wide window
+   * sit at their minimum width with the rest of the row blank; `auto-fit` collapses them and the
+   * cards share the space. Every other card grid in the app already does this.
+   */
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 12px;
 }
 .space {
