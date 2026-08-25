@@ -87,6 +87,12 @@ Keep it specific and short. Delete anything that stops being true — a stale no
 The SvelteKit PWA every module renders into. `pnpm dev:mock` runs the whole interface against an
 in-memory API with demo data — no backend, no database.
 
+**This repository holds the shell, not the modules.** As of 2026-08-25 every module's screens,
+strings and manifest live in its own package (`repos/modules/packages/<id>/src/client`) and the app
+mounts whatever they declare — `src/lib/modules/` is a registry, a router and `core`, which *is* the
+shell. Editing a module's interface means editing that package, and `readlink node_modules/@kernhq/module-<id>`
+tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-module-ships-its-own-screens.md`.
+
 **Things worth knowing**
 - **`DESIGN.md` is the authority.** It is derived from the product's own design file: exact tokens,
   sizes and per-view anatomy. Match it rather than inventing.
@@ -158,15 +164,15 @@ in-memory API with demo data — no backend, no database.
   conversations there instead of adding a third column. Slots are the only way a module reaches into
   a part of the shell it does not own.
 - A module whose state is shared between the sidebar and the content area holds it in one place keyed
-  by workspace (`modules/chat/store.svelte.ts`), never a module-level singleton: a transcript must not
+  by workspace (chat's `store-instance.svelte.ts`), never a module-level singleton: a transcript must not
   survive into another workspace.
 - Query keys are `[module, entity, …scope]` so a realtime `change` event invalidates precisely what it
   touched. Keep new queries in that shape.
-- **A module settings page's `id` is part of its URL.** The shell builds the href as
-  `/<ws>/settings/<moduleId>/<pageId>`, so the route file has to be
-  `settings/<moduleId>/<pageId>/+page.svelte`. Nothing checks this: a mismatch renders a nav entry
-  that 404s, and it is invisible until somebody clicks it. `mail` has this bug today — it declares
-  `id: 'mail'`, so the shell links `/settings/mail/mail`, and the page is at `/settings/mail`.
+- **A module settings page's `id` is its URL, and declaring it is the whole wiring.** The shell
+  mounts a workspace-scope page at `/<ws>/settings/<moduleId>/<pageId>`, and one whose `id` equals
+  the module id at `/<ws>/settings/<moduleId>`; instance pages mount under `/<ws>/admin/`. There is
+  no route file to keep in step — that mismatch used to render a nav entry that 404s, which is what
+  `mail` shipped with for months.
 - **A module's screens are only reachable if the module is in the mock too.** `dev:mock` decides the
   nav from `enabledFor()` and `moduleManifests` in `src/lib/api/mock.ts`; a module missing from
   either has a working page and no way to reach it, in exactly the environment used for demos.
@@ -202,7 +208,7 @@ in-memory API with demo data — no backend, no database.
   fields and types settings pages is the case: with the key unchanged TanStack serves the cached
   list, so the switch does nothing until something else happens to invalidate it — which is
   indistinguishable from the toggle being broken, and only ever reproduces on a warm cache.
-- **Before adding a handler to `modules/tracker/mock.ts`, grep it.** Whether the *app* calls a
+- **Before adding a handler to a module's `mock.ts`, grep it.** Whether the *app* calls a
   procedure and whether the *mock* implements one are different questions; answering the first and
   acting on the second produces a duplicate object key, which svelte-check catches but only after
   the work is done.
