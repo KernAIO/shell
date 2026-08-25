@@ -501,6 +501,31 @@ Total header height ≈ 20 + 32 + 10 + 28 + 16 + 3 = ~109px (not a fixed 60px; t
 
 `flex:1; overflow-y:auto; overflow-x:hidden; background:#FBFAF7` — each view renders inside.
 
+### 2.7 Content width — reading views cap, working views do not
+
+The `max-width` figures in §3 (Docs 780, Inbox detail 660, Activity 840, Office 1000, Meetings and
+HR 1180) were measured from a design frame narrower than the screens the app runs on. Applied
+literally on a 1580px display they leave 400px of dead space, and the `fr` ratios beside them —
+which assume the cap — inflate into gap rather than content.
+
+**The rule, derived from what the product actually does:**
+
+- **Reading views cap.** Prose has a comfortable measure and a 1400px line is unreadable. Quire's
+  page view is the one view in the app that sets `maxWidth`, at the 780px §3.6 specifies, and it is
+  right to.
+- **Working views fill.** Tables, lists, boards and dashboards are denser the wider they get, and a
+  person scanning a directory wants more rows visible, not a narrower column. The shell's own
+  padding (§2.6 `p-list` etc.) is the layout; no `maxWidth` is set.
+
+So treat a `max-width` in §3 as **advisory for a reading view and ignorable for a working one**.
+Where a working view's grid ratios came from a capped frame, give the flexible columns real
+`minmax()` minimums instead of raising the cap — the columns then hold their proportions on a
+laptop and absorb the extra width on a monitor.
+
+Two failure modes this prevents, both seen:
+- capping a table view leaves a large empty band on the end edge and makes the page look unfinished;
+- uncapping without touching the ratios turns a `1.4fr` name column into 700px of whitespace.
+
 ---
 
 ## 3. Per-view component inventory
@@ -545,6 +570,24 @@ Total header height ≈ 20 + 32 + 10 + 28 + 16 + 3 = ~109px (not a fixed 60px; t
 **Empty state** (not explicitly drawn; derive): centre a 11px uppercase sub-label + 13.5px `#8A8375` sentence inside a dashed `1px dashed #D5CFC2` r10 box (as the free-desk pattern).
 
 **Keyboard hint**: DM Mono 12px `#A79F8E` ("G then H", "↵", "C") in palette; ⌘K chip as in footer.
+
+**Use the component, do not redraw it.** `@kernhq/ui` already ships `ListRow`, `Table`, `Tabs`,
+`SegmentedControl`, `SectionLabel`, `StatTile`, `Badge`, `EmptyState`, `Avatar`, `Switch`. Every
+figure in this document is *inside* one of them. Hand-rolling `<ul><li class="row">` with local CSS
+reproduces the spacing approximately, the tones not at all, and drifts the moment a token changes —
+it is what makes a screen read as unfinished even when nothing is obviously wrong. Check the actual
+props before using one; several differ from the obvious guess:
+
+- `Avatar` takes `size` in **pixels** (`size={28}`), not `'sm'`.
+- `Badge` takes `tone`, and the set already contains the states this product has — `active`,
+  `on-leave`, `onboarding`, `done`, `declined`, `upcoming`, `urgent`, `grey`. Map a status onto a
+  named tone rather than picking a colour.
+- `StatTile` takes `label` / `value` / `note`, not `hint`, and `size="md"` for a row of four.
+- `SectionLabel` takes `label` and `count` as props — it has no children. Its `trailing` snippet
+  renders at the **end of the section**, so a search box placed there in a two-column layout lands
+  in the gap between the columns rather than above the table it filters.
+- `EmptyState` takes an `actions` snippet; `bare` and `compact` are for use inside a widget card.
+- `RightPanel` takes `onClose`, not `open`/`onclose`.
 
 ### 3.1 Home (the dashboard)
 
@@ -644,10 +687,25 @@ Grid `380px minmax(0,1fr); height:100%`.
 
 ### 3.12 HR / People
 
-`padding:18px 24px 44px; max-width:1180px; gap:20px`.
-- 4 stat tiles (value 26px).
-- Grid `minmax(0,1fr) 320px; gap:20px`. Left: "PEOPLE" section label + team tabs (All/Platform/Design/Product). **Table header** grid `minmax(0,1.4fr) minmax(0,1fr) 92px 88px 96px; gap:12px; height:34px; padding:0 12px; border-bottom hairline; font-size:11px; font-weight:600; letter-spacing:0.06em; uppercase; color:#9A9285` (Name / Role / Team / Started / Status). **Rows** same grid, height 48, hover `#FFFFFF`: avatar 28 + name 13.5px w500 `#1C1A17` + location 12px `#8A8375`; role 13px `#474339`; team 13px `#6B6459`; started 13px `#8A8375`; status chip (Active `#DEEDE4`/`#3D9A63`, On leave `#F7E9D8`/`#B5742A`, Onboarding `#DCE6F5`/`#3A69B8`).
-- Right: "TIME OFF TO APPROVE" leave cards white r10 `padding:12px 13px` gap8: avatar 24 + name 13.5px w500 flex1 + kind grey chip; dates 12.5px `#7A7365` mt7; buttons mt11 gap6: Approve (primary 28) / Decline (outline white 28) or decision chip (Approved `#DEEDE4`/`#3D9A63`, Declined `#F7DEDA`/`#A63D26`). "OPEN ROLES" rows `padding:11px 4px` hairline: title 13.5px w500; stage 12.5px `#7A7365` + candidates 12.5px `#8A8375`.
+`padding:18px 24px 44px; gap:20px`. **No `max-width`** — a directory is a working view and fills the
+frame (§2.7). The 1180px this section used to specify is kept only as the width the ratios below were
+measured at.
+- 4 stat tiles (value 26px), `size="md"` — the `lg` default leaves a number stranded in an empty box
+  when four tiles sit in one row.
+- Grid `minmax(0,1fr) 320px; gap:20px`. Left: "PEOPLE" section label + team tabs (All/Platform/Design/Product). **Table header** grid `minmax(180px,1.1fr) minmax(80px,0.5fr) minmax(90px,0.6fr) 110px 96px 104px;
+gap:12px; height:34px; padding:0 12px; border-bottom hairline; font-size:11px; font-weight:600;
+letter-spacing:0.06em; uppercase; color:#9A9285` (Name / ID / Office / Started / Local time / Status).
+The `minmax()` minimums replace the original bare `fr` ratios, which were measured at 1180px and
+inflate into whitespace on a wider screen (§2.7). The header and every row share one grid so the
+columns line up down the page; the table needs `width:100%` because a grid container with `fr`
+columns does not stretch on its own inside a grid item.
+
+**Local time** per row, from the person's primary office zone through `Intl` — a directory of a
+company with more than one office is also the answer to "can I call them now". Re-render it on a
+minute timer; a clock showing a stale time is worse than no clock. **Rows** same grid, height 48, hover `#FFFFFF`: avatar 28 + name 13.5px w500 `#1C1A17` + location 12px `#8A8375`; role 13px `#474339`; team 13px `#6B6459`; started 13px `#8A8375`; status chip (Active `#DEEDE4`/`#3D9A63`, On leave `#F7E9D8`/`#B5742A`, Onboarding `#DCE6F5`/`#3A69B8`).
+- Right (`320px`): **"APPROVALS"** — what needs a decision, decidable in place. Approve/Reject on the
+  card rather than a link to a list: the value of putting it beside the directory is clearing three
+  requests without leaving. Below it, "TIME OFF TO APPROVE" leave cards white r10 `padding:12px 13px` gap8: avatar 24 + name 13.5px w500 flex1 + kind grey chip; dates 12.5px `#7A7365` mt7; buttons mt11 gap6: Approve (primary 28) / Decline (outline white 28) or decision chip (Approved `#DEEDE4`/`#3D9A63`, Declined `#F7DEDA`/`#A63D26`). "OPEN ROLES" rows `padding:11px 4px` hairline: title 13.5px w500; stage 12.5px `#7A7365` + candidates 12.5px `#8A8375`.
 
 ### 3.13 Issue detail side panel
 
