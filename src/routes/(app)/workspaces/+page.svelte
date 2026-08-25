@@ -59,6 +59,10 @@ async function load() {
     user = me.user
     workspaces = me.workspaces
   } catch (err) {
+    // Nobody is signed in: that is not an error to read, it is a page to be on. The API client's
+    // `onUnauthorized` is already navigating, so this only decides what the page paints meanwhile.
+    if ((err as { code?: string })?.code === 'UNAUTHORIZED')
+      return void goto('/sign-in', { replaceState: true })
     error = err instanceof Error ? err.message : m.error_generic()
   } finally {
     loading = false
