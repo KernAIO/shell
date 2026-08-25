@@ -58,6 +58,7 @@ const RENAME = {
   settings_title: 'settings',
   audit_actor_system: 'system',
   chart_empty: 'no_data',
+  nav_admin: 'admin',
   widget_setting_rows: 'setting_rows',
   widget_setting_status: 'setting_status',
   widget_setting_show: 'setting_show',
@@ -99,10 +100,13 @@ for (const file of files) {
        * A bare `m.key` with no call is a *reference*, passed where a label is wanted lazily
        * (`{ label: m.mail_field_host }`). It has to stay lazy — evaluating it here would freeze the
        * string in whatever language was loaded first — so it becomes a thunk, not a call.
+       *
+       * Parenthesised, because the reference also appears as the right side of `??`, where a bare
+       * arrow function is a syntax error rather than a value.
        */
       .replace(/\bm\.([a-z0-9_]+)\b(?!\s*\()/g, (whole, key) => {
         const to = target(key)
-        return to ? `() => t('${to}')` : whole
+        return to ? `(() => t('${to}'))` : whole
       })
   const after = swap(before)
   if (after !== before) {

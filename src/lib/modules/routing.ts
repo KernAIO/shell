@@ -28,8 +28,11 @@ export function resolveModuleRoute(
     enabled: Set<string>
     capabilities?: Set<string>
     can: (permission: string) => boolean
+    /** which settings pages to resolve; module `routes` are always considered */
+    scope?: 'workspace' | 'instance'
   },
 ): ResolvedModuleRoute | undefined {
+  const wantScope = opts.scope ?? 'workspace'
   let best: ResolvedModuleRoute | undefined
   const consider = (
     moduleId: string,
@@ -49,14 +52,24 @@ export function resolveModuleRoute(
   }
 
   for (const mod of allModules()) {
-    if (!opts.enabled.has(mod.id)) continue
+    // Instance pages belong to the console, not to a workspace, so they survive a module the
+    // current workspace has switched off. Everything else is filtered on it.
+    if (wantScope !== 'instance' && !opts.enabled.has(mod.id)) continue
     for (const route of mod.routes ?? []) consider(mod.id, route.path, route)
     // A declared workspace settings page is mounted at its conventional URL
     // (`/settings/<moduleId>[/<pageId>]`) — declaring it is enough, exactly as the settings
     // navigation already treats it. The `id === moduleId` page is the module's main settings
     // screen and lives one level up; anything else nests below.
     for (const p of mod.settingsPages ?? []) {
-      if (p.scope !== 'workspace') continue
+      if (p.scope !== wantScope) continue
+      if (p.scope === 'instance') {
+        // The console is not about a workspace, so an instance page is never filtered on which
+        // modules this workspace enabled — `instanceLinksFor` offers it either way, and a link the
+        // console shows must resolve. The admin layout gates the whole area on the instance-admin
+        // flag, which is the check that matters here.
+        consider(mod.id, `/admin/${mod.id}/${p.id}`, { ...p, capability: undefined })
+        continue
+      }
       consider(mod.id, p.id === mod.id ? `/settings/${mod.id}` : `/settings/${mod.id}/${p.id}`, p)
     }
   }

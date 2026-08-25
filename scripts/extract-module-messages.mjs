@@ -85,6 +85,26 @@ const catalogues = Object.fromEntries(
   LOCALES.map((l) => [l, JSON.parse(readFileSync(join('messages', `${l}.json`), 'utf8'))]),
 )
 
+/**
+ * `[{ selectors: ['countPlural'], match: { 'countPlural=one': '…' } }]` -> `{ one: '…' }`.
+ * Returns null for any variant this shape cannot carry, so the caller reports it rather than
+ * silently dropping a form.
+ */
+function pluralForms(value) {
+  if (!Array.isArray(value) || value.length !== 1) return null
+  const [variant] = value
+  if (!variant?.match || variant.selectors?.length !== 1) return null
+  const selector = variant.selectors[0]
+  if (!/Plural$/.test(selector)) return null
+  const forms = {}
+  for (const [k, v] of Object.entries(variant.match)) {
+    const category = k.startsWith(`${selector}=`) ? k.slice(selector.length + 1) : null
+    if (!category || typeof v !== 'string') return null
+    forms[category] = v
+  }
+  return Object.keys(forms).length ? forms : null
+}
+
 const bundles = {}
 const variants = []
 for (const locale of LOCALES) {
@@ -92,10 +112,19 @@ for (const locale of LOCALES) {
   for (const key of owned) {
     const value = catalogues[locale][key]
     if (value === undefined) continue
-    // A counted message is an array carrying declarations/selectors — Paraglide's plural shape,
-    // which the framework's flat `t()` cannot represent. Report it; do not silently flatten it.
+    /**
+     * A counted message is an array carrying Paraglide's `declarations` / `selectors` / `match`.
+     * The framework stores the same thing as a plain map of CLDR plural category to string, which
+     * is all `Intl.PluralRules` needs — so convert rather than skip. Anything selecting on
+     * something other than a plural is genuinely beyond `t()` and is reported instead.
+     */
     if (typeof value !== 'string') {
-      if (locale === 'en') variants.push(key)
+      const forms = pluralForms(value)
+      if (!forms) {
+        if (locale === 'en') variants.push(key)
+        continue
+      }
+      out[rename(key)] = forms
       continue
     }
     out[rename(key)] = value
@@ -124,20 +153,20 @@ const lines = [
   ` * Bundles are thunks so a locale is only fetched when it is the one in use; English is the`,
   ` * fallback and is therefore always loaded.`,
   ` */`,
-  `import { scopedT } from '@kernhq/ui'`,
+  `import { type Message, scopedT } from '@kernhq/ui'`,
   ``,
-  `export const en = ${JSON.stringify(bundles.en, null, 2)} as const`,
+  `export const en: Record<string, Message> = ${JSON.stringify(bundles.en, null, 2)}`,
   ``,
   `export type ${id[0].toUpperCase()}${id.slice(1)}MessageKey = keyof typeof en`,
   ``,
 ]
 for (const locale of LOCALES.filter((l) => l !== 'en')) {
-  lines.push(`const ${locale}: Record<string, string> = ${JSON.stringify(bundles[locale], null, 2)}`, ``)
+  lines.push(`const ${locale}: Record<string, Message> = ${JSON.stringify(bundles[locale], null, 2)}`, ``)
 }
 lines.push(
   `/** In the shape \`defineClientModule().messages\` expects. */`,
   `export const ${id}MessageBundles = {`,
-  ...LOCALES.map((l) => `  ${l}: async () => (${l === 'en' ? 'en as Record<string, string>' : l}),`),
+  ...LOCALES.map((l) => `  ${l}: async () => ${l},`),
   `}`,
   ``,
   `/** \`t('settings_nav')\` — the module id is implied. */`,
