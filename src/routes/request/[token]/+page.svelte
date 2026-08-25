@@ -1,6 +1,6 @@
 <script lang="ts">
+import { IntakePage } from '@kernhq/module-tracker/client'
 import { page } from '$app/state'
-import IntakePage from '$lib/modules/tracker/IntakePage.svelte'
 
 /**
  * `/request/:token` — the public intake form.

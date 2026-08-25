@@ -36,10 +36,20 @@ const commonSrc = readFileSync(
 const COMMON = new Set()
 for (const m of commonSrc.matchAll(/['"]common\.([a-z0-9_]+)['"]\s*:/g)) COMMON.add(m[1])
 
+/**
+ * Extra prefixes a module owns despite not being named for it — must match what
+ * `extract-module-messages.mjs` was given, or the two disagree about who owns a key and the
+ * rewrite leaves calls pointing at strings that are no longer in the app's catalogue.
+ */
+const extra = (process.argv.find((a) => a.startsWith('--also=')) ?? '').slice('--also='.length)
+const alsoOwns = extra ? extra.split(',').filter(Boolean) : []
+
 /** `mail_settings_nav` -> `settings_nav`; `widget_mail_title` -> `widget_title`. */
 function scoped(key) {
   if (key.startsWith(`widget_${id}_`)) return `widget_${key.slice(`widget_${id}_`.length)}`
   if (key.startsWith(`${id}_`)) return key.slice(id.length + 1)
+  // renamed by the extractor as `<id>.<key>` — the key keeps its own name
+  if (alsoOwns.some((p) => key.startsWith(p))) return key
   return null
 }
 /** Where a key ends up, or null when nothing defines it and it must be left alone. */

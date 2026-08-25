@@ -16,8 +16,8 @@ import { chatClientModule } from '@kernhq/module-chat/client'
 import { hrClientModule } from '@kernhq/module-hr/client'
 import { mailClientModule } from '@kernhq/module-mail/client'
 import { quireClientModule } from '@kernhq/module-quire/client'
+import { trackerClientModule } from '@kernhq/module-tracker/client'
 import { coreClientModule } from './core/client'
-import { trackerClientModule } from './tracker/client'
 
 /**
  * The client-side module registry.
