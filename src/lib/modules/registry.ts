@@ -13,6 +13,7 @@ export { segmentOf } from './segment'
 import { billingClientModule } from './billing/client'
 import { chatClientModule } from './chat/client'
 import { coreClientModule } from './core/client'
+import { hrClientModule } from './hr/client'
 import { mailClientModule } from './mail/client'
 import { quireClientModule } from './quire/client'
 import { trackerClientModule } from './tracker/client'
@@ -137,6 +138,7 @@ registerModule(coreClientModule)
 registerModule(trackerClientModule)
 registerModule(chatClientModule)
 registerModule(quireClientModule)
+registerModule(hrClientModule)
 registerModule(mailClientModule)
 registerModule(billingClientModule)
 

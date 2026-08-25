@@ -17,7 +17,79 @@ import { mockObjectUrl } from '$lib/files/mock-storage'
  * from here is not a bug; a module whose entry disagrees with its server's is, and it shows up as a
  * nav row that works in `dev:mock` and 404s against core.
  */
-const MODULE_CAPABILITIES: Record<string, CapabilityDef[]> = {}
+const MODULE_CAPABILITIES: Record<string, CapabilityDef[]> = {
+  /**
+   * Mirrors what `@kernhq/module-hr` declares on the server. A disagreement here is a screen that
+   * works in `dev:mock` and 404s against core, which is the one failure the mock exists to prevent.
+   */
+  hr: [
+    { id: 'core', label: 'People', dependsOn: [], defaultEnabled: false, level: 1, required: true },
+    {
+      id: 'offices',
+      label: 'Offices',
+      dependsOn: ['core'],
+      defaultEnabled: false,
+      level: 2,
+      required: false,
+    },
+    {
+      id: 'legal_entities',
+      label: 'Legal entities',
+      dependsOn: ['offices'],
+      defaultEnabled: false,
+      level: 3,
+      required: false,
+    },
+    {
+      id: 'calendars',
+      label: 'Holiday calendars',
+      dependsOn: ['core'],
+      defaultEnabled: true,
+      level: 1,
+      required: false,
+    },
+    {
+      id: 'attendance',
+      label: 'Attendance',
+      dependsOn: ['core', 'calendars'],
+      defaultEnabled: false,
+      level: 1,
+      required: false,
+    },
+    {
+      id: 'overtime',
+      label: 'Overtime',
+      dependsOn: ['attendance'],
+      defaultEnabled: false,
+      level: 2,
+      required: false,
+    },
+    {
+      id: 'documents',
+      label: 'Employee documents',
+      dependsOn: ['core'],
+      defaultEnabled: false,
+      level: 2,
+      required: false,
+    },
+    {
+      id: 'leave',
+      label: 'Leave',
+      dependsOn: ['core', 'calendars'],
+      defaultEnabled: true,
+      level: 1,
+      required: false,
+    },
+    {
+      id: 'approvals',
+      label: 'Approval chains',
+      dependsOn: ['core'],
+      defaultEnabled: false,
+      level: 2,
+      required: false,
+    },
+  ],
+}
 const capabilityDefs = (moduleId: string): CapabilityDef[] => MODULE_CAPABILITIES[moduleId] ?? []
 
 const now = Date.now()
@@ -268,6 +340,15 @@ let mockPolicy = {
   minReleaseAgeHours: 72,
 }
 
+/*
+ * One entry per module, and the id is the key.
+ *
+ * `hr` was in here twice — the 0.4.0 rewrite left the old 0.1.0 manifest behind — and every list
+ * keyed by module id then threw `each_key_duplicate`, which is a *render* error: the admin,
+ * admin/modules, admin/updates and settings/modules screens stopped mid-paint and sat on their
+ * skeletons for ever. Nothing failed a build or a type-check, and the pages looked like they were
+ * still loading rather than broken.
+ */
 const moduleManifests = [
   {
     id: 'core',
@@ -293,6 +374,19 @@ const moduleManifests = [
     dependsOn: ['core'],
     permissionCount: 9,
     eventCount: 8,
+    objectTypeCount: 2,
+    hasSettings: true,
+  },
+  {
+    id: 'hr',
+    name: 'People',
+    version: '0.4.0',
+    description: 'Staff directory, offices, org chart, holidays, leave and attendance',
+    icon: 'users',
+    core: false,
+    dependsOn: ['core'],
+    permissionCount: 29,
+    eventCount: 13,
     objectTypeCount: 2,
     hasSettings: true,
   },
@@ -359,19 +453,6 @@ const moduleManifests = [
     permissionCount: 2,
     eventCount: 3,
     objectTypeCount: 0,
-    hasSettings: true,
-  },
-  {
-    id: 'hr',
-    name: 'People',
-    version: '0.1.0',
-    description: 'Employees, org chart, leave requests with approvals, holidays and onboarding',
-    icon: 'users',
-    core: false,
-    dependsOn: ['core', 'docs'],
-    permissionCount: 11,
-    eventCount: 7,
-    objectTypeCount: 4,
     hasSettings: true,
   },
 ]
@@ -547,7 +628,7 @@ export function createMockApi() {
   const enabledFor = (workspaceId: string) => {
     let set = state.enabled.get(workspaceId)
     if (!set) {
-      set = new Set(['core', 'chat', 'tracker', 'quire', 'mail', 'billing'])
+      set = new Set(['core', 'chat', 'tracker', 'quire', 'hr', 'mail', 'billing'])
       state.enabled.set(workspaceId, set)
     }
     return set
