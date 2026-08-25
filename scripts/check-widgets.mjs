@@ -14,21 +14,21 @@
  *
  *   node scripts/check-widgets.mjs
  */
-import { readdirSync, readFileSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const modulesDir = join(root, 'src/lib/modules')
 /**
- * Module clients live in two places while the UI migration is in flight: still in the app for
- * modules not yet moved, and in `repos/modules/packages/<id>/src/client` for the ones that have.
+ * Module clients are resolved through `node_modules`, not from a sibling checkout.
  *
- * Looking in only one of them is how this check quietly stopped seeing half the product — the
- * widget count simply got smaller and nothing said why. It reports where it looked, so a drop is
- * visible rather than silent.
+ * A module's screens live in its own package now, so this has to look outside the app — but the app
+ * is built **standalone** in CI, where `../modules` does not exist. Reading the installed packages
+ * works in both: pnpm links them in the umbrella and installs them from the registry in CI, and
+ * either way it is the code the app will actually run.
  */
-const packagesDir = join(root, '..', 'modules', 'packages')
+const installedDir = join(root, 'node_modules', '@kernhq')
 
 /** `id: 'tracker.issues',` inside a `widgets:` array. */
 const DECLARED = /^\s*id: '([a-z][a-z0-9-]*\.[a-z][a-z0-9-]*)',$/gm
@@ -68,13 +68,15 @@ for (const mod of readdirSync(modulesDir, { withFileTypes: true })) {
 }
 
 let inPackages = 0
-for (const mod of readdirSync(packagesDir, { withFileTypes: true })) {
-  if (!mod.isDirectory() || mod.name.startsWith('_')) continue
-  const dir = join(packagesDir, mod.name, 'src', 'client')
+// An install that has not run yet is not this check's business to report.
+const installed = existsSync(installedDir) ? readdirSync(installedDir, { withFileTypes: true }) : []
+for (const entry of installed) {
+  if (!entry.name.startsWith('module-')) continue
+  const dir = join(installedDir, entry.name, 'src', 'client')
   // a migrated module declares its client module in `module.ts`; `index.ts` only re-exports it
   const source = read(join(dir, 'module.ts')) ?? read(join(dir, 'index.ts'))
   if (source) {
-    collect(source, mod.name)
+    collect(source, entry.name.replace('module-', ''))
     inPackages++
   }
 }
