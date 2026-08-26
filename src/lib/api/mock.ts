@@ -463,7 +463,7 @@ const mockRelease = {
   version: MOCK_LATEST,
   channel: 'stable' as const,
   publishedAt: '2026-08-20T09:00:00.000Z',
-  notesUrl: `https://github.com/KernAIO/kern/releases/tag/v${MOCK_LATEST}`,
+  notesUrl: `https://github.com/KernAIO/app/releases/tag/v${MOCK_LATEST}`,
   services: { app: MOCK_LATEST, core: MOCK_LATEST, chat: MOCK_LATEST },
   modules: Object.fromEntries(
     moduleManifests.map((mod) => [mod.id, mod.id === 'tracker' ? '0.2.0' : mod.version]),
