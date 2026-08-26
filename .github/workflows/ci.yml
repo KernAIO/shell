@@ -2,13 +2,14 @@ name: CI
 on:
   push: { branches: [main] }
   pull_request:
-concurrency:
-  group: "ci-${{ github.ref }}"
-  cancel-in-progress: true
 permissions: { contents: read, packages: read }
 jobs:
   check:
     runs-on: ubuntu-latest
+    # Cheap and fast — a superseding push should cancel and restart this rather than wait.
+    concurrency:
+      group: "ci-check-${{ github.ref }}"
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -28,6 +29,14 @@ jobs:
     # run that reached 667 minutes before anyone noticed is not slow, it is stuck, and it burns the
     # runner the whole time. Fail instead.
     timeout-minutes: 30
+    # Grouped by commit, not by ref: a ref-wide group with cancel-in-progress sounds right for a
+    # ~25-30 minute job, but it is the opposite — on a repo that gets a push every few minutes
+    # (Renovate's @kernhq/* automerges included, scheduled "at any time"), this job never won that
+    # race and never once completed, cancelled every time by whatever landed next. Every commit's
+    # e2e run gets to actually finish; only an exact re-run of the same commit cancels its twin.
+    concurrency:
+      group: "ci-e2e-${{ github.sha }}"
+      cancel-in-progress: true
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
