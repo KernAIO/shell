@@ -315,6 +315,35 @@ test.describe('what a screen reader is told', () => {
       expect(nested, `${screen.path}\n${say(nested)}`).toEqual([])
     })
   }
+
+  /*
+   * The byline is the one line whose job is to say who touched the page, and it is not a control —
+   * so the sweep above cannot see it. It drew `Avatar` with no name for an author it could not
+   * resolve: a "?" disc with an empty `title`, announced as "question mark" ahead of the sentence.
+   * An avatar here is therefore only correct when it carries the name of the person it stands for.
+   */
+  test('a page says who edited it, and draws nobody it cannot name', async ({ page }) => {
+    await visit(page, WELCOME)
+    const byline = page.locator('.byline')
+    await expect(byline).toBeVisible()
+
+    const avatars = await byline.evaluate((el) =>
+      Array.from(el.querySelectorAll('.kav')).map((a) => ({
+        name: (a.getAttribute('title') ?? a.getAttribute('aria-label') ?? '').trim(),
+        text: (a as HTMLElement).innerText.trim(),
+      })),
+    )
+    const nameless = avatars.filter((a) => a.name === '')
+    expect(
+      nameless,
+      `the byline drew ${nameless.length} avatar(s) with no accessible name: ${nameless
+        .map((a) => `"${a.text}"`)
+        .join(', ')}`,
+    ).toEqual([])
+
+    // And the sentence itself names them, rather than falling back to the authorless wording.
+    await expect(byline).toContainText(/edited .* by \S/i)
+  })
 })
 
 /* ================================================================ the keyboard */
