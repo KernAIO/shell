@@ -1,9 +1,23 @@
 <script lang="ts">
-import { Button, Dialog, EmptyState, Icon, Skeleton, Switch, Tabs, toast } from '@kernhq/ui'
+import {
+  Button,
+  Dialog,
+  EmptyState,
+  Field,
+  Icon,
+  Input,
+  SegmentedControl,
+  Select,
+  Skeleton,
+  Switch,
+  Tabs,
+  toast,
+} from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { env } from '$env/dynamic/public'
 import { getApi } from '$lib/api/client'
+import CapabilityAudiencePicker from '$lib/components/settings/CapabilityAudiencePicker.svelte'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
 import { formatDate, relativeTime } from '$lib/format'
@@ -35,10 +49,12 @@ const modules = createQuery(() => ({
 
 const coreEntry = $derived((modules.data ?? []).find((e) => e.manifest.id === 'core'))
 const mcpEnabled = $derived(coreEntry?.state.capabilities?.includes('mcp') ?? false)
+const apiKeysEnabled = $derived(coreEntry?.state.capabilities?.includes('api_keys') ?? false)
 
 /**
- * What the switchboard has stored for core. The reserved key is sent whole — spread first, or the
- * day core grows a second capability this screen silently switches it off.
+ * What the switchboard has stored for core. Both reserved keys are sent whole — spread first, or
+ * the day core grows a second capability (or a second audience) this screen silently switches it
+ * off for everyone but the one entry it meant to touch.
  */
 const storedCapabilities = $derived(
   ((coreEntry?.state.settings as Record<string, unknown> | undefined)?.$capabilities ?? {}) as Record<
@@ -46,20 +62,54 @@ const storedCapabilities = $derived(
     boolean
   >,
 )
+const storedAudience = $derived(
+  ((coreEntry?.state.settings as Record<string, unknown> | undefined)?.$capabilityAudience ?? {}) as Record<
+    string,
+    string[] | null
+  >,
+)
 
 const setCapability = createMutation(() => ({
-  mutationFn: (on: boolean) =>
+  mutationFn: ({ capabilityId, on }: { capabilityId: string; on: boolean }) =>
     api.workspaces.modules.updateSettings({
       workspaceId,
       moduleId: 'core',
-      settings: { $capabilities: { ...storedCapabilities, mcp: on } },
+      settings: { $capabilities: { ...storedCapabilities, [capabilityId]: on } },
     }),
-  onSuccess: (_res, on) => {
-    toast.success(on ? m.mcp_switched_on_toast() : m.mcp_switched_off_toast())
+  onSuccess: (_res, { capabilityId, on }) => {
+    toast.success(
+      capabilityId === 'mcp'
+        ? on
+          ? m.mcp_switched_on_toast()
+          : m.mcp_switched_off_toast()
+        : on
+          ? m.api_keys_switched_on_toast()
+          : m.api_keys_switched_off_toast(),
+    )
     // Navigation, consent and this page all derive from the resolved set, so re-read everything.
     void queryClient.invalidateQueries({ queryKey: ['core'] })
   },
   onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+}))
+
+const setAudience = createMutation(() => ({
+  mutationFn: ({ capabilityId, groups }: { capabilityId: string; groups: string[] | null }) =>
+    api.workspaces.modules.updateSettings({
+      workspaceId,
+      moduleId: 'core',
+      settings: { $capabilityAudience: { ...storedAudience, [capabilityId]: groups } },
+    }),
+  onSuccess: () => {
+    toast.success(m.audience_saved_toast())
+    void queryClient.invalidateQueries({ queryKey: ['core'] })
+  },
+  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+}))
+
+const groups = createQuery(() => ({
+  queryKey: ['core', 'groups', workspaceId],
+  queryFn: () => api.workspaces.groups.list({ workspaceId }),
+  enabled: Boolean(workspaceId),
 }))
 
 // Same-origin by default (the dev proxy and Caddy both route it); PUBLIC_API_URL wins when set.
@@ -159,6 +209,78 @@ const revoke = createMutation(() => ({
   },
   onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
 }))
+
+/**
+ * Personal API keys — a member's own credential for the raw REST API. `list` is always "mine";
+ * `listAll` below is the admin's view of everyone's. Scope choices mirror the ones the backend
+ * actually enforces: a request-method gate on `read`, nothing narrower.
+ */
+const myKeys = createQuery(() => ({
+  queryKey: ['core', 'apiKeys', 'mine', workspaceId],
+  queryFn: () => api.apiKeys.list({ workspaceId }),
+  enabled: Boolean(workspaceId) && apiKeysEnabled,
+}))
+
+type ApiKeyRow = NonNullable<typeof myKeys.data>[number]
+
+let showCreateKey = $state(false)
+let newKeyName = $state('')
+let newKeyScope = $state<'read' | 'read_write'>('read')
+let newKeyExpiry = $state('30')
+/** Shown once, right after creation — the only time the plaintext key is ever available. */
+let revealedKey = $state<{ key: string; name: string } | null>(null)
+
+const createKey = createMutation(() => ({
+  mutationFn: () =>
+    api.apiKeys.create({
+      workspaceId,
+      name: newKeyName.trim(),
+      scope: newKeyScope,
+      expiresInDays: newKeyExpiry === 'never' ? null : Number(newKeyExpiry),
+    }),
+  onSuccess: (created) => {
+    showCreateKey = false
+    revealedKey = { key: created.key, name: created.name }
+    newKeyName = ''
+    newKeyScope = 'read'
+    newKeyExpiry = '30'
+    void queryClient.invalidateQueries({ queryKey: ['core', 'apiKeys'] })
+  },
+  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+}))
+
+let keyCopied = $state(false)
+async function copyRevealedKey() {
+  if (!revealedKey) return
+  try {
+    await navigator.clipboard.writeText(revealedKey.key)
+    keyCopied = true
+    setTimeout(() => {
+      keyCopied = false
+    }, 2000)
+  } catch {
+    toast.error(m.error_generic())
+  }
+}
+
+let pendingRevokeKey = $state<{ id: string; name: string } | null>(null)
+
+const revokeKey = createMutation(() => ({
+  mutationFn: (id: string) => api.apiKeys.revoke({ id }),
+  onSuccess: () => {
+    toast.success(m.api_keys_revoked_toast())
+    pendingRevokeKey = null
+    void queryClient.invalidateQueries({ queryKey: ['core', 'apiKeys'] })
+  },
+  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+}))
+
+/** Every key in the workspace, whoever holds it — an integration manager's oversight, not self-service. */
+const allKeys = createQuery(() => ({
+  queryKey: ['core', 'apiKeys', 'all', workspaceId],
+  queryFn: () => api.apiKeys.listAll({ workspaceId }),
+  enabled: Boolean(workspaceId) && apiKeysEnabled && canManage,
+}))
 </script>
 
 <SettingsPage title={m.mcp_settings_title()} description={m.mcp_settings_desc()}>
@@ -193,11 +315,22 @@ const revoke = createMutation(() => ({
           <Switch
             checked={mcpEnabled}
             disabled={!canManage || setCapability.isPending}
-            onCheckedChange={(on) => setCapability.mutate(on)}
+            onCheckedChange={(on) => setCapability.mutate({ capabilityId: 'mcp', on })}
             ariaLabel={m.mcp_enable_label()}
           />
         {/key}
       </div>
+
+      {#if mcpEnabled && canManage}
+        <div class="mt-4 border-t border-[var(--kern-border-hairline)] pt-4">
+          <CapabilityAudiencePicker
+            groups={groups.data ?? []}
+            value={storedAudience.mcp ?? null}
+            disabled={setAudience.isPending}
+            onChange={(g) => setAudience.mutate({ capabilityId: 'mcp', groups: g })}
+          />
+        </div>
+      {/if}
     </SettingsSection>
 
     <SettingsSection title={m.mcp_server_url_title()} description={m.mcp_server_url_hint()}>
@@ -411,6 +544,135 @@ const revoke = createMutation(() => ({
         {/if}
       </section>
     {/if}
+
+    <SettingsSection title={m.api_keys_enable_title()} description={m.api_keys_enable_hint()}>
+      <div class="flex items-center justify-between gap-4">
+        <div class="flex min-w-0 items-center gap-3">
+          <div
+            class="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] {apiKeysEnabled
+              ? 'bg-[var(--kern-accent-tint)] text-[var(--kern-accent-deep)]'
+              : 'bg-[var(--kern-surface-chip)] text-[var(--kern-ink-450)]'}"
+          >
+            <Icon name="key-round" size={16} />
+          </div>
+          <span class="text-[13.5px] font-medium text-[var(--kern-ink-900)]">
+            {m.api_keys_enable_label()}
+          </span>
+        </div>
+        {#key apiKeysEnabled}
+          <Switch
+            checked={apiKeysEnabled}
+            disabled={!canManage || setCapability.isPending}
+            onCheckedChange={(on) => setCapability.mutate({ capabilityId: 'api_keys', on })}
+            ariaLabel={m.api_keys_enable_label()}
+          />
+        {/key}
+      </div>
+
+      {#if apiKeysEnabled && canManage}
+        <div class="mt-4 border-t border-[var(--kern-border-hairline)] pt-4">
+          <CapabilityAudiencePicker
+            groups={groups.data ?? []}
+            value={storedAudience.api_keys ?? null}
+            disabled={setAudience.isPending}
+            onChange={(g) => setAudience.mutate({ capabilityId: 'api_keys', groups: g })}
+          />
+        </div>
+      {/if}
+    </SettingsSection>
+
+    {#if apiKeysEnabled}
+      <SettingsSection title={m.api_keys_title()} description={m.api_keys_desc()}>
+        {#snippet action()}
+          <Button variant="secondary" size="sm" icon="plus" onclick={() => (showCreateKey = true)}>
+            {m.api_keys_new()}
+          </Button>
+        {/snippet}
+
+        {#if myKeys.isPending}
+          <Skeleton class="h-[80px] w-full rounded-[10px]" />
+        {:else if (myKeys.data?.length ?? 0) === 0}
+          <EmptyState bare compact icon="key-round" title={m.api_keys_empty_title()} description={m.api_keys_empty_desc()} />
+        {:else}
+          <ul class="grid gap-2">
+            {#each myKeys.data ?? [] as apiKeyRow (apiKeyRow.id)}
+              <li
+                class="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-[9px] border border-[var(--kern-border-hairline)] px-3 py-2.5"
+              >
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-2">
+                    <span class="truncate text-[13px] font-medium text-[var(--kern-ink-900)]">{apiKeyRow.name}</span>
+                    <span
+                      class="rounded-[6px] bg-[var(--kern-surface-chip)] px-2 py-[2px] text-[11.5px] text-[var(--kern-ink-550)]"
+                    >
+                      {apiKeyRow.scope === 'read_write' ? m.api_keys_scope_read_write() : m.api_keys_scope_read()}
+                    </span>
+                  </div>
+                  <p class="mt-0.5 text-[12px] text-[var(--kern-ink-450)]">
+                    {apiKeyRow.start ? m.api_keys_starts_with({ start: apiKeyRow.start }) : ''}
+                    · {apiKeyRow.lastUsedAt
+                      ? m.mcp_token_last_used({ time: relativeTime(apiKeyRow.lastUsedAt) })
+                      : m.mcp_never_used()}
+                    · {apiKeyRow.expiresAt
+                      ? m.mcp_token_expires({ date: formatDate(apiKeyRow.expiresAt) })
+                      : m.api_keys_never_expires()}
+                  </p>
+                </div>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onclick={() => (pendingRevokeKey = { id: apiKeyRow.id, name: apiKeyRow.name })}
+                >
+                  {m.mcp_revoke()}
+                </Button>
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </SettingsSection>
+
+      {#if canManage}
+        <SettingsSection title={m.api_keys_all_title()} description={m.api_keys_all_desc()}>
+          {#if allKeys.isPending}
+            <Skeleton class="h-[80px] w-full rounded-[10px]" />
+          {:else if (allKeys.data?.length ?? 0) === 0}
+            <EmptyState bare compact icon="key-round" title={m.api_keys_empty_title()} description={m.api_keys_all_empty_desc()} />
+          {:else}
+            <ul class="grid gap-2">
+              {#each allKeys.data ?? [] as apiKeyRow (apiKeyRow.id)}
+                <li
+                  class="flex flex-wrap items-center gap-x-4 gap-y-1 rounded-[9px] border border-[var(--kern-border-hairline)] px-3 py-2.5"
+                >
+                  <div class="min-w-0 flex-1">
+                    <div class="flex items-center gap-2">
+                      <span class="truncate text-[13px] font-medium text-[var(--kern-ink-900)]">{apiKeyRow.name}</span>
+                      <span
+                        class="rounded-[6px] bg-[var(--kern-surface-chip)] px-2 py-[2px] text-[11.5px] text-[var(--kern-ink-550)]"
+                      >
+                        {apiKeyRow.scope === 'read_write' ? m.api_keys_scope_read_write() : m.api_keys_scope_read()}
+                      </span>
+                    </div>
+                    <p class="mt-0.5 text-[12px] text-[var(--kern-ink-450)]">
+                      {m.api_keys_owned_by({ name: apiKeyRow.userName })}
+                      · {apiKeyRow.expiresAt
+                        ? m.mcp_token_expires({ date: formatDate(apiKeyRow.expiresAt) })
+                        : m.api_keys_never_expires()}
+                    </p>
+                  </div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onclick={() => (pendingRevokeKey = { id: apiKeyRow.id, name: apiKeyRow.name })}
+                  >
+                    {m.mcp_revoke()}
+                  </Button>
+                </li>
+              {/each}
+            </ul>
+          {/if}
+        </SettingsSection>
+      {/if}
+    {/if}
   {/if}
 </SettingsPage>
 
@@ -432,6 +694,115 @@ const revoke = createMutation(() => ({
   {#snippet footer()}
     <Button variant="ghost" onclick={() => (pendingRevoke = null)}>{m.cancel()}</Button>
     <Button variant="danger" loading={revoke.isPending} onclick={() => pendingRevoke && revoke.mutate(pendingRevoke.id)}>
+      {m.mcp_revoke_confirm()}
+    </Button>
+  {/snippet}
+</Dialog>
+
+<Dialog
+  open={showCreateKey}
+  onOpenChange={(open) => (showCreateKey = open)}
+  title={m.api_keys_new()}
+  size="sm"
+>
+  <div class="grid gap-3.5">
+    <Field label={m.api_keys_name_label()}>
+      {#snippet children(id)}
+        <Input {id} bind:value={newKeyName} placeholder={m.api_keys_name_placeholder()} autofocus />
+      {/snippet}
+    </Field>
+    <Field label={m.api_keys_scope_label()}>
+      {#snippet children()}
+        <SegmentedControl
+          size="sm"
+          items={[
+            { value: 'read', label: m.api_keys_scope_read() },
+            { value: 'read_write', label: m.api_keys_scope_read_write() },
+          ]}
+          value={newKeyScope}
+          onValueChange={(v) => (newKeyScope = v as 'read' | 'read_write')}
+        />
+      {/snippet}
+    </Field>
+    <Field label={m.api_keys_expiry_label()}>
+      {#snippet children(id)}
+        <Select
+          {id}
+          value={newKeyExpiry}
+          options={[
+            { value: '7', label: m.api_keys_expiry_days({ count: '7' }) },
+            { value: '30', label: m.api_keys_expiry_days({ count: '30' }) },
+            { value: '90', label: m.api_keys_expiry_days({ count: '90' }) },
+            { value: '365', label: m.api_keys_expiry_days({ count: '365' }) },
+            { value: 'never', label: m.api_keys_expiry_never() },
+          ]}
+          onValueChange={(v) => (newKeyExpiry = v)}
+          width="100%"
+        />
+      {/snippet}
+    </Field>
+  </div>
+
+  {#snippet footer()}
+    <Button variant="ghost" onclick={() => (showCreateKey = false)}>{m.cancel()}</Button>
+    <Button loading={createKey.isPending} disabled={!newKeyName.trim()} onclick={() => createKey.mutate()}>
+      {m.api_keys_create()}
+    </Button>
+  {/snippet}
+</Dialog>
+
+<Dialog
+  open={revealedKey !== null}
+  onOpenChange={(open) => {
+    if (!open) revealedKey = null
+  }}
+  title={m.api_keys_created_title()}
+  size="sm"
+>
+  <div class="grid gap-3">
+    <p class="text-[13px] leading-relaxed text-[var(--kern-ink-600)]">{m.api_keys_created_body()}</p>
+    <div class="flex items-center justify-between gap-3">
+      <code
+        class="min-w-0 flex-1 overflow-hidden rounded-[8px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2 font-[var(--kern-font-mono)] text-[12.5px] text-[var(--kern-ink-700)] text-ellipsis whitespace-nowrap"
+        dir="ltr"
+      >
+        {revealedKey?.key ?? ''}
+      </code>
+      <Button
+        variant="secondary"
+        size="sm"
+        onclick={copyRevealedKey}
+        icon={keyCopied ? 'circle-check' : 'copy'}
+      >
+        {keyCopied ? m.copied() : m.mcp_copy_url()}
+      </Button>
+    </div>
+  </div>
+
+  {#snippet footer()}
+    <Button onclick={() => (revealedKey = null)}>{m.api_keys_created_done()}</Button>
+  {/snippet}
+</Dialog>
+
+<Dialog
+  open={pendingRevokeKey !== null}
+  onOpenChange={(open) => {
+    if (!open) pendingRevokeKey = null
+  }}
+  title={pendingRevokeKey ? m.api_keys_revoke_title({ name: pendingRevokeKey.name }) : ''}
+  size="sm"
+>
+  <p class="text-[13px] leading-relaxed text-[var(--kern-ink-600)]">
+    {m.api_keys_revoke_body({ name: pendingRevokeKey?.name ?? '' })}
+  </p>
+
+  {#snippet footer()}
+    <Button variant="ghost" onclick={() => (pendingRevokeKey = null)}>{m.cancel()}</Button>
+    <Button
+      variant="danger"
+      loading={revokeKey.isPending}
+      onclick={() => pendingRevokeKey && revokeKey.mutate(pendingRevokeKey.id)}
+    >
       {m.mcp_revoke_confirm()}
     </Button>
   {/snippet}

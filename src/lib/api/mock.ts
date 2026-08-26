@@ -19,11 +19,19 @@ import { mockObjectUrl } from '$lib/files/mock-storage'
  */
 const MODULE_CAPABILITIES: Record<string, CapabilityDef[]> = {
   /**
-   * Mirrors what core's server manifest declares: MCP is a capability of the `core` module itself,
-   * switched per workspace from Settings → MCP & AI access.
+   * Mirrors what core's server manifest declares: MCP and personal API keys are each a capability
+   * of the `core` module itself, switched per workspace from Settings → API & MCP.
    */
   core: [
-    { id: 'mcp', label: 'MCP & AI access', dependsOn: [], defaultEnabled: false, level: 1, required: false },
+    { id: 'mcp', label: 'MCP (AI access)', dependsOn: [], defaultEnabled: false, level: 2, required: false },
+    {
+      id: 'api_keys',
+      label: 'Personal API keys',
+      dependsOn: [],
+      defaultEnabled: false,
+      level: 2,
+      required: false,
+    },
   ],
   /**
    * Mirrors what `@kernhq/module-hr` declares on the server. A disagreement here is a screen that
@@ -726,7 +734,34 @@ export function createMockApi() {
   )
   // The demo workspace has MCP switched on; the second one has never stored an opinion, so the
   // consent screen's workspace picker has something to filter.
-  state.capabilities.set(`${workspaces[0]!.id}:core`, { mcp: true })
+  state.capabilities.set(`${workspaces[0]!.id}:core`, { mcp: true, api_keys: true })
+
+  /** One key the demo user already made, so the settings page has something to show and revoke. */
+  const apiKeys: Array<{
+    id: string
+    name: string
+    start: string | null
+    scope: 'read' | 'read_write'
+    workspaceId: string
+    userId: string
+    userName: string
+    lastUsedAt: string | null
+    expiresAt: string | null
+    createdAt: string
+  }> = [
+    {
+      id: id(750),
+      name: 'CI pipeline',
+      start: 'kak_a1b2',
+      scope: 'read',
+      workspaceId: workspaces[0]!.id,
+      userId: user.id,
+      userName: user.name,
+      lastUsedAt: iso(3 * 3600_000),
+      expiresAt: new Date(now + 20 * 864e5).toISOString(),
+      createdAt: iso(10 * 864e5),
+    },
+  ]
 
   /**
    * The demo workspace runs HR at its widest, and the reason is not that it looks better.
@@ -1106,6 +1141,52 @@ export function createMockApi() {
           return { ok: true as const }
         },
       },
+    },
+
+    /**
+     * Personal API keys. `list` is always the demo user's own, in one workspace — real self-service,
+     * the same as the server. `listAll` is the admin oversight view and is not filtered by user.
+     */
+    apiKeys: {
+      list: async ({ workspaceId }: { workspaceId: string }) =>
+        apiKeys
+          .filter((k) => k.workspaceId === workspaceId && k.userId === user.id)
+          .map(({ userId: _userId, userName: _userName, ...rest }) => clone(rest)),
+      create: async ({
+        workspaceId,
+        name,
+        scope,
+        expiresInDays,
+      }: {
+        workspaceId: string
+        name: string
+        scope: 'read' | 'read_write'
+        expiresInDays: number | null
+      }) => {
+        const created = {
+          id: id(750 + apiKeys.length),
+          name,
+          start: `kak_${Math.random().toString(36).slice(2, 6)}`,
+          scope,
+          workspaceId,
+          userId: user.id,
+          userName: user.name,
+          lastUsedAt: null as string | null,
+          expiresAt: expiresInDays ? new Date(now + expiresInDays * 864e5).toISOString() : null,
+          createdAt: new Date().toISOString(),
+        }
+        apiKeys.push(created)
+        const { userId: _userId, userName: _userName, ...info } = created
+        return { ...clone(info), key: `${created.start}_${Math.random().toString(36).slice(2, 10)}` }
+      },
+      revoke: async ({ id: keyId }: { id: string }) => {
+        const index = apiKeys.findIndex((k) => k.id === keyId)
+        if (index === -1) throw Object.assign(new Error('key not found'), { code: 'NOT_FOUND' })
+        apiKeys.splice(index, 1)
+        return { ok: true as const }
+      },
+      listAll: async ({ workspaceId }: { workspaceId: string }) =>
+        apiKeys.filter((k) => k.workspaceId === workspaceId).map(clone),
     },
 
     /**
