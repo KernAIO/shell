@@ -26,6 +26,11 @@ const ROUTES: { path: string; name: string }[] = [
   { path: `/${WS}/tracker`, name: 'tracker' },
   { path: `/${WS}/tracker/reports`, name: 'tracker reports' },
   { path: `/${WS}/quire`, name: 'quire' },
+  { path: `/${WS}/quire/handbook`, name: 'quire space' },
+  // The largest surface in the module: the title, the byline, the editor and the comment margin.
+  { path: `/${WS}/quire/handbook/01920000-0000-7000-8000-000000000101`, name: 'quire page' },
+  // The same screen carrying the unpublished-draft banner, which nothing else on this list draws.
+  { path: `/${WS}/quire/handbook/01920000-0000-7000-8000-000000000102`, name: 'quire page with a draft' },
   { path: `/${WS}/quire/handbook/01920000-0000-7000-8000-000000000110`, name: 'quire database' },
   { path: `/${WS}/admin`, name: 'admin' },
   { path: `/${WS}/admin/modules`, name: 'admin modules' },
@@ -161,7 +166,9 @@ for (const theme of ['light', 'dark'] as const) {
 test.describe('phone width', () => {
   test.use({ viewport: { width: 390, height: 844 } })
 
-  for (const route of ROUTES.slice(0, 12)) {
+  // A count rather than a named set, so it silently narrows the moment a route is inserted above it
+  // — three quire routes did exactly that. Grow it by however many you add.
+  for (const route of ROUTES.slice(0, 15)) {
     test(`${route.name} does not scroll sideways`, async ({ page }) => {
       await useRendering(page, RENDERINGS[0])
       await visit(page, route.path)
