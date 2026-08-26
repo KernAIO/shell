@@ -41,7 +41,7 @@
     "@kernhq/module-quire": "^0.10.0",
     "@kernhq/module-tracker": "^0.11.1",
     "@kernhq/sdk": "^0.1.5",
-    "@kernhq/ui": "^0.10.0",
+    "@kernhq/ui": "^0.12.0",
     "@lucide/svelte": "^1.33.0",
     "@tanstack/svelte-query": "^6.1.0",
     "better-auth": "^1.7.1",

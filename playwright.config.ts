@@ -7,6 +7,16 @@ import { defineConfig, devices } from '@playwright/test'
  */
 export default defineConfig({
   testDir: './tests/e2e',
+  /*
+   * `quire-collab.spec.ts` lives here and is not part of this suite.
+   *
+   * Multiplayer cannot be tested against the mock — there is no collab service behind it — so that
+   * file needs Postgres, `core` on :4000 and `collab` on :4300, and the shell *not* in mock mode.
+   * It has its own config and says so in its header, but `testDir` collects every file in the
+   * directory regardless, so it was throwing three times in every CI run and reading as this
+   * suite's failure. Run it with `-c playwright.collab.config.ts`.
+   */
+  testIgnore: /quire-collab\.spec\.ts$/,
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,

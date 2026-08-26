@@ -1,5 +1,5 @@
 <script lang="ts">
-import type { AnyComponent } from '@kernhq/ui'
+import { type AnyComponent, setRouteParams } from '@kernhq/ui'
 import type { ResolvedModuleRoute } from '$lib/modules/routing'
 
 /**
@@ -15,6 +15,23 @@ interface Props {
   workspaceSlug: string
 }
 let { resolved, workspaceId, workspaceSlug }: Props = $props()
+
+/*
+ * Publish the parameters this route matched, so things outside it can read them.
+ *
+ * `:space` and `:page` are declared by the module and matched here; the shell's layout only ever
+ * sees SvelteKit's `{ws, module}`, where `module` is the whole unparsed rest of the path. Passing
+ * `resolved.params` to the page component alone left `navigation.params.space` undefined for
+ * everything else — and Quire's sidebar, which picks the space to draw from it, silently fell back
+ * to the first space in the list. Standing in any space but the first, it listed another space's
+ * pages and every row navigated you out of the one you were reading.
+ *
+ * Cleared on teardown, or the page you left outlives it.
+ */
+$effect(() => {
+  setRouteParams(resolved.params)
+  return () => setRouteParams({})
+})
 
 const loaded = new Map<string, Promise<{ default: AnyComponent }>>()
 
