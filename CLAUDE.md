@@ -342,6 +342,28 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   whichever starts second deletes the other's traces — which is how a failure gets investigated with
   no artefacts at all. The collab config writes to `test-results/collab`; `pnpm test:e2e` owns the
   parent and will still clear it, so do not start that suite while reading a collab failure.
+- **`tests/e2e/quire-a11y.spec.ts` asks whether Quire can be *operated*, which `ux.spec.ts` cannot.**
+  It drives the keyboard and reads the accessibility tree: every control named, no control nested
+  inside another, the page tree expanded/collapsed/opened/grown by Tab and Enter, a database row
+  traversed and a cell committed, a focus ring on every stop, a modal that gives focus back, the
+  Persian tree indenting from the right, and no text muted with `opacity`. Three traps it cost time
+  to learn, and all three make a browser test lie rather than fail:
+  - **`blur()` does not send Tab back to the top of the document.** The browser keeps a *sequential
+    focus navigation starting point* at the last focused element and clearing focus does not clear
+    it, so a second walk carries on from where the first stopped and finds the *next* control with
+    the name it wanted — silently a row lower down the table. Focus `document.documentElement` (with
+    a temporary `tabindex="-1"`) to reset it.
+  - **An uncontrolled input proves nothing about persistence.** `<input value={text}>` keeps
+    whatever the keyboard typed, so asserting on it straight after typing passes even when the
+    commit is a no-op. Leave the view and come back — the component remounts from the store.
+  - **A rule that judged nothing reports nothing.** Both sweeps here passed a blank page until they
+    counted the elements they had looked at and asserted a floor. Every audit-shaped test needs one.
+- **`node build/index.js` needs `PUBLIC_API_MOCK=1` at *runtime*, not only at build time.** It is a
+  dynamic public env var, so serving `build/` without it renders every page blank — and a blank page
+  is how an audit-shaped suite goes green having checked nothing. Worth knowing because copying
+  `build/` somewhere private and serving that is the only way to hold a stable server while another
+  agent rebuilds: a parallel `npm run build` deletes `.svelte-kit/output` under a running
+  `vite preview`, which then dies with ENOENT on a CSS chunk mid-run.
 - **The identity colours were defined twice, and the copy nobody read was the one in CSS.**
   `IDENTITY_COLORS` in `@kernhq/ui/utils.ts` held literal hexes while `--kern-av-*` held the same
   palette in `tokens.css`; every avatar took its ground from the array, so darkening the tokens so
