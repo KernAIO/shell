@@ -85,29 +85,34 @@ $effect(() => {
   if (workspace) localStorage.setItem('kern.workspace', workspace.slug)
 })
 
+/**
+ * Keep the framework's view of the router current.
+ *
+ * Module screens cannot import `$app/navigation` or `$app/state` — a module package is compiled on
+ * its own, where those aliases do not exist — so the shell publishes the location here and modules
+ * read it. Forget this and a module's sidebar stops highlighting the page you are on, silently.
+ *
+ * Unconditional on purpose: this used to sit inside the realtime effect below, gated on `!authDisabled()`
+ * — routing has nothing to do with auth, but the guard skipped it anyway, so in mock mode (where
+ * `authDisabled()` is always true) no module page ever learned which workspace it was in and every
+ * one of them sat on whatever it renders while waiting to find out.
+ */
+$effect(() => {
+  setNavigation({
+    pathname: page.url.pathname,
+    params: page.params as Record<string, string>,
+    search: page.url.searchParams,
+    go: (href: string, opts) => void goto(href, opts),
+    // A module names the view it is showing; here that becomes the tab's label.
+    describe: (view) =>
+      tabs.describe(relativeHref(page.url.pathname, page.url.search, page.params.ws ?? ''), view),
+  })
+})
+
 // one socket for every workspace the user belongs to: notifications from a workspace you are not
 // looking at still light up its badge in the rail
 $effect(() => {
   if (!me.data || authDisabled()) return
-  /**
-   * Keep the framework's view of the router current.
-   *
-   * Module screens cannot import `$app/navigation` or `$app/state` — a module package is compiled on
-   * its own, where those aliases do not exist — so the shell publishes the location here and modules
-   * read it. Forget this and a module's sidebar stops highlighting the page you are on, silently.
-   */
-  $effect(() => {
-    setNavigation({
-      pathname: page.url.pathname,
-      params: page.params as Record<string, string>,
-      search: page.url.searchParams,
-      go: (href: string, opts) => void goto(href, opts),
-      // A module names the view it is showing; here that becomes the tab's label.
-      describe: (view) =>
-        tabs.describe(relativeHref(page.url.pathname, page.url.search, page.params.ws ?? ''), view),
-    })
-  })
-
   const url = realtimeUrl()
   if (url) realtime.connect({ url, queryClient, getToken: () => null })
   for (const w of me.data.workspaces) realtime.watchWorkspace(w.id)
