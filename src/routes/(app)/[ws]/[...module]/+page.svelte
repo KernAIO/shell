@@ -19,8 +19,8 @@ import { session } from '$lib/state/session.svelte'
  * UI moves into the modules, their hand-written files are deleted and this is what serves them.
  *
  * The same gates apply as everywhere else contributions are read: the workspace must have the
- * module enabled, the capability on, and the person allowed — otherwise this renders nothing and
- * SvelteKit's error page answers, mirroring the API's 404.
+ * module enabled, the capability on, and the person allowed — otherwise nothing resolves and the
+ * app's own not-found screen answers below, mirroring the API's 404.
  */
 const api = getApi()
 
