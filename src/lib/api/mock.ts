@@ -8,6 +8,7 @@
  */
 
 import { type CapabilityDef, resolveCapabilities } from '@kernhq/contracts'
+import { hrCapabilities } from '@kernhq/module-hr/contract'
 import { mockObjectUrl } from '$lib/files/mock-storage'
 
 /**
@@ -16,6 +17,13 @@ import { mockObjectUrl } from '$lib/files/mock-storage'
  * Empty for every module that has none — which is all of them until one grows some. A module missing
  * from here is not a bug; a module whose entry disagrees with its server's is, and it shows up as a
  * nav row that works in `dev:mock` and 404s against core.
+ *
+ * **Import the module's own declarations where they are reachable rather than copying them.** HR's
+ * were hand-copied and fell two behind: `resolveCapabilities` prunes a stored key the module no
+ * longer declares, so `periods` and `leave_accrual` were pruned out of the demo workspace however
+ * they were stored — and the switchboard, which lists what is declared, did not offer them either.
+ * Two capabilities could not be switched on from the interface at all, and one of them had just
+ * grown a screen. A module's contract entry is zod and types only, so importing it costs nothing.
  */
 const MODULE_CAPABILITIES: Record<string, CapabilityDef[]> = {
   /**
@@ -37,73 +45,8 @@ const MODULE_CAPABILITIES: Record<string, CapabilityDef[]> = {
    * Mirrors what `@kernhq/module-hr` declares on the server. A disagreement here is a screen that
    * works in `dev:mock` and 404s against core, which is the one failure the mock exists to prevent.
    */
-  hr: [
-    { id: 'core', label: 'People', dependsOn: [], defaultEnabled: false, level: 1, required: true },
-    {
-      id: 'offices',
-      label: 'Offices',
-      dependsOn: ['core'],
-      defaultEnabled: false,
-      level: 2,
-      required: false,
-    },
-    {
-      id: 'legal_entities',
-      label: 'Legal entities',
-      dependsOn: ['offices'],
-      defaultEnabled: false,
-      level: 3,
-      required: false,
-    },
-    {
-      id: 'calendars',
-      label: 'Holiday calendars',
-      dependsOn: ['core'],
-      defaultEnabled: true,
-      level: 1,
-      required: false,
-    },
-    {
-      id: 'attendance',
-      label: 'Attendance',
-      dependsOn: ['core', 'calendars'],
-      defaultEnabled: false,
-      level: 1,
-      required: false,
-    },
-    {
-      id: 'overtime',
-      label: 'Overtime',
-      dependsOn: ['attendance'],
-      defaultEnabled: false,
-      level: 2,
-      required: false,
-    },
-    {
-      id: 'documents',
-      label: 'Employee documents',
-      dependsOn: ['core'],
-      defaultEnabled: false,
-      level: 2,
-      required: false,
-    },
-    {
-      id: 'leave',
-      label: 'Leave',
-      dependsOn: ['core', 'calendars'],
-      defaultEnabled: true,
-      level: 1,
-      required: false,
-    },
-    {
-      id: 'approvals',
-      label: 'Approval chains',
-      dependsOn: ['core'],
-      defaultEnabled: false,
-      level: 2,
-      required: false,
-    },
-  ],
+  // The module's own eleven, imported rather than restated — see the note above.
+  hr: hrCapabilities as unknown as CapabilityDef[],
 }
 const capabilityDefs = (moduleId: string): CapabilityDef[] => MODULE_CAPABILITIES[moduleId] ?? []
 
