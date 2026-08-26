@@ -19,6 +19,13 @@ import { mockObjectUrl } from '$lib/files/mock-storage'
  */
 const MODULE_CAPABILITIES: Record<string, CapabilityDef[]> = {
   /**
+   * Mirrors what core's server manifest declares: MCP is a capability of the `core` module itself,
+   * switched per workspace from Settings → MCP & AI access.
+   */
+  core: [
+    { id: 'mcp', label: 'MCP & AI access', dependsOn: [], defaultEnabled: false, level: 1, required: false },
+  ],
+  /**
    * Mirrors what `@kernhq/module-hr` declares on the server. A disagreement here is a screen that
    * works in `dev:mock` and 404s against core, which is the one failure the mock exists to prevent.
    */
@@ -584,6 +591,8 @@ export function createMockApi() {
     enabled: new Map<string, Set<string>>(),
     /** `<workspaceId>:<moduleId>` → what the switchboard stored; absent means "never touched". */
     capabilities: new Map<string, Record<string, boolean>>(),
+    /** `<workspaceId>:<moduleId>` → the settings object `updateSettings` last wrote. */
+    moduleSettings: new Map<string, Record<string, unknown>>(),
     invitations: [] as Array<Record<string, unknown>>,
     dashboards: new Map<
       string,
@@ -643,6 +652,68 @@ export function createMockApi() {
   const capabilitiesFor = (workspaceId: string, moduleId: string) => [
     ...resolveCapabilities(capabilityDefs(moduleId), state.capabilities.get(`${workspaceId}:${moduleId}`)),
   ]
+
+  /**
+   * MCP demo data. One connected client with a token per member who used it, and one pending
+   * authorization request at the fixed id the consent screen is opened with — enough for the
+   * settings page and `/authorize` to behave against exactly as they do against core.
+   */
+  const mcpClient = {
+    clientId: 'mock-client-claude',
+    name: 'Claude Desktop',
+    clientUri: 'https://claude.ai',
+    logoUri: null as string | null,
+    redirectUris: ['https://claude.ai/api/mcp/auth/callback'],
+    firstParty: false,
+    createdBy: user.id,
+    createdAt: iso(6 * 864e5),
+    workspaceId: workspaces[0]!.id,
+    activeTokens: 2,
+    lastUsedAt: iso(2 * 3600_000) as string | null,
+  }
+  const mcpTokens = [
+    {
+      id: id(701),
+      clientId: mcpClient.clientId,
+      clientName: mcpClient.name,
+      userId: user.id,
+      userName: user.name,
+      workspaceId: workspaces[0]!.id,
+      scopes: ['tracker:read', 'tracker:write', 'chat:read'],
+      createdAt: iso(6 * 864e5),
+      lastUsedAt: iso(2 * 3600_000) as string | null,
+      expiresAt: new Date(now + 84 * 864e5).toISOString(),
+    },
+    {
+      id: id(702),
+      clientId: mcpClient.clientId,
+      clientName: mcpClient.name,
+      userId: people[1]!.id,
+      userName: people[1]!.name,
+      workspaceId: workspaces[0]!.id,
+      scopes: ['tracker:read'],
+      createdAt: iso(5 * 864e5),
+      lastUsedAt: iso(26 * 3600_000),
+      expiresAt: new Date(now + 85 * 864e5).toISOString(),
+    },
+  ]
+  const mcpRequests = new Map(
+    [
+      {
+        id: 'mock-auth-request',
+        clientName: mcpClient.name,
+        clientUri: mcpClient.clientUri,
+        logoUri: mcpClient.logoUri,
+        scopes: ['tracker:read', 'tracker:write'],
+        returning: true,
+        expiresAt: new Date(now + 10 * 60_000).toISOString(),
+      },
+    ].map((r) => [r.id, r]),
+  )
+  // The demo workspace has MCP switched on; the second one has never stored an opinion, so the
+  // consent screen's workspace picker has something to filter.
+  state.capabilities.set(`${workspaces[0]!.id}:core`, { mcp: true })
+
   const summary = (w: (typeof workspaces)[number]) => {
     const unread = state.notifications.filter(
       (n) => n.workspaceId === w.id && !n.readAt && !n.archivedAt,
@@ -885,7 +956,7 @@ export function createMockApi() {
             state: {
               moduleId: m.id,
               enabled: m.core || on.has(m.id),
-              settings: {},
+              settings: clone(state.moduleSettings.get(`${workspaceId}:${m.id}`) ?? {}),
               installedVersion: m.version,
               capabilities: capabilitiesFor(workspaceId, m.id),
             },
@@ -905,12 +976,29 @@ export function createMockApi() {
           else on.delete(moduleId)
           return { moduleId, enabled, settings: {}, installedVersion: '0.1.0' }
         },
-        updateSettings: async ({ moduleId, settings }: { moduleId: string; settings: unknown }) => ({
+        updateSettings: async ({
+          workspaceId,
           moduleId,
-          enabled: true,
-          settings: settings as Record<string, unknown>,
-          installedVersion: '0.1.0',
-        }),
+          settings,
+        }: {
+          workspaceId: string
+          moduleId: string
+          settings: Record<string, unknown>
+        }) => {
+          const key = `${workspaceId}:${moduleId}`
+          // Merged, the way core merges: a module's own settings and the reserved `$capabilities`
+          // key are written one key at a time from different screens.
+          const stored = { ...(state.moduleSettings.get(key) ?? {}), ...clone(settings) }
+          state.moduleSettings.set(key, stored)
+          if (stored.$capabilities && typeof stored.$capabilities === 'object')
+            state.capabilities.set(key, clone(stored.$capabilities as Record<string, boolean>))
+          return {
+            moduleId,
+            enabled: enabledFor(workspaceId).has(moduleId),
+            settings: clone(stored),
+            installedVersion: '0.1.0',
+          }
+        },
       },
 
       audit: async ({ workspaceId }: { workspaceId: string }) => ({
@@ -929,6 +1017,57 @@ export function createMockApi() {
         ],
         nextCursor: null,
       }),
+    },
+
+    /**
+     * MCP: the consent decision, the connected clients and their live tokens. Mirrors core's
+     * authorisation rules closely enough to exercise the interface: `authorize.*` answers only for
+     * its owner (the demo user is everyone here), and revoking one of a connection's tokens removes
+     * all of them.
+     */
+    mcp: {
+      authorize: {
+        get: async ({ id }: { id: string }) => {
+          const request = mcpRequests.get(id)
+          if (!request)
+            throw Object.assign(new Error('authorization request not found'), { code: 'NOT_FOUND' })
+          return clone(request)
+        },
+        approve: async ({ id }: { id: string; workspaceId: string }) => {
+          const request = mcpRequests.get(id)
+          if (!request)
+            throw Object.assign(new Error('authorization request not found'), { code: 'NOT_FOUND' })
+          return { redirectUrl: `${mcpClient.redirectUris[0]}?code=mock-auth-code&state=mock` }
+        },
+        deny: async ({ id }: { id: string }) => {
+          const request = mcpRequests.get(id)
+          if (!request)
+            throw Object.assign(new Error('authorization request not found'), { code: 'NOT_FOUND' })
+          return { redirectUrl: `${mcpClient.clientUri}?mcp=denied` }
+        },
+      },
+      clients: {
+        list: async ({ workspaceId }: { workspaceId: string }) =>
+          mcpClient.workspaceId === workspaceId ? [clone(mcpClient)] : [],
+      },
+      tokens: {
+        list: async ({ workspaceId }: { workspaceId: string }) =>
+          mcpTokens.filter((t) => t.workspaceId === workspaceId).map(clone),
+        revoke: async ({ id }: { id: string }) => {
+          const token = mcpTokens.find((t) => t.id === id)
+          if (!token) throw Object.assign(new Error('token not found'), { code: 'NOT_FOUND' })
+          for (const other of [...mcpTokens])
+            if (
+              other.clientId === token.clientId &&
+              other.userId === token.userId &&
+              other.workspaceId === token.workspaceId
+            )
+              mcpTokens.splice(mcpTokens.indexOf(other), 1)
+          mcpClient.activeTokens = Math.max(0, mcpClient.activeTokens - 1)
+          if (mcpClient.activeTokens === 0) mcpClient.lastUsedAt = null
+          return { ok: true as const }
+        },
+      },
     },
 
     /**

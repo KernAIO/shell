@@ -46,6 +46,12 @@ const workspaceLinks = $derived(
         icon: 'plug',
         permission: 'core.integrations.manage',
       },
+      {
+        path: '/mcp',
+        label: m.mcp_settings_title(),
+        icon: 'bot',
+        permission: 'core.integrations.manage',
+      },
       { path: '/audit', label: m.settings_audit(), icon: 'scroll-text', permission: 'core.audit.view' },
     ] satisfies NavLink[]
   ).filter((l) => !l.permission || session.can(l.permission)),
