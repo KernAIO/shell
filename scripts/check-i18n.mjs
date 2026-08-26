@@ -48,8 +48,10 @@ const SAME_AS_ENGLISH_IS_FINE = new Set([
   'home_subtitle',
   // Product names an MCP client's own UI shows verbatim — translating them would name a button the
   // app you land in doesn't have.
+  'mcp_connect_chatgpt',
   'mcp_connect_claude',
   'mcp_connect_claude_code',
+  'mcp_connect_codex',
   'mcp_connect_cursor',
   'mcp_connect_vscode',
   'mcp_connect_vscode_insiders',

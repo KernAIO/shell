@@ -1070,5 +1070,14 @@
   "mcp_connect_claude_code_hint": "Führen Sie dies in einem Terminal aus, und genehmigen Sie die Verbindung, sobald sich Ihr Browser öffnet.",
   "mcp_connect_copy_command": "Befehl kopieren",
   "mcp_connect_claude": "Claude",
-  "mcp_connect_claude_hint": "Gehen Sie in Claude zu Einstellungen → Connectors → Benutzerdefinierten Connector hinzufügen, und fügen Sie die Server-URL oben ein."
+  "mcp_connect_claude_hint": "Gehen Sie in Claude zu Einstellungen → Connectors → Benutzerdefinierten Connector hinzufügen, und fügen Sie die Server-URL oben ein.",
+  "mcp_connect_cursor_hint": "Ein Klick öffnet Cursor mit bereits vorausgefülltem Server — den Rest erledigt es von selbst.",
+  "mcp_connect_vscode_hint": "Ein Klick öffnet VS Code mit bereits vorausgefülltem Server — den Rest erledigt es von selbst.",
+  "mcp_connect_copy_config": "Konfiguration kopieren",
+  "mcp_connect_chatgpt": "ChatGPT",
+  "mcp_connect_chatgpt_hint": "Aktivieren Sie in ChatGPT den Entwicklermodus unter Einstellungen → Connectors → Erweitert, gehen Sie dann zu Einstellungen → Apps & Connectors → Erstellen, fügen Sie die Server-URL oben ein und stellen Sie die Authentifizierung auf OAuth.",
+  "mcp_connect_codex": "Codex",
+  "mcp_connect_codex_hint": "Fügen Sie dies zu ~/.codex/config.toml hinzu, und führen Sie dann den unten stehenden Befehl aus, um die Verbindung herzustellen.",
+  "mcp_connect_other": "Andere",
+  "mcp_connect_other_hint": "Die meisten MCP-Clients lesen einen Remote-Server auf diese Weise — fügen Sie dies in die MCP-Einstellungen Ihres Clients ein, oder nur die Server-URL oben, falls das alles ist, wonach er fragt."
 }

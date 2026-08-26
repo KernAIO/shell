@@ -1064,11 +1064,20 @@
   "mcp_connect_desc": "Add this server to an AI tool your team already uses. Each one asks you to approve the connection before it can do anything.",
   "mcp_connect_add_button": "Add to {client}",
   "mcp_connect_cursor": "Cursor",
+  "mcp_connect_cursor_hint": "One click opens Cursor with this server pre-filled — it handles the rest itself.",
   "mcp_connect_vscode": "VS Code",
   "mcp_connect_vscode_insiders": "Insiders",
+  "mcp_connect_vscode_hint": "One click opens VS Code with this server pre-filled — it handles the rest itself.",
   "mcp_connect_claude_code": "Claude Code",
   "mcp_connect_claude_code_hint": "Run this in a terminal, then approve the connection when it opens your browser.",
   "mcp_connect_copy_command": "Copy command",
+  "mcp_connect_copy_config": "Copy config",
   "mcp_connect_claude": "Claude",
-  "mcp_connect_claude_hint": "In Claude, go to Settings → Connectors → Add custom connector, and paste the server URL above."
+  "mcp_connect_claude_hint": "In Claude, go to Settings → Connectors → Add custom connector, and paste the server URL above.",
+  "mcp_connect_chatgpt": "ChatGPT",
+  "mcp_connect_chatgpt_hint": "In ChatGPT, turn on Developer mode under Settings → Connectors → Advanced, then go to Settings → Apps & Connectors → Create, paste the server URL above, and set Authentication to OAuth.",
+  "mcp_connect_codex": "Codex",
+  "mcp_connect_codex_hint": "Add this to ~/.codex/config.toml, then run the command below to connect.",
+  "mcp_connect_other": "Other",
+  "mcp_connect_other_hint": "Most MCP clients read a remote server this way — paste this into your client's MCP settings, or just the server URL above if that's all it asks for."
 }

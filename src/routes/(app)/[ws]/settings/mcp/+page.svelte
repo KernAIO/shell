@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, Dialog, EmptyState, Icon, Skeleton, Switch, toast } from '@kernhq/ui'
+import { Button, Dialog, EmptyState, Icon, Skeleton, Switch, Tabs, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { env } from '$env/dynamic/public'
@@ -104,6 +104,29 @@ const vscodeInsidersInstallUrl = $derived(
 )
 /** `claude mcp add` speaks HTTP + OAuth natively — no flags beyond a name and this server's URL. */
 const claudeCodeCommand = $derived(`claude mcp add --transport http ${clientName} ${serverUrl}`)
+/**
+ * Codex reads its servers from a TOML file rather than taking a URL on its own `mcp add` command,
+ * so a config block is the reliable instruction — `codex mcp login` is what actually runs the OAuth
+ * flow, whether the entry was typed by hand or pasted from here.
+ */
+const codexConfig = $derived(`[mcp_servers.${clientName}]\nurl = "${serverUrl}"\nauth = "oauth"`)
+const codexLoginCommand = $derived(`codex mcp login ${clientName}`)
+/** The shape most clients that aren't listed by name still read: an `mcpServers` map keyed by name. */
+const otherConfig = $derived(
+  JSON.stringify({ mcpServers: { [clientName]: { type: 'http', url: serverUrl } } }, null, 2),
+)
+
+type ConnectTab = { value: string; label: string; icon: string }
+const connectTabs = $derived.by<ConnectTab[]>(() => [
+  { value: 'cursor', label: m.mcp_connect_cursor(), icon: 'code' },
+  { value: 'vscode', label: m.mcp_connect_vscode(), icon: 'square-code' },
+  { value: 'claude-code', label: m.mcp_connect_claude_code(), icon: 'command' },
+  { value: 'claude', label: m.mcp_connect_claude(), icon: 'bot' },
+  { value: 'chatgpt', label: m.mcp_connect_chatgpt(), icon: 'message-circle' },
+  { value: 'codex', label: m.mcp_connect_codex(), icon: 'command' },
+  { value: 'other', label: m.mcp_connect_other(), icon: 'puzzle' },
+])
+let activeConnectTab = $state('cursor')
 
 const clients = createQuery(() => ({
   queryKey: ['core', 'mcp', 'client', workspaceId],
@@ -199,72 +222,110 @@ const revoke = createMutation(() => ({
       />
     {:else}
       <SettingsSection title={m.mcp_connect_title()} description={m.mcp_connect_desc()}>
-        <div class="grid gap-2">
-          <div
-            class="flex flex-wrap items-center justify-between gap-3 rounded-[9px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2.5"
-          >
-            <div class="flex items-center gap-2.5 text-[13px] font-medium text-[var(--kern-ink-800)]">
-              <Icon name="code" size={16} class="text-[var(--kern-ink-450)]" />
-              <span>{m.mcp_connect_cursor()}</span>
+        <Tabs items={connectTabs} bind:value={activeConnectTab} variant="pill" label={m.mcp_connect_title()}>
+          {#snippet children(value)}
+            <div class="grid gap-2.5 pt-3">
+              {#if value === 'cursor'}
+                <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_cursor_hint()}</p>
+                <div>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    href={cursorInstallUrl}
+                    data-sveltekit-reload
+                    icon="download"
+                  >
+                    {m.mcp_connect_add_button({ client: m.mcp_connect_cursor() })}
+                  </Button>
+                </div>
+              {:else if value === 'vscode'}
+                <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_vscode_hint()}</p>
+                <div class="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    href={vscodeInstallUrl}
+                    data-sveltekit-reload
+                    icon="download"
+                  >
+                    {m.mcp_connect_add_button({ client: m.mcp_connect_vscode() })}
+                  </Button>
+                  <Button variant="ghost" size="sm" href={vscodeInsidersInstallUrl} data-sveltekit-reload>
+                    {m.mcp_connect_vscode_insiders()}
+                  </Button>
+                </div>
+              {:else if value === 'claude-code'}
+                <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_claude_code_hint()}</p>
+                <div class="flex items-center justify-between gap-3">
+                  <code
+                    class="min-w-0 flex-1 overflow-hidden rounded-[8px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2 font-[var(--kern-font-mono)] text-[12px] text-[var(--kern-ink-700)] text-ellipsis whitespace-nowrap"
+                    dir="ltr"
+                  >
+                    {claudeCodeCommand}
+                  </code>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onclick={() => copyText('claude-code', claudeCodeCommand)}
+                    icon={copiedKey === 'claude-code' ? 'circle-check' : 'copy'}
+                  >
+                    {copiedKey === 'claude-code' ? m.copied() : m.mcp_connect_copy_command()}
+                  </Button>
+                </div>
+              {:else if value === 'claude'}
+                <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_claude_hint()}</p>
+              {:else if value === 'chatgpt'}
+                <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_chatgpt_hint()}</p>
+              {:else if value === 'codex'}
+                <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_codex_hint()}</p>
+                <div class="flex items-start justify-between gap-3">
+                  <pre
+                    class="min-w-0 flex-1 overflow-x-auto rounded-[8px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2 font-[var(--kern-font-mono)] text-[12px] text-[var(--kern-ink-700)]"
+                    dir="ltr"><code>{codexConfig}</code></pre>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onclick={() => copyText('codex-config', codexConfig)}
+                    icon={copiedKey === 'codex-config' ? 'circle-check' : 'copy'}
+                  >
+                    {copiedKey === 'codex-config' ? m.copied() : m.mcp_connect_copy_config()}
+                  </Button>
+                </div>
+                <div class="flex items-center justify-between gap-3">
+                  <code
+                    class="min-w-0 flex-1 overflow-hidden rounded-[8px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2 font-[var(--kern-font-mono)] text-[12px] text-[var(--kern-ink-700)] text-ellipsis whitespace-nowrap"
+                    dir="ltr"
+                  >
+                    {codexLoginCommand}
+                  </code>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onclick={() => copyText('codex-login', codexLoginCommand)}
+                    icon={copiedKey === 'codex-login' ? 'circle-check' : 'copy'}
+                  >
+                    {copiedKey === 'codex-login' ? m.copied() : m.mcp_connect_copy_command()}
+                  </Button>
+                </div>
+              {:else if value === 'other'}
+                <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_other_hint()}</p>
+                <div class="flex items-start justify-between gap-3">
+                  <pre
+                    class="min-w-0 flex-1 overflow-x-auto rounded-[8px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2 font-[var(--kern-font-mono)] text-[12px] text-[var(--kern-ink-700)]"
+                    dir="ltr"><code>{otherConfig}</code></pre>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onclick={() => copyText('other-config', otherConfig)}
+                    icon={copiedKey === 'other-config' ? 'circle-check' : 'copy'}
+                  >
+                    {copiedKey === 'other-config' ? m.copied() : m.mcp_connect_copy_config()}
+                  </Button>
+                </div>
+              {/if}
             </div>
-            <Button variant="secondary" size="sm" href={cursorInstallUrl} data-sveltekit-reload icon="download">
-              {m.mcp_connect_add_button({ client: m.mcp_connect_cursor() })}
-            </Button>
-          </div>
-
-          <div
-            class="flex flex-wrap items-center justify-between gap-3 rounded-[9px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2.5"
-          >
-            <div class="flex items-center gap-2.5 text-[13px] font-medium text-[var(--kern-ink-800)]">
-              <Icon name="square-code" size={16} class="text-[var(--kern-ink-450)]" />
-              <span>{m.mcp_connect_vscode()}</span>
-            </div>
-            <div class="flex items-center gap-2">
-              <Button variant="secondary" size="sm" href={vscodeInstallUrl} data-sveltekit-reload icon="download">
-                {m.mcp_connect_add_button({ client: m.mcp_connect_vscode() })}
-              </Button>
-              <Button variant="ghost" size="sm" href={vscodeInsidersInstallUrl} data-sveltekit-reload>
-                {m.mcp_connect_vscode_insiders()}
-              </Button>
-            </div>
-          </div>
-
-          <div
-            class="grid gap-2 rounded-[9px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2.5"
-          >
-            <div class="flex items-center gap-2.5 text-[13px] font-medium text-[var(--kern-ink-800)]">
-              <Icon name="command" size={16} class="text-[var(--kern-ink-450)]" />
-              <span>{m.mcp_connect_claude_code()}</span>
-            </div>
-            <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_claude_code_hint()}</p>
-            <div class="flex items-center justify-between gap-3">
-              <code
-                class="min-w-0 flex-1 overflow-hidden rounded-[8px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-raised)] px-3 py-2 font-[var(--kern-font-mono)] text-[12px] text-[var(--kern-ink-700)] text-ellipsis whitespace-nowrap"
-                dir="ltr"
-              >
-                {claudeCodeCommand}
-              </code>
-              <Button
-                variant="secondary"
-                size="sm"
-                onclick={() => copyText('claude-code', claudeCodeCommand)}
-                icon={copiedKey === 'claude-code' ? 'circle-check' : 'copy'}
-              >
-                {copiedKey === 'claude-code' ? m.copied() : m.mcp_connect_copy_command()}
-              </Button>
-            </div>
-          </div>
-
-          <div
-            class="grid gap-1 rounded-[9px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2.5"
-          >
-            <div class="flex items-center gap-2.5 text-[13px] font-medium text-[var(--kern-ink-800)]">
-              <Icon name="bot" size={16} class="text-[var(--kern-ink-450)]" />
-              <span>{m.mcp_connect_claude()}</span>
-            </div>
-            <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_claude_hint()}</p>
-          </div>
-        </div>
+          {/snippet}
+        </Tabs>
       </SettingsSection>
 
       <section class="grid gap-2.5">

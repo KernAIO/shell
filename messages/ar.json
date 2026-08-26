@@ -1186,5 +1186,14 @@
   "mcp_connect_claude_code_hint": "نفّذ هذا في الطرفية، ثم وافق على الاتصال عندما يفتح متصفحك.",
   "mcp_connect_copy_command": "نسخ الأمر",
   "mcp_connect_claude": "Claude",
-  "mcp_connect_claude_hint": "في Claude، اذهب إلى الإعدادات ← الموصلات ← إضافة موصل مخصص، والصق عنوان الخادم أعلاه."
+  "mcp_connect_claude_hint": "في Claude، اذهب إلى الإعدادات ← الموصلات ← إضافة موصل مخصص، والصق عنوان الخادم أعلاه.",
+  "mcp_connect_cursor_hint": "نقرة واحدة تفتح Cursor وهذا الخادم مُعَدّ فيه مسبقًا — يتولى الباقي بنفسه.",
+  "mcp_connect_vscode_hint": "نقرة واحدة تفتح VS Code وهذا الخادم مُعَدّ فيه مسبقًا — يتولى الباقي بنفسه.",
+  "mcp_connect_copy_config": "نسخ التكوين",
+  "mcp_connect_chatgpt": "ChatGPT",
+  "mcp_connect_chatgpt_hint": "في ChatGPT، فعّل وضع المطوّر ضمن الإعدادات ← الموصلات ← متقدم، ثم اذهب إلى الإعدادات ← التطبيقات والموصلات ← إنشاء، والصق عنوان الخادم أعلاه، واضبط المصادقة على OAuth.",
+  "mcp_connect_codex": "Codex",
+  "mcp_connect_codex_hint": "أضف هذا إلى ~/.codex/config.toml، ثم نفّذ الأمر أدناه للاتصال.",
+  "mcp_connect_other": "أخرى",
+  "mcp_connect_other_hint": "تقرأ معظم عملاء MCP خادمًا عن بُعد بهذه الطريقة — الصق هذا في إعدادات MCP الخاصة بعميلك، أو فقط عنوان الخادم أعلاه إذا كان هذا كل ما يطلبه."
 }

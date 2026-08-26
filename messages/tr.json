@@ -1070,5 +1070,14 @@
   "mcp_connect_claude_code_hint": "Bunu bir terminalde çalıştırın, sonra tarayıcınız açıldığında bağlantıyı onaylayın.",
   "mcp_connect_copy_command": "Komutu kopyala",
   "mcp_connect_claude": "Claude",
-  "mcp_connect_claude_hint": "Claude'da Ayarlar → Bağlayıcılar → Özel bağlayıcı ekle'ye gidin ve yukarıdaki sunucu adresini yapıştırın."
+  "mcp_connect_claude_hint": "Claude'da Ayarlar → Bağlayıcılar → Özel bağlayıcı ekle'ye gidin ve yukarıdaki sunucu adresini yapıştırın.",
+  "mcp_connect_cursor_hint": "Tek tıkla Cursor, bu sunucu önceden doldurulmuş şekilde açılır — gerisini kendisi halleder.",
+  "mcp_connect_vscode_hint": "Tek tıkla VS Code, bu sunucu önceden doldurulmuş şekilde açılır — gerisini kendisi halleder.",
+  "mcp_connect_copy_config": "Yapılandırmayı kopyala",
+  "mcp_connect_chatgpt": "ChatGPT",
+  "mcp_connect_chatgpt_hint": "ChatGPT'de, Ayarlar → Bağlayıcılar → Gelişmiş altında Geliştirici modunu açın, ardından Ayarlar → Uygulamalar ve Bağlayıcılar → Oluştur'a gidin, yukarıdaki sunucu adresini yapıştırın ve Kimlik Doğrulama'yı OAuth olarak ayarlayın.",
+  "mcp_connect_codex": "Codex",
+  "mcp_connect_codex_hint": "Bunu ~/.codex/config.toml dosyasına ekleyin, ardından bağlanmak için aşağıdaki komutu çalıştırın.",
+  "mcp_connect_other": "Diğer",
+  "mcp_connect_other_hint": "Çoğu MCP istemcisi bir uzak sunucuyu bu şekilde okur — bunu istemcinizin MCP ayarlarına yapıştırın, ya da yalnızca bunu istiyorsa yukarıdaki sunucu adresini yapıştırın."
 }
