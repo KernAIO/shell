@@ -436,7 +436,9 @@ test('a recording can be discarded without sending', async ({ page }) => {
 
   const before = await page.getByTestId('message').count()
   await page.getByTestId('record-voice').click()
-  await expect(page.getByTestId('recorder-bar')).toHaveAttribute('data-state', 'recording', { timeout: 10_000 })
+  await expect(page.getByTestId('recorder-bar')).toHaveAttribute('data-state', 'recording', {
+    timeout: 10_000,
+  })
 
   await page.getByTestId('discard-recording').click()
   await expect(page.getByTestId('recorder-bar')).toBeHidden()
@@ -451,7 +453,9 @@ test('a video message records and sends', async ({ page }) => {
 
   const before = await page.getByTestId('message').count()
   await page.getByTestId('record-video').click()
-  await expect(page.getByTestId('recorder-bar')).toHaveAttribute('data-state', 'recording', { timeout: 10_000 })
+  await expect(page.getByTestId('recorder-bar')).toHaveAttribute('data-state', 'recording', {
+    timeout: 10_000,
+  })
   await page.waitForTimeout(1200)
 
   await page.getByTestId('stop-recording').click()
