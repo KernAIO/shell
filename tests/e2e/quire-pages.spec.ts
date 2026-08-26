@@ -152,36 +152,57 @@ test('a node expands and collapses, and opening a child is one click', async ({ 
   await expect(titleField(page)).toHaveValue('Your first week')
 })
 
-/**
- * KNOWN DEFECT — expected to fail, and expected to be deleted when it is fixed.
+/*
+ * The sidebar knows which space and which page the URL names.
  *
- * The sidebar never learns which space or page the URL names, so all three of these are wrong at
- * once: no row is marked `aria-current`, a link straight to a nested page does not open its
- * ancestors, and — worst — standing in a space the sidebar does not know about, it draws the *first*
- * space's tree, so every row in it navigates you out of the space you were reading.
+ * It did not, and the cause was one line outside this module: `+layout.svelte` publishes
+ * SvelteKit's `page.params` — `{ ws, module }`, where `module` is the whole unparsed rest of the
+ * path — through `setNavigation`, while a module route's own `:space`/`:page` are matched by
+ * `resolveModuleRoute` and handed to the page component as props and nowhere else. `SidebarSpaces`
+ * is not the page component, so it read `undefined` and `activeSpace` fell back to `spaceList[0]`.
  *
- * The cause is one line outside this module. `src/routes/(app)/[ws]/+layout.svelte` publishes
- * SvelteKit's `page.params` — `{ ws, module }` — through `setNavigation`, while the module route's
- * own parameters are matched by `resolveModuleRoute` and handed to the *page component* as props
- * and nowhere else. So `navigation.params.space` and `.page`, which `SidebarSpaces` reads, are
- * always undefined, and `activeSpace` silently falls back to `spaceList[0]`.
- *
- * Written as a whole test rather than as assertions dropped from the ones above, so that fixing it
- * turns this red ("expected to fail, but passed") instead of leaving the coverage quietly missing.
+ * Three separate things were wrong at once and they are three tests, not one. A single `test.fail()`
+ * over all three passes when *any* assertion fails, so while one was fixed and two were not it
+ * would have stayed green and said nothing about which — and when the last one was fixed it turned
+ * red with "expected to fail, but passed" rather than reporting the good news.
  */
-test('the sidebar shows the space and the page the URL names', async ({ page }) => {
-  test.fail()
-
+test('a link to a nested page opens its ancestors', async ({ page }) => {
   // straight to a child by URL, exactly as a shared link arrives
   await page.goto(PAGES.firstWeek)
   await expect(titleField(page)).toHaveValue('Your first week')
   await expect(twisty(page)).toHaveAttribute('aria-expanded', 'true')
-  await expect(row(page, 'Your first week')).toHaveAttribute('aria-current', 'page')
+  await expect(row(page, 'Your first week')).toBeVisible()
+})
 
-  // and a second space is that space, not the first one in the list
+test('the open page is the one marked aria-current', async ({ page }) => {
+  await page.goto(PAGES.firstWeek)
+  await expect(row(page, 'Your first week')).toHaveAttribute('aria-current', 'page')
+  await expect(row(page, 'Welcome')).not.toHaveAttribute('aria-current', 'page')
+})
+
+test("a second space draws its own tree, not the first space's", async ({ page }) => {
   await page.goto(`/${WS}/quire/engineering`)
   await expect(row(page, 'Architecture')).toBeVisible()
+  // The whole defect in one assertion: Welcome belongs to Handbook, and used to be drawn here.
   await expect(row(page, 'Welcome')).toHaveCount(0)
+})
+
+/*
+ * And a disclosure the auto-expand opened can still be closed.
+ *
+ * The effect that opens an open page's ancestors both reads and writes `expanded`, so once
+ * `params.page` started arriving it became its own trigger: collapsing an ancestor removed it from
+ * the set, the effect put it straight back, and the disclosure was inert to click and to Enter
+ * alike. The fix that made the three tests above pass is exactly what made this reachable, which is
+ * why it is asserted here rather than assumed.
+ */
+test('an ancestor opened automatically can still be collapsed', async ({ page }) => {
+  await page.goto(PAGES.firstWeek)
+  const chevron = twisty(page)
+  await expect(chevron).toHaveAttribute('aria-expanded', 'true')
+  await chevron.click()
+  await expect(chevron).toHaveAttribute('aria-expanded', 'false')
+  await expect(row(page, 'Your first week')).toHaveCount(0)
 })
 
 /**
@@ -464,7 +485,7 @@ test('the tree is worked entirely from the keyboard', async ({ page }) => {
 
   // the first page of the space is a Tab away from the search box, not buried behind the tree
   await page.keyboard.press('Tab')
-  expect((await focused()).label).toBe('Welcome')
+  await expect.poll(async () => (await focused()).label).toBe('Welcome')
 
   // the twisty is drawn as an overlay rather than laid out in the row, which is exactly the shape
   // that ends up unfocusable — so reaching it at all is the assertion
@@ -472,7 +493,12 @@ test('the tree is worked entirely from the keyboard', async ({ page }) => {
 
   // expanding is a keystroke, and focus stays on the control that did it
   await page.keyboard.press('Enter')
-  expect((await focused()).expanded).toBe('true')
+  // Polled, like every other assertion here. A one-shot `page.evaluate` compare reads whatever the
+  // DOM holds at that instant, so it reports a state Svelte has not flushed yet as a wrong state —
+  // the one shape in this file that can fail for a reason that is not the product's.
+  await expect
+    .poll(async () => (await focused()).expanded, { message: 'focus stays on the control that expanded' })
+    .toBe('true')
   await expect(row(page, 'Your first week')).toBeVisible()
 
   // and the child it revealed is reachable and opens on Enter, with no pointer anywhere
@@ -484,7 +510,9 @@ test('the tree is worked entirely from the keyboard', async ({ page }) => {
   // collapsing again is the same keystroke on the same control
   await twisty(page).focus()
   await page.keyboard.press('Enter')
-  expect((await focused()).expanded).toBe('false')
+  await expect
+    .poll(async () => (await focused()).expanded, { message: 'the disclosure closes from the keyboard' })
+    .toBe('false')
   await expect(row(page, 'Time off')).toHaveCount(0)
 })
 
