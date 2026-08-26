@@ -311,6 +311,37 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   anything the page throws while rendering. It found 408 contrast failures, 146 undersized targets
   and 85 unnamed controls the first time it ran, none of which failed a build. Add a route to
   `ROUTES` when you add a route, and read a failure as a defect rather than as a strict test.
+- **`tests/e2e/quire-collab.spec.ts` opens two browsers on one document, and is deliberately not in
+  `pnpm test:e2e`.** Multiplayer cannot be tested against the mock — there is no collab service
+  behind it — so it needs Postgres, `core` on :4000 and `collab` on :4300, with the shell *not* in
+  mock mode. It has its own config: `pnpm exec playwright test -c playwright.collab.config.ts`. It
+  skips when a service is missing and fails under `CI=1`. Its sessions are real: core's
+  `sign-up/email` with a password generated per run, an invitation, and the token read out of
+  Mailpit where the recipient would read it — never a hard-coded credential, never a sign-in form.
+  Five things it cost time to learn, all of which apply to any browser test of the editor:
+  - `getByRole('status')` matches the chat gateway's connection banner, `PageView`'s
+    unpublished-changes banner **and** the editor's own note. Scope it to `.editor`, which is
+    `CollaborativeEditor`'s wrapper and the only element wearing that class.
+  - `ControlOrMeta+Home`/`End` are not caret keys in a contenteditable on macOS. Put a caret
+    somewhere by clicking the paragraph you mean.
+  - Two people typing at one offset **interleave character by character** —
+    `alpha-from-adaao-baemfro-vbrb`. That is Yjs working, not a defect. Assert that both browsers
+    converge and that no keystroke was dropped; assert each other's words only when the two are
+    typing in different blocks.
+  - The editor notices a dropped network only after the Hocuspocus provider's
+    `messageReconnectTimeout` — 30 seconds of silence. A socket that stops carrying traffic does not
+    close, and the provider ignores the window's `offline` event, so for half a minute the editor
+    still reads as connected while the shell's own banner (driven by `navigator.onLine`) already
+    says otherwise.
+  - **`context.setOffline(false)` makes Vite reload the page.** The HMR client reloads when its own
+    socket comes back, so any `page.evaluate` in flight dies with "Execution context was destroyed"
+    — a dev-server artefact that looks exactly like the app navigating away. Read the DOM through a
+    helper that returns empty on that error and let the surrounding `expect.poll` retry, then assert
+    separately that the browser is still on the URL it was on.
+- **Playwright empties its `outputDir` when a run starts.** Two suites sharing `test-results/` means
+  whichever starts second deletes the other's traces — which is how a failure gets investigated with
+  no artefacts at all. The collab config writes to `test-results/collab`; `pnpm test:e2e` owns the
+  parent and will still clear it, so do not start that suite while reading a collab failure.
 - **The identity colours were defined twice, and the copy nobody read was the one in CSS.**
   `IDENTITY_COLORS` in `@kernhq/ui/utils.ts` held literal hexes while `--kern-av-*` held the same
   palette in `tokens.css`; every avatar took its ground from the array, so darkening the tokens so
