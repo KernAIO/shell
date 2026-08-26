@@ -32,9 +32,11 @@
  * `pnpm dev` at the umbrella starts all three at once and is the usual way. Playwright starts the
  * shell itself on :5173 and reuses one that is already running.
  *
- * **Expected result:** five passing tests in about a minute. When core, collab or Mailpit is missing
- * the suite **skips on a laptop and fails under `CI=1`** — skipping a test because its
- * infrastructure is absent is fine locally and dishonest in CI.
+ * **Expected result:** five passing tests in about a minute and a half. The offline one alone takes
+ * three quarters of a minute, most of it waiting out a timer the note beside it explains.
+ *
+ * When core, collab or Mailpit is missing the suite **skips on a laptop and fails under `CI=1`** —
+ * skipping a test because its infrastructure is absent is fine locally and dishonest in CI.
  *
  * `chat` is deliberately *not* required. It is not in the path of anything here, and the shell's
  * own connection banner for the chat gateway is why every assertion below is scoped to the editor
