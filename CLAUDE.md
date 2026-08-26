@@ -173,6 +173,12 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   the module id at `/<ws>/settings/<moduleId>`; instance pages mount under `/<ws>/admin/`. There is
   no route file to keep in step — that mismatch used to render a nav entry that 404s, which is what
   `mail` shipped with for months.
+- **Settings is a section, so its list is the shell's sidebar — not a column inside the page.**
+  `SettingsNav` renders where a module's sidebar would (`(app)/[ws]/+layout.svelte`), and
+  `settings/+layout.svelte` is only the scroll container for the page. It used to be a second
+  navigation column beside the workspace one: two sets of rows at once, the page starting 268px in,
+  and a sidebar whose search box and inbox row all lead *out* of settings. Anything that wants a
+  list beside the content belongs in the sidebar for its segment.
 - **A module's screens are only reachable if the module is in the mock too.** `dev:mock` decides the
   nav from `enabledFor()` and `moduleManifests` in `src/lib/api/mock.ts`; a module missing from
   either has a working page and no way to reach it, in exactly the environment used for demos.

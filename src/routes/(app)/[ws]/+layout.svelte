@@ -27,6 +27,7 @@ import { authDisabled, signOut } from '$lib/auth/client'
 import CommandPalette from '$lib/components/CommandPalette.svelte'
 import InstallPrompt from '$lib/components/InstallPrompt.svelte'
 import OfflineBanner from '$lib/components/OfflineBanner.svelte'
+import SettingsNav from '$lib/components/SettingsNav.svelte'
 import WorkspaceTabs from '$lib/components/WorkspaceTabs.svelte'
 import { formatCount } from '$lib/format'
 import ModuleSidebar from '$lib/modules/ModuleSidebar.svelte'
@@ -152,6 +153,13 @@ const segment = $derived(segmentOf(page.url.pathname, slug))
  */
 const sidebars = $derived(sidebarsFor({ ...navContext, segment }))
 const sidebarControls = $derived(sidebars.filter((entry) => entry.controls))
+
+/**
+ * Settings is a section like any other, so its navigation is the sidebar rather than a second
+ * column beside it. It used to be both: the workspace sidebar sat there offering a search box and
+ * rows that all lead *out* of settings, and the settings list started 268px further across.
+ */
+const inSettings = $derived(segment === 'settings')
 
 const badgeFor = (id: string) => realtime.badges[id]?.unread ?? workspaceById(id)?.unread ?? 0
 const workspaceById = (id: string) => me.data?.workspaces.find((w) => w.id === id)
@@ -380,14 +388,18 @@ const userMenu: MenuItem[] = $derived([
           who claims this path segment. That is what stops a workspace with the tracker switched off
           being shown three rows that link into it, which is what used to happen.
         -->
-        <ModuleSidebar
-          entries={sidebars}
-          which="component"
-          workspaceId={workspace.id}
-          workspaceSlug={slug}
-          pathname={page.url.pathname}
-          {segment}
-        />
+        {#if inSettings}
+          <SettingsNav {slug} workspaceId={workspace.id} />
+        {:else}
+          <ModuleSidebar
+            entries={sidebars}
+            which="component"
+            workspaceId={workspace.id}
+            workspaceSlug={slug}
+            pathname={page.url.pathname}
+            {segment}
+          />
+        {/if}
 
         {#snippet footer()}
           <DropdownMenu items={userMenu} align="start" side="top">
