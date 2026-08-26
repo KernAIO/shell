@@ -727,6 +727,7 @@
     }
   ],
   "quire_switch_space": "Alan değiştir",
+  "connecting_banner": "Bağlanılıyor…",
   "reconnecting": "Yeniden bağlanılıyor…",
   "remove": "Kaldır",
   "retry": "Yeniden dene",

@@ -727,6 +727,7 @@
     }
   ],
   "quire_switch_space": "Bereich wechseln",
+  "connecting_banner": "Verbindung wird hergestellt…",
   "reconnecting": "Verbindung wird wiederhergestellt…",
   "remove": "Entfernen",
   "retry": "Erneut versuchen",
