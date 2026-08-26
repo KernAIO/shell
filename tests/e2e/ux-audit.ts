@@ -16,7 +16,7 @@ import type { Page } from '@playwright/test'
 
 export type Violation = {
   /** which rule was broken, so failures group by cause rather than by page */
-  rule: 'cursor' | 'name' | 'target' | 'contrast' | 'overflow' | 'focus' | 'heading'
+  rule: 'cursor' | 'name' | 'target' | 'contrast' | 'overflow' | 'focus' | 'heading' | 'untranslated'
   /** what is wrong, in the units a fix is expressed in */
   detail: string
   /** enough of the element to find it: tag, classes, and the text a person would search for */
@@ -380,6 +380,54 @@ function auditInPage(): AuditResult {
   // 6. a page names itself, so the tab, the back button and a screen reader all agree what it is
   if (!document.querySelector('h1, [role="heading"][aria-level="1"]')) {
     add('heading', 'no level-1 heading on the page', document.title || '(untitled)')
+  }
+
+  /**
+   * 7. a message key rendered as itself.
+   *
+   * `t()` answers a key it has no string for with the key, on purpose: `hr.leave_none` on screen is
+   * visibly broken and gets reported, where an empty string is a blank nobody notices. But nothing
+   * was noticing — this sweep walks every route in four renderings and reported a page clean while
+   * thirteen keys were drawn as their own names, because it only ever looked at colour, size and
+   * shape. A module ships its strings separately from the screens that use them, so the gap between
+   * writing `t('x')` and the bundle having `x` is a real window, and this is what closes it.
+   *
+   * Narrower than "anything dotted", because plenty of dotted identifiers belong on screen. A
+   * module's message keys are namespaced by its module id and named in snake_case — the convention
+   * `scopedT` enforces — so `<module>.<snake_case>` is the whole of what this matches.
+   *
+   * Everything else dotted that a screen legitimately draws falls outside it: a permission
+   * (`core.workspace.manage`) has three segments and no underscore, an MCP scope (`tracker.create`)
+   * has no underscore, and a custom field key (`cf.days_open`) has the right shape but a prefix
+   * that is not a module. The first version of this rule matched all of them and failed 52 cases
+   * across six modules over nothing. `<code>` and `<kbd>` are excluded outright — showing a literal
+   * is their whole job.
+   *
+   * The cost, stated rather than hidden: a raw `common.save` from the shared bundle is not caught,
+   * and neither is a module key without an underscore. Both are rarer than what this does catch,
+   * and a rule that cries wolf is a rule somebody switches off.
+   */
+  const MODULE_IDS = [
+    'core',
+    'chat',
+    'tracker',
+    'quire',
+    'hr',
+    'mail',
+    'billing',
+    'inventory',
+    'docs',
+    'collab',
+  ]
+  const MESSAGE_KEY = new RegExp(`^(?:${MODULE_IDS.join('|')})\\.[a-z0-9]+_[a-z0-9_]+$`)
+  for (const node of document.querySelectorAll<HTMLElement>('body *')) {
+    if (node.children.length > 0) continue
+    if (node.closest('code, kbd')) continue
+    const text = (node.textContent ?? '').trim()
+    if (!text || text.length > 80 || text.includes(' ')) continue
+    if (!MESSAGE_KEY.test(text)) continue
+    if (!node.offsetParent && node.getClientRects().length === 0) continue
+    add('untranslated', 'a message key rendered as itself', `${node.tagName.toLowerCase()}: ${text}`)
   }
 
   return { violations, skipped, counted }
