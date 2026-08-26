@@ -24,6 +24,10 @@ jobs:
   # wrong control. This runs the real interface against the mock backend, so it needs no services.
   e2e:
     runs-on: ubuntu-latest
+    # The suite is serial in CI (`workers: 1`) and retries twice, so it is slow by design — but a
+    # run that reached 667 minutes before anyone noticed is not slow, it is stuck, and it burns the
+    # runner the whole time. Fail instead.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
