@@ -1059,5 +1059,16 @@
   "mcp_consent_no_workspace_body": "In keinem Ihrer Workspaces ist MCP eingeschaltet. Die Administration kann es unter Einstellungen → MCP & KI-Zugriff einschalten.",
   "mcp_error_title": "Dieser Link ist ungültig oder abgelaufen",
   "mcp_error_body": "Die Verbindungsanfrage wurde nicht gefunden — sie ist vielleicht abgelaufen oder bereits beantwortet. Beginnen Sie in Ihrem KI-Client von Neuem.",
-  "mcp_back_home": "Zurück zu Kern"
+  "mcp_back_home": "Zurück zu Kern",
+  "mcp_connect_title": "Client verbinden",
+  "mcp_connect_desc": "Fügen Sie diesen Server zu einem KI-Werkzeug hinzu, das Ihr Team bereits verwendet. Jedes bittet Sie, die Verbindung zu genehmigen, bevor es irgendetwas tun kann.",
+  "mcp_connect_add_button": "Zu {client} hinzufügen",
+  "mcp_connect_cursor": "Cursor",
+  "mcp_connect_vscode": "VS Code",
+  "mcp_connect_vscode_insiders": "Insiders",
+  "mcp_connect_claude_code": "Claude Code",
+  "mcp_connect_claude_code_hint": "Führen Sie dies in einem Terminal aus, und genehmigen Sie die Verbindung, sobald sich Ihr Browser öffnet.",
+  "mcp_connect_copy_command": "Befehl kopieren",
+  "mcp_connect_claude": "Claude",
+  "mcp_connect_claude_hint": "Gehen Sie in Claude zu Einstellungen → Connectors → Benutzerdefinierten Connector hinzufügen, und fügen Sie die Server-URL oben ein."
 }

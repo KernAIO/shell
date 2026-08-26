@@ -1059,5 +1059,16 @@
   "mcp_consent_no_workspace_body": "در هیچ‌یک از فضاهای کاری شما MCP روشن نیست. یک مدیر می‌تواند آن را در تنظیمات ← «دسترسی MCP و هوش مصنوعی» روشن کند.",
   "mcp_error_title": "این نشانی نامعتبر است یا منقضی شده",
   "mcp_error_body": "درخواست اتصال پیدا نشد؛ ممکن است منقضی شده یا قبلاً پاسخ داده شده باشد. از کلاینت هوش مصنوعی خود دوباره شروع کنید.",
-  "mcp_back_home": "بازگشت به Kern"
+  "mcp_back_home": "بازگشت به Kern",
+  "mcp_connect_title": "اتصال کلاینت",
+  "mcp_connect_desc": "این سرور را به ابزار هوش مصنوعی‌ای اضافه کنید که تیم شما همین حالا استفاده می‌کند. هر ابزار پیش از انجام هر کاری از شما می‌خواهد اتصال را تأیید کنید.",
+  "mcp_connect_add_button": "افزودن به {client}",
+  "mcp_connect_cursor": "Cursor",
+  "mcp_connect_vscode": "VS Code",
+  "mcp_connect_vscode_insiders": "Insiders",
+  "mcp_connect_claude_code": "Claude Code",
+  "mcp_connect_claude_code_hint": "این را در ترمینال اجرا کنید، سپس وقتی مرورگرتان باز شد، اتصال را تأیید کنید.",
+  "mcp_connect_copy_command": "کپی فرمان",
+  "mcp_connect_claude": "Claude",
+  "mcp_connect_claude_hint": "در Claude، به تنظیمات ← اتصال‌دهنده‌ها ← افزودن اتصال‌دهنده سفارشی بروید و نشانی سرور بالا را جای‌گذاری کنید."
 }

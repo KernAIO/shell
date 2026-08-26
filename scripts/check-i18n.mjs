@@ -46,6 +46,13 @@ const SAME_AS_ENGLISH_IS_FINE = new Set([
   'app_name',
   'chat_channel_name_placeholder',
   'home_subtitle',
+  // Product names an MCP client's own UI shows verbatim — translating them would name a button the
+  // app you land in doesn't have.
+  'mcp_connect_claude',
+  'mcp_connect_claude_code',
+  'mcp_connect_cursor',
+  'mcp_connect_vscode',
+  'mcp_connect_vscode_insiders',
   'mail_provider_mailgun',
   'mail_provider_postmark',
   'mail_provider_resend',

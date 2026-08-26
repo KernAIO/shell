@@ -1059,5 +1059,16 @@
   "mcp_consent_no_workspace_body": "None of your workspaces has MCP switched on. An administrator can turn it on under Settings → MCP & AI access.",
   "mcp_error_title": "This link is invalid or has expired",
   "mcp_error_body": "The connection request could not be found — it may have expired or already been answered. Start again from your AI client.",
-  "mcp_back_home": "Back to Kern"
+  "mcp_back_home": "Back to Kern",
+  "mcp_connect_title": "Connect a client",
+  "mcp_connect_desc": "Add this server to an AI tool your team already uses. Each one asks you to approve the connection before it can do anything.",
+  "mcp_connect_add_button": "Add to {client}",
+  "mcp_connect_cursor": "Cursor",
+  "mcp_connect_vscode": "VS Code",
+  "mcp_connect_vscode_insiders": "Insiders",
+  "mcp_connect_claude_code": "Claude Code",
+  "mcp_connect_claude_code_hint": "Run this in a terminal, then approve the connection when it opens your browser.",
+  "mcp_connect_copy_command": "Copy command",
+  "mcp_connect_claude": "Claude",
+  "mcp_connect_claude_hint": "In Claude, go to Settings → Connectors → Add custom connector, and paste the server URL above."
 }

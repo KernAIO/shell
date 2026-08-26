@@ -68,18 +68,42 @@ const serverUrl = $derived.by(() => {
   return `${new URL(base).origin}/mcp`
 })
 
-let copied = $state(false)
-async function copyUrl() {
+/** One id per copy target, so copying the CLI command does not also flip the URL button's icon. */
+let copiedKey = $state<string | null>(null)
+async function copyText(key: string, text: string) {
   try {
-    await navigator.clipboard.writeText(serverUrl)
-    copied = true
+    await navigator.clipboard.writeText(text)
+    copiedKey = key
     setTimeout(() => {
-      copied = false
+      if (copiedKey === key) copiedKey = null
     }, 2000)
   } catch {
     toast.error(m.error_generic())
   }
 }
+const copyUrl = () => copyText('url', serverUrl)
+const copied = $derived(copiedKey === 'url')
+
+/**
+ * One-click install links, built from this workspace's own server URL. Cursor and VS Code both
+ * read a small JSON config out of the link — a `url` field is enough for either to run its own
+ * OAuth discovery against this server, so no client secret or pre-registration is needed.
+ * `clientName` only has to be stable and URL-safe; the slug already is.
+ */
+const clientName = $derived(`kern-${slug}`)
+const cursorInstallUrl = $derived.by(() => {
+  const config = btoa(JSON.stringify({ url: serverUrl }))
+  return `cursor://anysphere.cursor-deeplink/mcp/install?name=${encodeURIComponent(clientName)}&config=${config}`
+})
+const vscodeConfig = $derived(encodeURIComponent(JSON.stringify({ type: 'http', url: serverUrl })))
+const vscodeInstallUrl = $derived(
+  `vscode:mcp/install?name=${encodeURIComponent(clientName)}&config=${vscodeConfig}`,
+)
+const vscodeInsidersInstallUrl = $derived(
+  `vscode-insiders:mcp/install?name=${encodeURIComponent(clientName)}&config=${vscodeConfig}`,
+)
+/** `claude mcp add` speaks HTTP + OAuth natively — no flags beyond a name and this server's URL. */
+const claudeCodeCommand = $derived(`claude mcp add --transport http ${clientName} ${serverUrl}`)
 
 const clients = createQuery(() => ({
   queryKey: ['core', 'mcp', 'client', workspaceId],
@@ -174,6 +198,75 @@ const revoke = createMutation(() => ({
         description={m.mcp_apps_off_body()}
       />
     {:else}
+      <SettingsSection title={m.mcp_connect_title()} description={m.mcp_connect_desc()}>
+        <div class="grid gap-2">
+          <div
+            class="flex flex-wrap items-center justify-between gap-3 rounded-[9px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2.5"
+          >
+            <div class="flex items-center gap-2.5 text-[13px] font-medium text-[var(--kern-ink-800)]">
+              <Icon name="code" size={16} class="text-[var(--kern-ink-450)]" />
+              <span>{m.mcp_connect_cursor()}</span>
+            </div>
+            <Button variant="secondary" size="sm" href={cursorInstallUrl} data-sveltekit-reload icon="download">
+              {m.mcp_connect_add_button({ client: m.mcp_connect_cursor() })}
+            </Button>
+          </div>
+
+          <div
+            class="flex flex-wrap items-center justify-between gap-3 rounded-[9px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2.5"
+          >
+            <div class="flex items-center gap-2.5 text-[13px] font-medium text-[var(--kern-ink-800)]">
+              <Icon name="square-code" size={16} class="text-[var(--kern-ink-450)]" />
+              <span>{m.mcp_connect_vscode()}</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <Button variant="secondary" size="sm" href={vscodeInstallUrl} data-sveltekit-reload icon="download">
+                {m.mcp_connect_add_button({ client: m.mcp_connect_vscode() })}
+              </Button>
+              <Button variant="ghost" size="sm" href={vscodeInsidersInstallUrl} data-sveltekit-reload>
+                {m.mcp_connect_vscode_insiders()}
+              </Button>
+            </div>
+          </div>
+
+          <div
+            class="grid gap-2 rounded-[9px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2.5"
+          >
+            <div class="flex items-center gap-2.5 text-[13px] font-medium text-[var(--kern-ink-800)]">
+              <Icon name="command" size={16} class="text-[var(--kern-ink-450)]" />
+              <span>{m.mcp_connect_claude_code()}</span>
+            </div>
+            <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_claude_code_hint()}</p>
+            <div class="flex items-center justify-between gap-3">
+              <code
+                class="min-w-0 flex-1 overflow-hidden rounded-[8px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-raised)] px-3 py-2 font-[var(--kern-font-mono)] text-[12px] text-[var(--kern-ink-700)] text-ellipsis whitespace-nowrap"
+                dir="ltr"
+              >
+                {claudeCodeCommand}
+              </code>
+              <Button
+                variant="secondary"
+                size="sm"
+                onclick={() => copyText('claude-code', claudeCodeCommand)}
+                icon={copiedKey === 'claude-code' ? 'circle-check' : 'copy'}
+              >
+                {copiedKey === 'claude-code' ? m.copied() : m.mcp_connect_copy_command()}
+              </Button>
+            </div>
+          </div>
+
+          <div
+            class="grid gap-1 rounded-[9px] border border-[var(--kern-border-hairline)] bg-[var(--kern-surface-chip)] px-3 py-2.5"
+          >
+            <div class="flex items-center gap-2.5 text-[13px] font-medium text-[var(--kern-ink-800)]">
+              <Icon name="bot" size={16} class="text-[var(--kern-ink-450)]" />
+              <span>{m.mcp_connect_claude()}</span>
+            </div>
+            <p class="text-[12px] text-[var(--kern-ink-500)]">{m.mcp_connect_claude_hint()}</p>
+          </div>
+        </div>
+      </SettingsSection>
+
       <section class="grid gap-2.5">
         <h2 class="text-[13px] font-medium tracking-[-0.01em] text-[var(--kern-ink-700)]">
           {m.mcp_apps_title()}

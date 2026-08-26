@@ -1059,5 +1059,16 @@
   "mcp_consent_no_workspace_body": "Çalışma alanlarınızdan hiçbirinde MCP açık değil. Bir yönetici bunu Ayarlar → MCP ve yapay zekâ erişimi bölümünden açabilir.",
   "mcp_error_title": "Bu bağlantı geçersiz ya da süresi dolmuş",
   "mcp_error_body": "Bağlantı isteği bulunamadı; süresi dolmuş ya da daha önce yanıtlanmış olabilir. Yapay zekâ istemcinizden yeniden başlayın.",
-  "mcp_back_home": "Kern'e dön"
+  "mcp_back_home": "Kern'e dön",
+  "mcp_connect_title": "İstemci bağla",
+  "mcp_connect_desc": "Bu sunucuyu, ekibinizin zaten kullandığı bir yapay zekâ aracına ekleyin. Her biri, herhangi bir şey yapabilmeden önce bağlantıyı onaylamanızı ister.",
+  "mcp_connect_add_button": "{client} uygulamasına ekle",
+  "mcp_connect_cursor": "Cursor",
+  "mcp_connect_vscode": "VS Code",
+  "mcp_connect_vscode_insiders": "Insiders",
+  "mcp_connect_claude_code": "Claude Code",
+  "mcp_connect_claude_code_hint": "Bunu bir terminalde çalıştırın, sonra tarayıcınız açıldığında bağlantıyı onaylayın.",
+  "mcp_connect_copy_command": "Komutu kopyala",
+  "mcp_connect_claude": "Claude",
+  "mcp_connect_claude_hint": "Claude'da Ayarlar → Bağlayıcılar → Özel bağlayıcı ekle'ye gidin ve yukarıdaki sunucu adresini yapıştırın."
 }

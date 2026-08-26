@@ -1175,5 +1175,16 @@
   "mcp_consent_no_workspace_body": "لا توجد مساحة عمل لديك مفعَّل فيها MCP. يستطيع المسؤول تشغيله من الإعدادات ← «الوصول عبر MCP والذكاء الاصطناعي».",
   "mcp_error_title": "هذا الرابط غير صالح أو منتهٍ الصلاحية",
   "mcp_error_body": "لم يُعثر على طلب الاتصال؛ ربما انتهت صلاحيته أو رُد عليه سابقًا. ابدأ من جديد من عميل الذكاء الاصطناعي.",
-  "mcp_back_home": "العودة إلى Kern"
+  "mcp_back_home": "العودة إلى Kern",
+  "mcp_connect_title": "ربط عميل",
+  "mcp_connect_desc": "أضف هذا الخادم إلى أداة ذكاء اصطناعي يستخدمها فريقك بالفعل. تطلب كل أداة منها موافقتك على الاتصال قبل أن تتمكن من فعل أي شيء.",
+  "mcp_connect_add_button": "الإضافة إلى {client}",
+  "mcp_connect_cursor": "Cursor",
+  "mcp_connect_vscode": "VS Code",
+  "mcp_connect_vscode_insiders": "Insiders",
+  "mcp_connect_claude_code": "Claude Code",
+  "mcp_connect_claude_code_hint": "نفّذ هذا في الطرفية، ثم وافق على الاتصال عندما يفتح متصفحك.",
+  "mcp_connect_copy_command": "نسخ الأمر",
+  "mcp_connect_claude": "Claude",
+  "mcp_connect_claude_hint": "في Claude، اذهب إلى الإعدادات ← الموصلات ← إضافة موصل مخصص، والصق عنوان الخادم أعلاه."
 }
