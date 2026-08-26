@@ -3,6 +3,7 @@ import { createQuery } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 
 import { getApi } from '$lib/api/client'
+import NotFound from '$lib/components/NotFound.svelte'
 import { capabilitiesOf } from '$lib/modules/capabilities'
 import ModuleRoute from '$lib/modules/ModuleRoute.svelte'
 import { resolveModuleRoute } from '$lib/modules/routing'
@@ -43,17 +44,21 @@ const resolved = $derived(
 )
 
 /**
- * A path no module claims is not this component's to answer: rendering an empty page would hide
- * real breakage behind a blank screen. Throwing sends it to the app's `+error.svelte`, which says
- * plainly that the page does not exist.
+ * A path no module claims gets the app's not-found screen, rendered here.
+ *
+ * This used to `throw` from an `$effect` on the theory that SvelteKit's `+error.svelte` would
+ * answer. It does not: an error thrown from an effect is not a failed navigation, so nothing caught
+ * it and the content area simply stayed empty — shell chrome, no page, and a blank browser tab
+ * title. Every unclaimed URL looked like a broken app rather than a wrong address.
+ *
+ * Only once the workspace's module list has landed. Before that, "nothing resolved" means "nothing
+ * fetched yet", and saying not-found would flash it on every hard navigation.
  */
-$effect(() => {
-  // Only after the workspace's module list has landed — before that, "nothing resolved" means
-  // "nothing fetched yet", and throwing would 404 every hard navigation.
-  if (modulesQuery.isSuccess && !resolved) throw new Error('not found')
-})
+const missing = $derived(modulesQuery.isSuccess && !resolved)
 </script>
 
 {#if resolved}
   <ModuleRoute {resolved} workspaceId={workspace?.id ?? ''} workspaceSlug={slug} />
+{:else if missing}
+  <NotFound />
 {/if}

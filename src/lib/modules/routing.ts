@@ -46,6 +46,16 @@ export function resolveModuleRoute(
   let best: ResolvedModuleRoute | undefined
   /** How specific a match is: literal segments first, then total length. */
   let bestScore = -1
+  /**
+   * A declaration that claimed this exact URL and was turned away by a gate.
+   *
+   * Without this the answer fell through to the nearest *prefix*: `/hr/offices` with the `offices`
+   * capability off resolved to `/hr`, so the person got the people directory rendered under the
+   * offices URL, tab title and all. A gate that swaps one page for another is worse than one that
+   * does nothing — the screen looks real, so nobody reports it. A gated exact match is a 404, which
+   * is what the API answers for the same request.
+   */
+  let gatedExact = false
 
   const consider = (
     moduleId: string,
@@ -70,8 +80,15 @@ export function resolveModuleRoute(
       literals++
     }
 
-    if (decl.permission && !opts.can(decl.permission)) return
-    if (!hasCapability(opts.capabilities, moduleId, decl.capability)) return
+    const exact = parts.length === segments.length
+    if (decl.permission && !opts.can(decl.permission)) {
+      if (exact) gatedExact = true
+      return
+    }
+    if (!hasCapability(opts.capabilities, moduleId, decl.capability)) {
+      if (exact) gatedExact = true
+      return
+    }
 
     const score = literals * 1000 + parts.length
     if (score <= bestScore) return
@@ -101,5 +118,8 @@ export function resolveModuleRoute(
       consider(mod.id, p.id === mod.id ? `/settings/${mod.id}` : `/settings/${mod.id}/${p.id}`, p)
     }
   }
+  // Only a *less specific* winner is suppressed. A second declaration matching the same URL
+  // exactly and passing its own gates is a legitimate answer, not a fallback.
+  if (gatedExact && best && best.rest.length > 0) return undefined
   return best
 }

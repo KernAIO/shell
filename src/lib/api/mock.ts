@@ -450,6 +450,20 @@ const moduleManifests = [
     hasSettings: true,
   },
   {
+    id: 'inventory',
+    name: 'Inventory',
+    version: '0.1.0',
+    description:
+      'The asset register: what the company owns, who holds each item, and everything that happened to it',
+    icon: 'briefcase',
+    core: false,
+    dependsOn: ['core'],
+    permissionCount: 2,
+    eventCount: 3,
+    objectTypeCount: 0,
+    hasSettings: false,
+  },
+  {
     id: 'mail',
     name: 'Mail',
     version: '0.1.0',
@@ -637,7 +651,7 @@ export function createMockApi() {
   const enabledFor = (workspaceId: string) => {
     let set = state.enabled.get(workspaceId)
     if (!set) {
-      set = new Set(['core', 'chat', 'tracker', 'quire', 'hr', 'mail', 'billing'])
+      set = new Set(['core', 'chat', 'tracker', 'quire', 'hr', 'mail', 'billing', 'inventory'])
       state.enabled.set(workspaceId, set)
     }
     return set
@@ -713,6 +727,30 @@ export function createMockApi() {
   // The demo workspace has MCP switched on; the second one has never stored an opinion, so the
   // consent screen's workspace picker has something to filter.
   state.capabilities.set(`${workspaces[0]!.id}:core`, { mcp: true })
+
+  /**
+   * The demo workspace runs HR at its widest, and the reason is not that it looks better.
+   *
+   * Most of HR's capabilities default to off, which is right for a real workspace and wrong for
+   * this one: the routes the end-to-end sweep walks — offices, attendance — resolved to nothing,
+   * so `ux.spec.ts` was auditing a not-found page under the name of a screen and reporting it
+   * clean. A demo environment that exercises a third of the module is not a demo of the module.
+   *
+   * Anything switched off here should be switched off deliberately, to demonstrate that it
+   * disappears — not by inheriting a default nobody chose.
+   */
+  state.capabilities.set(`${workspaces[0]!.id}:hr`, {
+    offices: true,
+    legal_entities: true,
+    calendars: true,
+    documents: true,
+    leave: true,
+    leave_accrual: true,
+    periods: true,
+    approvals: true,
+    attendance: true,
+    overtime: true,
+  })
 
   const summary = (w: (typeof workspaces)[number]) => {
     const unread = state.notifications.filter(
