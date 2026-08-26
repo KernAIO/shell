@@ -14,6 +14,7 @@ export { segmentOf } from './segment'
 import { billingClientModule } from '@kernhq/module-billing/client'
 import { chatClientModule } from '@kernhq/module-chat/client'
 import { hrClientModule } from '@kernhq/module-hr/client'
+import { inventoryClientModule } from '@kernhq/module-inventory/client'
 import { mailClientModule } from '@kernhq/module-mail/client'
 import { quireClientModule } from '@kernhq/module-quire/client'
 import { trackerClientModule } from '@kernhq/module-tracker/client'
@@ -166,6 +167,7 @@ registerModule(quireClientModule)
 registerModule(hrClientModule)
 registerModule(mailClientModule)
 registerModule(billingClientModule)
+registerModule(inventoryClientModule)
 
 export interface ModuleSettingsLink {
   moduleId: string
