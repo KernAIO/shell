@@ -1,5 +1,5 @@
 {
-  "name": "@kernhq/app",
+  "name": "@kernhq/shell",
   "version": "0.1.0",
   "private": true,
   "description": "Kern web app \u2014 SvelteKit PWA shell hosting every module's client",

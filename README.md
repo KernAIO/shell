@@ -1,18 +1,18 @@
 <p align="center">
-<img src="https://raw.githubusercontent.com/KernAIO/kern/main/assets/kern-mark.svg" width="56" alt="">
+<img src="https://raw.githubusercontent.com/KernAIO/app/main/assets/kern-mark.svg" width="56" alt="">
 </p>
 
-# app
+# shell
 
 **Every screen people actually use.**
 
-[![CI](https://img.shields.io/github/actions/workflow/status/KernAIO/app/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/KernAIO/app/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/KernAIO/shell/ci.yml?branch=main&label=CI&style=flat-square)](https://github.com/KernAIO/shell/actions/workflows/ci.yml)
 [![Licence](https://img.shields.io/badge/licence-AGPL--3.0-blue?style=flat-square)](LICENSE)
-[![Status](https://img.shields.io/badge/status-pre--1.0-orange?style=flat-square)](https://github.com/KernAIO/kern#what-works-today)
-[![Last commit](https://img.shields.io/github/last-commit/KernAIO/app?style=flat-square)](https://github.com/KernAIO/app/commits/main)
+[![Status](https://img.shields.io/badge/status-pre--1.0-orange?style=flat-square)](https://github.com/KernAIO/app#what-works-today)
+[![Last commit](https://img.shields.io/github/last-commit/KernAIO/shell?style=flat-square)](https://github.com/KernAIO/shell/commits/main)
 [![Website](https://img.shields.io/badge/kernaio.com-1f2328?style=flat-square)](https://kernaio.com)
 
-The web application for [Kern](https://github.com/KernAIO/kern). It installs like an app, works in
+The web application for [Kern](https://github.com/KernAIO/app). It installs like an app, works in
 four languages including right-to-left ones, and follows the system's light or dark setting.
 
 Each Kern module contributes its own screens, navigation and command-palette actions here. The shell
@@ -41,7 +41,7 @@ issues and conversations.
 ### Run it against real services
 
 If you want the app talking to a real backend, start everything from the
-[umbrella repository](https://github.com/KernAIO/kern):
+[umbrella repository](https://github.com/KernAIO/app):
 
 ```bash
 pnpm setup
@@ -92,7 +92,7 @@ Read [CONTRIBUTING.md](CONTRIBUTING.md), [DESIGN.md](DESIGN.md) and [CLAUDE.md](
 
 [AGPL-3.0-only](LICENSE). This repository is part of the Kern product.
 The Kern framework you build modules against is Apache-2.0 — see
-[LICENSING.md](https://github.com/KernAIO/kern/blob/main/LICENSING.md).
+[LICENSING.md](https://github.com/KernAIO/app/blob/main/LICENSING.md).
 
 ---
 
