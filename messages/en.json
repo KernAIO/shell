@@ -623,7 +623,16 @@
       }
     }
   ],
-  "modules_meta_objects": "{count} object types",
+  "modules_meta_objects": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} object type",
+        "countPlural=other": "{n} object types"
+      }
+    }
+  ],
   "modules_meta_permissions": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],

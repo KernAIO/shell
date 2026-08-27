@@ -9,14 +9,20 @@
 
 import { type CapabilityDef, resolveCapabilities } from '@kernhq/contracts'
 import { hrCapabilities } from '@kernhq/module-hr/contract'
+import { inventoryCapabilities } from '@kernhq/module-inventory/contract'
 import { mockObjectUrl } from '$lib/files/mock-storage'
 
 /**
  * Capabilities each module declares, mirroring what its server half declares.
  *
- * Empty for every module that has none — which is all of them until one grows some. A module missing
- * from here is not a bug; a module whose entry disagrees with its server's is, and it shows up as a
- * nav row that works in `dev:mock` and 404s against core.
+ * A module with none is simply absent, and that is not a bug; a module whose entry disagrees with
+ * its server's is, and it fails in both directions. Declaring one the server does not is a nav row
+ * that works in `dev:mock` and 404s against core. Declaring *none* where the server declares three
+ * is the quieter half and it shipped: `capabilitiesFor('inventory')` answered `[]` while core would
+ * have answered `['core','repairs','attachments']`, so every screen gated on `hasCapability` — the
+ * Repairs and Files tabs of the asset panel, the repairs widget — was filtered out of the demo and
+ * out of the UX sweep. A feature that is invisible in the environment used to show the product has
+ * effectively not shipped.
  *
  * **Import the module's own declarations where they are reachable rather than copying them.** HR's
  * were hand-copied and fell two behind: `resolveCapabilities` prunes a stored key the module no
@@ -47,6 +53,12 @@ const MODULE_CAPABILITIES: Record<string, CapabilityDef[]> = {
    */
   // The module's own eleven, imported rather than restated — see the note above.
   hr: hrCapabilities as unknown as CapabilityDef[],
+  /**
+   * `core` (required), `repairs` and `attachments`, imported for the same reason HR's are: the
+   * three are `defaultEnabled`, so a demo workspace that has never touched the switchboard gets all
+   * of them and the asset panel shows its five tabs rather than three.
+   */
+  inventory: inventoryCapabilities as unknown as CapabilityDef[],
 }
 const capabilityDefs = (moduleId: string): CapabilityDef[] => MODULE_CAPABILITIES[moduleId] ?? []
 
@@ -307,7 +319,7 @@ let mockPolicy = {
  * skeletons for ever. Nothing failed a build or a type-check, and the pages looked like they were
  * still loading rather than broken.
  */
-const moduleManifests = [
+export const moduleManifests = [
   {
     id: 'core',
     name: 'Core',
@@ -403,16 +415,19 @@ const moduleManifests = [
   {
     id: 'inventory',
     name: 'Inventory',
-    version: '0.1.0',
+    version: '0.2.0',
     description:
-      'The asset register: what the company owns, who holds each item, and everything that happened to it',
+      'The asset register: what the company owns, item by item — tags, serial numbers, purchase and warranty details',
     icon: 'briefcase',
     core: false,
     dependsOn: ['core'],
-    permissionCount: 2,
-    eventCount: 3,
-    objectTypeCount: 0,
-    hasSettings: false,
+    // Five permissions, seven events and the `asset` object type — held to the module's own
+    // declarations by `mock-manifests.test.ts`, because these were written when it had two of each
+    // and Settings → Modules went on reporting that number for three phases of work.
+    permissionCount: 5,
+    eventCount: 7,
+    objectTypeCount: 1,
+    hasSettings: true,
   },
   {
     id: 'mail',
@@ -429,7 +444,6 @@ const moduleManifests = [
   },
 ]
 
-/** Shapes a seed entry like the manifest the real API returns. */
 /** One release ahead of the mock instance: tracker moves, chat is new, everything else stands still. */
 const mockRelease = {
   version: MOCK_LATEST,
@@ -486,7 +500,15 @@ function mockUpdateStatus() {
   }
 }
 
-const manifestOf = (m: (typeof moduleManifests)[number]) => ({
+/**
+ * Shapes a seed entry into the manifest `modules.list` returns.
+ *
+ * Exported for `mock-manifests.test.ts`, which holds it against the modules' own contracts: a count
+ * here is a number typed by hand next to a module that keeps growing, and Settings → Modules is
+ * where a demo reports what the product is. Inventory's said "2 permissions, 3 events, no settings"
+ * for three phases after it had five, seven and two settings pages.
+ */
+export const manifestOf = (m: (typeof moduleManifests)[number]) => ({
   id: m.id,
   name: m.name,
   version: m.version,

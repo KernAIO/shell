@@ -675,7 +675,20 @@
       }
     }
   ],
-  "modules_meta_objects": "{count} أنواع كائنات",
+  "modules_meta_objects": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=zero": "لا أنواع كائنات",
+        "countPlural=one": "نوع كائن واحد",
+        "countPlural=two": "نوعا كائن",
+        "countPlural=few": "{n} أنواع كائنات",
+        "countPlural=many": "{n} نوعَ كائن",
+        "countPlural=other": "{n} نوع كائن"
+      }
+    }
+  ],
   "modules_meta_permissions": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],

@@ -33,6 +33,14 @@ const ROUTES: { path: string; name: string }[] = [
   { path: `/${WS}/quire/handbook/01920000-0000-7000-8000-000000000102`, name: 'quire page with a draft' },
   { path: `/${WS}/quire/handbook/01920000-0000-7000-8000-000000000110`, name: 'quire database' },
   { path: `/${WS}/inventory`, name: 'inventory' },
+  // The largest surface in the module and the only screen that draws custody, repairs, files and
+  // the change history: a 440px sheet over the list, opened by `?asset=<id>`. The id is the first
+  // asset the module's own mock seeds — its ids live in the `…-8001-…` namespace so that none of
+  // them can collide with a shell mock user id.
+  {
+    path: `/${WS}/inventory?asset=01920000-0000-7000-8001-000000000001`,
+    name: 'inventory asset panel',
+  },
   { path: `/${WS}/admin`, name: 'admin' },
   { path: `/${WS}/admin/modules`, name: 'admin modules' },
   { path: `/${WS}/admin/updates`, name: 'admin updates' },
@@ -60,6 +68,7 @@ const ROUTES: { path: string; name: string }[] = [
   { path: `/${WS}/settings/tracker/planning`, name: 'settings tracker planning' },
   { path: `/${WS}/settings/tracker/repeating`, name: 'settings tracker repeating' },
   { path: `/${WS}/settings/inventory/general`, name: 'settings inventory general' },
+  { path: `/${WS}/settings/inventory/categories`, name: 'settings inventory categories' },
   { path: `/${WS}/hr`, name: 'hr directory' },
   { path: `/${WS}/hr/leave`, name: 'hr leave' },
   { path: `/${WS}/hr/attendance`, name: 'hr attendance' },
@@ -174,7 +183,9 @@ test.describe('phone width', () => {
 
   // A count rather than a named set, so it silently narrows the moment a route is inserted above it
   // — three quire routes did exactly that. Grow it by however many you add.
-  for (const route of ROUTES.slice(0, 16)) {
+  // 16 → 17 for the inventory asset panel, which is a 440px sheet and therefore has more to say
+  // about a 390px viewport than most of the list above it.
+  for (const route of ROUTES.slice(0, 17)) {
     test(`${route.name} does not scroll sideways`, async ({ page }) => {
       await useRendering(page, RENDERINGS[0])
       await visit(page, route.path)

@@ -623,7 +623,16 @@
       }
     }
   ],
-  "modules_meta_objects": "{count} nesne türü",
+  "modules_meta_objects": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} nesne türü",
+        "countPlural=other": "{n} nesne türü"
+      }
+    }
+  ],
   "modules_meta_permissions": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
