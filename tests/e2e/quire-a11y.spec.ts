@@ -603,6 +603,23 @@ async function walkForFocusRings(
         // only what the browser itself marks as keyboard focus; a control focused by a click owes
         // nothing, and Chrome is the authority on which is which
         if (!el.matches(':focus-visible')) return null
+        /*
+         * A text surface indicates focus with a caret, and a caret is not in any computed style.
+         *
+         * WCAG 2.4.7 is satisfied by the text cursor for text entry, which is why a document body
+         * and a page title carry no ring — Notion, Docs and every word processor do the same, and a
+         * box drawn round the whole page is the thing that reads as a defect. So a control that
+         * takes typed text is exempt from the comparison below, and *only* that: a button, a link,
+         * a disclosure or a menu item has no caret and still has to look different when focused.
+         */
+        const entry =
+          el.isContentEditable ||
+          el.tagName === 'TEXTAREA' ||
+          (el.tagName === 'INPUT' &&
+            !['checkbox', 'radio', 'button', 'submit', 'reset', 'file', 'range', 'color'].includes(
+              (el as HTMLInputElement).type,
+            ))
+        if (entry) return null
         const main = document.querySelector('main')
         const side = document.querySelector(sidebarSelector)
         if (!(main?.contains(el) || side?.contains(el))) return null // the shell's chrome, not Quire's
