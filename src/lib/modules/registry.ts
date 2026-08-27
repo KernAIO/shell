@@ -116,8 +116,39 @@ export function sidebarsFor(ctx: NavContext & { segment: string }): SidebarEntry
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100) || a.id.localeCompare(b.id))
 }
 
+/**
+ * What a module is *called on screen*, as opposed to what its manifest records it as.
+ *
+ * `mod.name` is a plain English literal — every module writes `defineClientModule({ name: 'People' })`
+ * — because a manifest is data a server stores and an operator greps, not a string a reader sees.
+ * The module's own nav item is the translated one: every module declares
+ * `get label() { return t('nav') }`, which is already the word the rail shows for it. So a heading
+ * taken from the manifest sits "Inventory" in the middle of a Persian column while the rail three
+ * pixels to its left says «اموال»; taken from here it says «اموال» too.
+ *
+ * **Read it late.** `t()` resolves against a `$state` locale in `@kernhq/ui`, so a caller that
+ * snapshots this string outside a derived or a template — at registration, say, which runs once at
+ * import time — freezes the heading in whichever locale loaded first and it never changes again.
+ * That is why `ModuleSettingsLink.moduleLabel` is a getter rather than a value.
+ *
+ * The nav item is read unfiltered, unlike `navigationFor`. Permission decides what somebody may
+ * *open*, and this is a name rather than a link: a person who administers People's leave policy
+ * without holding `hr.person.view` still needs its settings pages labelled.
+ */
+export function moduleDisplayName(mod: ClientModule): string {
+  // The item whose id is the module's own is the module's entry — every first-party module declares
+  // exactly one and names it after itself. `nav[0]` covers a module that names its entry something
+  // else; `mod.name` covers one with no navigation at all, which today is only Mail and Billing.
+  const own = mod.nav?.find((item) => item.id === mod.id) ?? mod.nav?.[0]
+  return own?.label ?? mod.name
+}
+
 export interface WidgetEntry extends SvelteWidgetDefinition {
   moduleId: string
+  /**
+   * The manifest name, untranslated — `mod.name`. Not the same thing as
+   * `ModuleSettingsLink.moduleLabel`, which goes through `moduleDisplayName`.
+   */
   moduleName: string
 }
 
@@ -171,7 +202,13 @@ registerModule(inventoryClientModule)
 
 export interface ModuleSettingsLink {
   moduleId: string
-  moduleName: string
+  /**
+   * What to head this module's pages with, translated.
+   *
+   * A getter, and it must stay one — see `moduleDisplayName` for why reading it eagerly freezes a
+   * heading in one locale.
+   */
+  readonly moduleLabel: string
   id: string
   label: string
   icon?: string
@@ -223,7 +260,10 @@ function pagesForScope(
         .filter((p) => p.scope === scope)
         .map((p) => ({
           moduleId: m.id,
-          moduleName: m.name,
+          // Lazy on purpose: `t()` runs where this is read, not where it is built.
+          get moduleLabel() {
+            return moduleDisplayName(m)
+          },
           id: p.id,
           label: p.label,
           icon: p.icon,
