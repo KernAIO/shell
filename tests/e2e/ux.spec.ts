@@ -32,6 +32,19 @@ const ROUTES: { path: string; name: string }[] = [
   // The same screen carrying the unpublished-draft banner, which nothing else on this list draws.
   { path: `/${WS}/quire/handbook/01920000-0000-7000-8000-000000000102`, name: 'quire page with a draft' },
   { path: `/${WS}/quire/handbook/01920000-0000-7000-8000-000000000110`, name: 'quire database' },
+  /*
+   * The published site: the one part of the product a signed-out stranger sees, and the only one
+   * that renders on the server with no JavaScript at all. It has its own layout, its own palette
+   * decisions and its own writing direction, so nothing else on this list covers it — and because
+   * `csr = false` there, what this sweep audits is the HTML itself rather than a hydrated app.
+   *
+   * Three entries, because the route has three faces: the front page, a nested page (breadcrumbs,
+   * an open branch in the contents), and the in-site search. The mock publishes "Working here" with
+   * "Your first week" under it and "Time off" opted out, so the tree here is the pruned one.
+   */
+  { path: `/p/${WS}/working-here`, name: 'published site' },
+  { path: `/p/${WS}/working-here/your-first-week`, name: 'published site page' },
+  { path: `/p/${WS}/working-here?q=week`, name: 'published site search' },
   { path: `/${WS}/inventory`, name: 'inventory' },
   // The largest surface in the module and the only screen that draws custody, repairs, files and
   // the change history: a 440px sheet over the list, opened by `?asset=<id>`. The id is the first
@@ -185,7 +198,9 @@ test.describe('phone width', () => {
   // — three quire routes did exactly that. Grow it by however many you add.
   // 16 → 17 for the inventory asset panel, which is a 440px sheet and therefore has more to say
   // about a 390px viewport than most of the list above it.
-  for (const route of ROUTES.slice(0, 17)) {
+  // 17 → 20 for the three published-site routes, which belong here more than most: a handbook
+  // somebody published is read on a phone by people who have never seen the application.
+  for (const route of ROUTES.slice(0, 20)) {
     test(`${route.name} does not scroll sideways`, async ({ page }) => {
       await useRendering(page, RENDERINGS[0])
       await visit(page, route.path)

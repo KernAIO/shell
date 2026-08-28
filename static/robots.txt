@@ -1,0 +1,17 @@
+# Kern serves two different things on one origin: the application, which nobody may crawl because
+# every page of it needs a session, and published Quire sites under /p/, which exist to be read by
+# strangers and found by search engines.
+#
+# A crawler reads robots.txt at the origin and nowhere else. Without this file the request fell
+# through to the app's own catch-all route and came back as 200 text/html, so every crawler was
+# handed an unparseable robots.txt — and the per-publication robots.txt a published site serves,
+# with the Sitemap: line pointing at its own sitemap.xml, sat at an address nothing ever fetches.
+#
+# Longest-match wins for a path in both Google's and Bing's implementations, so "Allow: /p/" is what
+# opens the published sites inside the blanket refusal above it. A publication that has asked not to
+# be indexed is not carved out here: it says so per page, with a robots meta tag the route renders,
+# which is the only place that decision is actually known.
+
+User-agent: *
+Disallow: /
+Allow: /p/
