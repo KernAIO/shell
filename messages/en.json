@@ -1,8 +1,29 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
+  "add": "Add",
+  "admin_activate": "Activate",
   "admin_forbidden": "You need to be an instance admin to see this.",
+  "admin_healthy": "healthy",
+  "admin_make_admin": "Make instance admin",
+  "admin_modules": "Modules",
+  "admin_modules_col_health": "Health",
+  "admin_modules_col_host": "Host",
+  "admin_modules_col_module": "Module",
+  "admin_remove_admin": "Remove instance admin",
   "admin_scope_hint": "instance",
   "admin_section_instance": "Instance",
+  "admin_settings": "Instance settings",
+  "admin_settings_admins": "Instance admins only",
+  "admin_settings_base_url": "Base URL",
+  "admin_settings_default_locale": "Default language",
+  "admin_settings_everyone": "Everyone",
+  "admin_settings_name": "Instance name",
+  "admin_settings_saved": "Instance settings saved",
+  "admin_settings_signup": "Allow public sign-up",
+  "admin_settings_ws_creation": "Who can create workspaces",
+  "admin_suspend": "Suspend",
+  "admin_title": "Instance admin",
+  "admin_unhealthy": "unreachable",
   "admin_updates_auto_requires_host": "The upgrade runs on the host, not in this container. It needs the update timer that install.sh sets up, or the opt-in updater service.",
   "admin_updates_available": "Update available",
   "admin_updates_backup_note": "The script dumps the database and copies your .env before it changes anything, and prints the command that puts them back.",
@@ -72,6 +93,16 @@
   "admin_updates_window": "Update window",
   "admin_updates_window_hint": "An upgrade only starts inside this window. It may cross midnight.",
   "admin_updates_window_to": "to",
+  "admin_users": "Users",
+  "admin_users_col_admin": "Admin",
+  "admin_users_col_created": "Created",
+  "admin_users_col_status": "Status",
+  "admin_users_col_user": "User",
+  "admin_workspaces": "Workspaces",
+  "admin_ws_col_created": "Created",
+  "admin_ws_col_members": "Members",
+  "admin_ws_col_name": "Workspace",
+  "app_name": "Kern",
   "appearance_clock": "Local time",
   "appearance_clock_hint": "Show this device's city and clock beside the tab strip.",
   "appearance_hint": "Theme and language for this device.",
@@ -81,6 +112,7 @@
   "appearance_tabbar": "Tab bar",
   "appearance_tabbar_hint": "Keep several places in the workspace open at once, in a strip above the app.",
   "appearance_title": "Appearance",
+  "archive": "Archive",
   "audit_actor_system": "System",
   "audit_col_action": "Action",
   "audit_col_actor": "Actor",
@@ -88,6 +120,7 @@
   "audit_col_when": "When",
   "audit_empty": "No audit events yet",
   "audit_filter_module": "Module",
+  "audit_load_more": "Load more",
   "audit_title": "Audit log",
   "auth_back_to_sign_in": "Back to sign in",
   "auth_backup_code": "Backup code",
@@ -109,6 +142,7 @@
   "auth_invalid_credentials": "Wrong email or password",
   "auth_magic_link": "Email me a magic link",
   "auth_magic_link_sent": "Check your inbox — we sent a sign-in link to {email}.",
+  "auth_magic_link_title": "Magic link",
   "auth_name": "Full name",
   "auth_new_password": "New password",
   "auth_no_account": "New to Kern?",
@@ -168,8 +202,159 @@
   "auth_use_backup_code": "Use a backup code",
   "auth_verify": "Verify",
   "auth_welcome_back": "Welcome back",
+  "back": "Back",
+  "billing_actions": "Billing actions",
+  "billing_admin_action_clear_override": "Clear limit override",
+  "billing_admin_action_extend_trial": "Extend trial by 14 days",
+  "billing_admin_action_resume": "Resume",
+  "billing_admin_action_set_plan": "Change plan",
+  "billing_admin_action_stripe": "Open in Stripe",
+  "billing_admin_action_suspend": "Suspend",
+  "billing_admin_archive_body": "It stops being offered and disappears from the pricing page. Workspaces already on it stay on it and keep their limits. Nothing is deleted.",
+  "billing_admin_archive_confirm": "Archive plan",
+  "billing_admin_archive_title": "Archive {name}?",
+  "billing_admin_cancel": "Cancel",
+  "billing_admin_col_plan": "Plan",
+  "billing_admin_col_renews": "Renews",
+  "billing_admin_col_revenue": "Per month",
+  "billing_admin_col_seats": "Seats",
+  "billing_admin_col_status": "Status",
+  "billing_admin_col_storage": "Storage",
+  "billing_admin_col_workspace": "Workspace",
+  "billing_admin_empty": "No workspaces yet",
+  "billing_admin_empty_hint": "A workspace appears here as soon as somebody creates one.",
+  "billing_admin_error": "The workspace list could not be loaded",
+  "billing_admin_mrr": "Per month",
+  "billing_admin_no_payments": "No Stripe key is configured, so this instance cannot take a payment. Plans and limits still apply.",
+  "billing_admin_overridden": "Overridden",
+  "billing_admin_overridden_hint": "This workspace has limits set by hand, so its plan does not decide them.",
+  "billing_admin_paying": "Paying",
+  "billing_admin_plan_archive": "Archive",
+  "billing_admin_plan_archived_toast": "{name} archived",
+  "billing_admin_plan_audit_days": "Audit log kept (days)",
+  "billing_admin_plan_changed_toast": "Plan changed",
+  "billing_admin_plan_currency": "Currency",
+  "billing_admin_plan_description": "Description",
+  "billing_admin_plan_draft": "Draft",
+  "billing_admin_plan_edit": "Edit",
+  "billing_admin_plan_interval": "Billed",
+  "billing_admin_plan_interval_month": "Monthly",
+  "billing_admin_plan_interval_year": "Yearly",
+  "billing_admin_plan_limits": "What it includes",
+  "billing_admin_plan_limits_hint": "Leave a limit empty for unlimited.",
+  "billing_admin_plan_name": "Name",
+  "billing_admin_plan_new": "New plan",
+  "billing_admin_plan_none": "No plan (unlimited)",
+  "billing_admin_plan_order": "Order",
+  "billing_admin_plan_per_seat": "Charge per user",
+  "billing_admin_plan_per_seat_hint": "Off charges the price once for the whole workspace.",
+  "billing_admin_plan_price": "Price",
+  "billing_admin_plan_price_hint": "In whole currency units, so 8 is $8.00.",
+  "billing_admin_plan_publish": "Publish",
+  "billing_admin_plan_published": "Published",
+  "billing_admin_plan_published_toast": "{name} is now on the pricing page",
+  "billing_admin_plan_saved": "Plan saved",
+  "billing_admin_plan_seats": "Seats",
+  "billing_admin_plan_slug": "Slug",
+  "billing_admin_plan_slug_hint": "Appears in URLs and on the pricing page. It cannot be reused by another plan.",
+  "billing_admin_plan_sso": "Single sign-on",
+  "billing_admin_plan_storage_gb": "Storage (GB)",
+  "billing_admin_plan_stripe_price": "Stripe price ID",
+  "billing_admin_plan_stripe_price_hint": "Without one, this plan cannot be bought — only assigned by an administrator.",
+  "billing_admin_plan_trial_days": "Trial days",
+  "billing_admin_plan_unpublish": "Unpublish",
+  "billing_admin_plan_unpublished_toast": "{name} is no longer offered",
+  "billing_admin_plans_empty": "No plans yet",
+  "billing_admin_plans_empty_hint": "Create one to start charging for workspaces on this instance.",
+  "billing_admin_plans_subtitle": "What this instance sells. A published plan is what the pricing page shows.",
+  "billing_admin_plans_title": "Plans",
+  "billing_admin_resumed_toast": "{name} resumed",
+  "billing_admin_save": "Save",
+  "billing_admin_search": "Search workspaces",
+  "billing_admin_set_plan_body": "This takes effect at once and does not go through Stripe. Use it to comp an account or correct a mistake, not to sell one.",
+  "billing_admin_set_plan_title": "Change the plan for {name}",
+  "billing_admin_subscriptions_subtitle": "Every workspace on this instance, and what it pays.",
+  "billing_admin_subscriptions_title": "Subscriptions",
+  "billing_admin_suspend_body": "Everyone in {name} keeps their sign-in and can read and export what is theirs. Nobody can write until you resume it. Nothing is deleted.",
+  "billing_admin_suspend_confirm": "Suspend workspace",
+  "billing_admin_suspend_title": "Suspend this workspace?",
+  "billing_admin_suspended_count": "Suspended",
+  "billing_admin_suspended_toast": "{name} suspended",
+  "billing_admin_trial_extended_toast": "Trial extended by 14 days",
+  "billing_admin_workspaces": "Workspaces",
+  "billing_change_plan": "Change plan",
+  "billing_limit_module": "This plan does not include that module",
+  "billing_limit_module_hint": "Switching it on needs a plan it is part of.",
+  "billing_limit_seats": "Every seat in this plan is taken",
+  "billing_limit_seats_hint": "Nobody else can be invited until a seat frees up or the plan changes.",
+  "billing_limit_storage": "This plan's storage is full",
+  "billing_limit_storage_hint": "Remove some files, or move to a plan with more room.",
+  "billing_plan_section": "Plan",
+  "billing_see_plans": "See plans",
+  "billing_status": "Status",
+  "billing_trial_days_left": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} day left",
+        "countPlural=other": "{n} days left"
+      }
+    }
+  ],
   "cancel": "Cancel",
+  "chart_empty": "Nothing to show for this period yet",
+  "chart_max": "up to {value}",
+  "chart_when": "When",
+  "chat_attach_soon": "Attaching files is not built yet",
+  "chat_cmd_unread": "Next unread conversation",
+  "chat_convert_to_issue": "Convert to issue",
+  "chat_emoji_empty": "No emoji matches",
+  "chat_emoji_group_people": "People",
+  "chat_emoji_group_reactions": "Reactions",
+  "chat_emoji_group_work": "Work",
+  "chat_emoji_search": "Search emoji",
+  "chat_member_count_one": "1 member",
+  "chat_members_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} member",
+        "countPlural=other": "{n} members"
+      }
+    }
+  ],
+  "chat_mention_empty": "Nobody matches",
+  "chat_mention_loading": "Finding people…",
+  "chat_muted": "Muted",
+  "chat_offline": "Reconnecting — messages will send when the connection is back",
+  "chat_replies": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} reply",
+        "countPlural=other": "{n} replies"
+      }
+    }
+  ],
+  "chat_search_results": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} result",
+        "countPlural=other": "{n} results"
+      }
+    }
+  ],
+  "chat_thread_reply_placeholder": "Reply…",
+  "chat_video_message": "Video message",
+  "chat_voice_message": "Voice message",
   "close": "Close",
+  "command_palette": "Command palette",
+  "confirm": "Confirm",
   "copied": "Copied",
   "copy": "Copy",
   "create": "Create",
@@ -223,6 +408,7 @@
   "dash_size_s": "Small",
   "dash_size_xl": "Full width",
   "dash_undo": "Undo",
+  "dash_unsaved": "You have unsaved changes to this dashboard.",
   "dash_widget_menu": "Widget options",
   "dash_widget_needs_setup": "Nothing to show here yet.",
   "dash_widget_unavailable": "No longer available",
@@ -256,14 +442,20 @@
   "dev_modules_subscriptions": "Subscriptions",
   "dev_modules_subscriptions_hint": "Events from other modules that this one reacts to.",
   "dev_modules_title": "Modules",
+  "disabled": "Disabled",
   "discard": "Discard",
   "done": "Done",
+  "edit": "Edit",
   "enabled": "Enabled",
   "error_generic": "Something went wrong. Please try again.",
   "error_page_title": "Something broke",
+  "forbidden_body": "You don't have permission to view this.",
+  "forbidden_title": "No access",
   "go_home": "Go home",
   "groups_created": "Group created",
+  "groups_deleted": "Group deleted",
   "groups_description": "Description",
+  "groups_edit_members": "Edit members",
   "groups_empty": "Groups let you @mention and grant permissions to many people at once.",
   "groups_handle": "Handle",
   "groups_members": [
@@ -279,13 +471,24 @@
   "groups_name": "Group name",
   "groups_new": "New group",
   "groups_title": "Groups",
+  "groups_updated": "Group updated",
   "home_greeting_afternoon": "Good afternoon, {name}",
   "home_greeting_evening": "Good evening, {name}",
   "home_greeting_morning": "Good morning, {name}",
   "home_inbox_empty": "Nothing waiting on you",
+  "home_inbox_preview": "Waiting on you",
+  "home_open_inbox": "Open inbox",
   "home_stat_mentions": "Mentions",
   "home_stat_unread": "Unread notifications",
   "home_stat_workspaces": "Workspaces",
+  "home_subtitle": "{date}",
+  "home_widgets": "From your modules",
+  "hr_att_late": "Late",
+  "hr_balance": "Balance",
+  "hr_feature_off": "Off",
+  "hr_feature_on": "On",
+  "hr_position": "Position",
+  "hr_requested_by": "Requested by {name}",
   "inbox_all_workspaces": "All workspaces",
   "inbox_archive": "Archive",
   "inbox_archived": "Notification archived",
@@ -293,6 +496,7 @@
   "inbox_empty_unread": "You're all caught up",
   "inbox_empty_unread_body": "New mentions, assignments and updates will land here.",
   "inbox_mark_read": "Mark read",
+  "inbox_mark_unread_only_read": "Mark as read",
   "inbox_marked_read": "{count} marked read",
   "inbox_open_object": "Open",
   "inbox_scope": "Showing",
@@ -309,10 +513,13 @@
   "integrations_title": "Integrations",
   "integrations_webhooks": "Webhooks",
   "integrations_webhooks_desc": "Signed outgoing events for your own services",
+  "invite_accept": "Accept invitation",
+  "invite_body": "{inviter} invited {email} to collaborate in {workspace}.",
   "invite_by_email": "By email",
   "invite_dialog_title": "Invite to {workspace}",
   "invite_directory_empty": "No one found — try a different search",
   "invite_email_placeholder": "colleague@company.com — comma-separate multiple",
+  "invite_expired": "This invitation has expired. Ask for a new one.",
   "invite_expires": "Expires {date}",
   "invite_from_directory": "From your other workspaces",
   "invite_message": "Message",
@@ -343,11 +550,16 @@
       }
     }
   ],
+  "invite_sign_in_first": "Sign in or create an account to accept.",
+  "invite_title": "Join {workspace}",
+  "invite_wrong_account": "Signed in as {current}. This invite is for {email}.",
   "language": "Language",
+  "loading": "Loading…",
   "mark_all_read": "Mark all read",
   "members_actions": "Member actions",
   "members_cannot_change_own_role": "You cannot change your own role",
   "members_change_role": "Change role",
+  "members_col_groups": "Groups",
   "members_col_joined": "Joined",
   "members_col_name": "Name",
   "members_col_role": "Role",
@@ -376,6 +588,7 @@
   "members_reactivated_toast": "{name} reactivated",
   "members_remove": "Remove from workspace",
   "members_remove_body": "They lose access to everything in this workspace immediately. Their messages, issues and comments stay where they are, and you can invite them back at any time.",
+  "members_remove_confirm": "Remove {name} from this workspace?",
   "members_remove_title": "Remove {name}?",
   "members_removed": "{name} removed",
   "members_role_admin": "Admin",
@@ -393,6 +606,8 @@
   "members_title_label": "Job title",
   "members_title_updated": "Job title updated",
   "members_you": "you",
+  "module_disabled_body": "{module} is turned off for this workspace. An admin can enable it in Settings → Modules.",
+  "module_disabled_title": "Module not enabled",
   "modules_configure": "Configure",
   "modules_core_badge": "Core",
   "modules_core_locked": "Always included",
@@ -401,6 +616,7 @@
   "modules_disable_body": "Everyone in this workspace loses access to {name} and it disappears from their navigation. Nothing is deleted: turning it back on restores the data exactly as it was.",
   "modules_disable_title": "Turn off {name}?",
   "modules_disabled_toast": "{name} disabled",
+  "modules_enable": "Enable",
   "modules_enabled_toast": "{name} enabled",
   "modules_group_available": "Available",
   "modules_group_enabled": "Enabled",
@@ -438,16 +654,21 @@
   ],
   "modules_min_kernel": "Needs Kern {version}",
   "modules_moves_to": "Moves to {version} in Kern {release}",
+  "modules_no_settings": "This module has no workspace settings.",
   "modules_none_match": "No modules match “{query}”.",
   "modules_page_hint": "Turn features on for this workspace. Everything a module adds — navigation, permissions, search — appears only where it is enabled.",
   "modules_read_only": "You can see which modules are in use, but only workspace admins can change them.",
   "modules_required_by": "Needed by {modules} — turn those off first.",
   "modules_search": "Search modules",
+  "modules_settings_for": "{name} settings",
   "modules_title": "Modules",
+  "nav_account": "Account",
   "nav_admin": "Admin",
   "nav_home": "My work",
   "nav_inbox": "Inbox",
+  "nav_modules": "Modules",
   "nav_more": "More",
+  "nav_preferences": "Preferences",
   "nav_settings": "Settings",
   "nav_workspace": "Workspace",
   "no_notifications": "You're all caught up",
@@ -478,14 +699,22 @@
   "onboarding_title": "Create your first workspace",
   "onboarding_ws_name": "Workspace name",
   "onboarding_ws_slug": "URL",
+  "open": "Open",
+  "open_inbox": "Open inbox",
   "optional": "optional",
   "palette_empty": "No results",
   "palette_group_commands": "Commands",
   "palette_group_navigation": "Navigation",
+  "palette_group_recent": "Recent",
   "palette_group_search": "Search results",
   "palette_group_workspaces": "Workspaces",
+  "palette_language": "Change language",
   "palette_placeholder": "Jump to, or run a command…",
   "palette_switch_theme": "Switch theme",
+  "presence_away": "Away",
+  "presence_dnd": "Do not disturb",
+  "presence_offline": "Offline",
+  "presence_online": "Online",
   "profile_avatar": "Avatar",
   "profile_hint": "How you appear to other people in Kern.",
   "profile_name": "Name",
@@ -520,6 +749,19 @@
   "pwa_ios_step1": "Tap the Share button",
   "pwa_ios_step2": "Choose “Add to Home Screen”",
   "pwa_ios_title": "Add Kern to your Home Screen",
+  "pwa_update_ready": "A new version of Kern is ready",
+  "pwa_update_reload": "Reload",
+  "quire_people_here": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} other person here",
+        "countPlural=other": "{n} others here"
+      }
+    }
+  ],
+  "quire_switch_space": "Switch space",
   "connecting_banner": "Connecting…",
   "reconnecting": "Reconnecting…",
   "remove": "Remove",
@@ -554,9 +796,12 @@
   "roles_title": "Roles & permissions",
   "roles_updated": "Role updated",
   "save": "Save",
+  "saved": "Saved",
   "search": "Search",
+  "search_everything": "Search {workspace}…",
   "search_placeholder": "Search",
   "security_2fa": "Two-factor authentication",
+  "security_2fa_disable": "Disable 2FA",
   "security_2fa_enable": "Enable 2FA",
   "security_2fa_hint": "Require a code from your authenticator app when signing in.",
   "security_2fa_scan": "Scan this secret into your authenticator app, then enter a code to confirm.",
@@ -566,10 +811,16 @@
   "security_passkey_add": "Add passkey",
   "security_passkey_added": "Passkey added",
   "security_passkey_hint": "Replaces your password on devices that support it.",
+  "security_passkey_removed": "Passkey removed",
   "security_passkeys": "Passkeys",
   "security_passkeys_hint": "Sign in with Face ID, Touch ID or a security key.",
   "security_password": "Password",
   "security_password_updated": "Password updated",
+  "security_session_current": "This device",
+  "security_session_revoke": "Revoke",
+  "security_session_revoked": "Session revoked",
+  "security_sessions": "Sessions",
+  "security_sessions_hint": "Devices signed in to your account.",
   "security_title": "Security",
   "settings_account_section": "Your account",
   "settings_appearance": "Appearance",
@@ -588,6 +839,9 @@
   "settings_security": "Security",
   "settings_title": "Settings",
   "settings_workspace_section": "Workspace",
+  "shortcut_go_home": "Go to My work",
+  "shortcut_go_inbox": "Go to Inbox",
+  "shortcut_go_settings": "Go to Settings",
   "tabs_close": "Close tab",
   "tabs_close_others": "Close other tabs",
   "tabs_close_right": "Close tabs after this one",
@@ -603,6 +857,38 @@
   "theme_dark": "Dark",
   "theme_light": "Light",
   "theme_system": "System",
+  "time_just_now": "just now",
+  "tracker_bulk_done": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Updated {n} issue",
+        "countPlural=other": "Updated {n} issues"
+      }
+    }
+  ],
+  "tracker_components_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} component",
+        "countPlural=other": "{n} components"
+      }
+    }
+  ],
+  "tracker_field_not_editable": "This field cannot be edited here yet",
+  "tracker_hours": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n}h",
+        "countPlural=other": "{n}h"
+      }
+    }
+  ],
   "tracker_issues_count": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
@@ -613,6 +899,81 @@
       }
     }
   ],
+  "tracker_planning_issue_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} issue",
+        "countPlural=other": "{n} issues"
+      }
+    }
+  ],
+  "tracker_points": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} pt",
+        "countPlural=other": "{n} pts"
+      }
+    }
+  ],
+  "tracker_project_page": "Open the project",
+  "tracker_project_weeks": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} week",
+        "countPlural=other": "{n} weeks"
+      }
+    }
+  ],
+  "tracker_template_subitems": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "creates {n} sub-issue",
+        "countPlural=other": "creates {n} sub-issues"
+      }
+    }
+  ],
+  "tracker_templates_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} template",
+        "countPlural=other": "{n} templates"
+      }
+    }
+  ],
+  "tracker_workflow_asks": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "Asks for {n} field first",
+        "countPlural=other": "Asks for {n} fields first"
+      }
+    }
+  ],
+  "tracker_workflow_status_count": [
+    {
+      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
+      "selectors": ["countPlural"],
+      "match": {
+        "countPlural=one": "{n} status",
+        "countPlural=other": "{n} statuses"
+      }
+    }
+  ],
+  "tracker_workflow_statuses": "Statuses",
+  "tracker_workflow_transitions": "Moves",
+  "tracker_workflow_used_by": "Used by {types}.",
+  "tracker_workflow_used_by_label": "Work item types that run on this workflow",
   "tz_region_africa": "Africa",
   "tz_region_america": "Americas",
   "tz_region_antarctica": "Antarctica",
@@ -633,6 +994,8 @@
   "widget_people_desc": "Who is in this workspace, and who is here now.",
   "widget_people_title": "People",
   "widget_setting_rows": "Rows",
+  "widget_setting_show": "Show",
+  "widget_setting_status": "Status",
   "widget_unread_desc": "How much is waiting in this workspace.",
   "widget_unread_title": "Unread",
   "widget_waiting_desc": "Unread notifications, with the two things you do with one.",
@@ -649,12 +1012,14 @@
       }
     }
   ],
+  "workspace_switcher_label": "Switch workspace",
   "workspaces_choose_hint": "Pick where you want to work.",
   "workspaces_choose_title": "Choose a workspace",
   "workspaces_filter_empty": "No workspace matches “{query}”.",
   "workspaces_filter_placeholder": "Filter workspaces…",
   "workspaces_last_used": "Last used",
   "workspaces_signed_in_as": "Signed in as {email}",
+  "ws_accent": "Accent color",
   "ws_archive": "Archive workspace",
   "ws_archive_confirm_body": "The workspace disappears for its members and its content stops appearing in search. Nothing is deleted, and an admin can restore it later.",
   "ws_archive_confirm_title": "Archive {name}?",

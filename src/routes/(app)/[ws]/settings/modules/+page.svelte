@@ -3,6 +3,7 @@ import { Badge, Button, Dialog, Icon, SearchBox, SectionLabel, Skeleton, Switch,
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
+import { planLimitToast } from '$lib/api/plan-limit'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
@@ -21,6 +22,14 @@ const queryClient = useQueryClient()
 const slug = $derived(page.params.ws!)
 const workspaceId = $derived(session.workspaces.find((w) => w.slug === slug)?.id ?? '')
 const canManage = $derived(session.can('core.modules.manage'))
+
+/**
+ * Switching a module on is where a plan refuses one, so it is where the plan has to be explainable.
+ *
+ * `billing.modules.not_included` used to arrive here as the server's own English sentence in a bare
+ * toast — see `$lib/api/plan-limit.ts`.
+ */
+const plan = $derived({ workspaceSlug: slug, canSeePlans: session.can('billing.subscription.view') })
 
 const modules = createQuery(() => ({
   queryKey: keys.modules(workspaceId),
@@ -83,7 +92,10 @@ const setEnabled = createMutation(() => ({
     })
     void queryClient.invalidateQueries({ queryKey: ['core'] })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => {
+    if (planLimitToast(err, plan)) return
+    toast.error(err instanceof Error ? err.message : m.error_generic())
+  },
 }))
 
 function request(entry: Entry, next: boolean) {

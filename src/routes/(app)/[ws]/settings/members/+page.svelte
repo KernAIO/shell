@@ -19,6 +19,7 @@ import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-qu
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
+import { planLimitToast } from '$lib/api/plan-limit'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
 import { formatDate } from '$lib/format'
@@ -40,6 +41,14 @@ const workspaceId = $derived(workspace?.id ?? '')
 
 const canManage = $derived(session.can('core.members.manage'))
 const canInvite = $derived(session.can('core.members.invite'))
+
+/**
+ * Inviting is where a workspace runs out of seats, so it is where the plan has to be explainable.
+ *
+ * `billing.seats.limit_reached` used to arrive here as the server's own English sentence in a bare
+ * toast, with no way forward from it — see `$lib/api/plan-limit.ts`.
+ */
+const plan = $derived({ workspaceSlug: slug, canSeePlans: session.can('billing.subscription.view') })
 
 let search = $state('')
 let inviteOpen = $state(false)
@@ -157,7 +166,10 @@ const invite = createMutation(() => ({
     picked = new Set()
     void queryClient.invalidateQueries({ queryKey: keys.invitations(workspaceId) })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => {
+    if (planLimitToast(err, plan)) return
+    toast.error(err instanceof Error ? err.message : m.error_generic())
+  },
 }))
 
 const revoke = createMutation(() => ({
@@ -179,7 +191,10 @@ const resend = createMutation(() => ({
     toast.success(m.invite_resent({ email: invitation.email }))
     void queryClient.invalidateQueries({ queryKey: keys.invitations(workspaceId) })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => {
+    if (planLimitToast(err, plan)) return
+    toast.error(err instanceof Error ? err.message : m.error_generic())
+  },
 }))
 
 /** Why this member's role cannot be changed, or null when it can. */
