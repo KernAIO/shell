@@ -57,7 +57,12 @@ const PAGES = {
 const tree = (page: Page) => page.getByRole('complementary', { name: 'Navigation' }).getByRole('navigation')
 
 /** Just the tree's own rows — see the note above. Controls like "New page" live outside them. */
-const treeRows = (page: Page) => tree(page).locator('.scroll > .row')
+const treeRows = (page: Page) =>
+  tree(page).locator(
+    // A row of the tree at any depth — a child page's row is nested inside its parent's — but not
+    // one belonging to the Favourites or Recent groups, which wrap theirs in a `.group`.
+    'xpath=.//div[contains(@class,"row")][not(ancestor::div[contains(@class,"group")])]',
+  )
 
 /**
  * One row of the page tree.
