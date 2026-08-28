@@ -142,6 +142,7 @@
     }
   ],
   "auth_password_weak": "Zayıf parola",
+  "auth_privacy_policy": "Gizlilik politikası",
   "auth_reset_done": "Parolan değişti. Onunla giriş yap.",
   "auth_reset_hint": "Başka hiçbir yerde kullanmadığın bir parola seç.",
   "auth_reset_link_dead": "Sıfırlama bağlantıları bir saat sonra geçersiz olur ve bir kez çalışır. Yenisini iste.",
@@ -156,6 +157,7 @@
   "auth_sign_out": "Çıkış yap",
   "auth_sign_up": "Hesap oluştur",
   "auth_terms_note": "Devam ederek bu sunucunun koşullarını kabul etmiş olursunuz.",
+  "auth_terms_of_service": "Kullanım koşulları",
   "auth_trust_device": "Bu cihaza güven",
   "auth_trust_device_hint": "Bu cihazda 30 gün boyunca kod sorma.",
   "auth_two_factor": "İki adımlı doğrulama",

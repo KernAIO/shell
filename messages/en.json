@@ -142,6 +142,7 @@
     }
   ],
   "auth_password_weak": "Weak password",
+  "auth_privacy_policy": "Privacy policy",
   "auth_reset_done": "Your password is changed. Sign in with it.",
   "auth_reset_hint": "Choose a password you do not use anywhere else.",
   "auth_reset_link_dead": "Reset links expire after an hour and work once. Ask for a new one.",
@@ -156,6 +157,7 @@
   "auth_sign_out": "Sign out",
   "auth_sign_up": "Create account",
   "auth_terms_note": "By continuing you agree to this instance's terms.",
+  "auth_terms_of_service": "Terms of service",
   "auth_trust_device": "Trust this device",
   "auth_trust_device_hint": "Skip the code on this device for the next 30 days.",
   "auth_two_factor": "Two-factor authentication",

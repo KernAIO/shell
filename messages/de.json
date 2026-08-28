@@ -142,6 +142,7 @@
     }
   ],
   "auth_password_weak": "Schwaches Passwort",
+  "auth_privacy_policy": "Datenschutzerklärung",
   "auth_reset_done": "Dein Passwort ist geändert. Melde dich damit an.",
   "auth_reset_hint": "Wähle ein Passwort, das du sonst nirgends verwendest.",
   "auth_reset_link_dead": "Reset-Links laufen nach einer Stunde ab und funktionieren einmal. Fordere einen neuen an.",
@@ -156,6 +157,7 @@
   "auth_sign_out": "Abmelden",
   "auth_sign_up": "Konto erstellen",
   "auth_terms_note": "Mit dem Fortfahren stimmst du den Bedingungen dieser Instanz zu.",
+  "auth_terms_of_service": "Nutzungsbedingungen",
   "auth_trust_device": "Diesem Gerät vertrauen",
   "auth_trust_device_hint": "Auf diesem Gerät die nächsten 30 Tage keinen Code verlangen.",
   "auth_two_factor": "Zwei-Faktor-Authentifizierung",
