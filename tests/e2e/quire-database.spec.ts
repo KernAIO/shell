@@ -103,7 +103,7 @@ test('a filter shrinks the list, and clearing it restores it', async ({ page }) 
   await openDatabase(page)
   expect(await page.getByTestId('database-row').count()).toBe(8)
 
-  await page.getByRole('button', { name: 'Filter' }).click()
+  await page.getByRole('button', { name: 'Filter', exact: true }).click()
   await page.getByRole('button', { name: 'Add a filter' }).click()
 
   // the first column is Owner; switch to Status and pick one value

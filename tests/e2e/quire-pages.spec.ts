@@ -38,7 +38,26 @@ const PAGES = {
 
 /* ------------------------------------------------------------------ handles */
 
+/**
+ * The page tree, and not the other two lists beside it.
+ *
+ * The sidebar grew Favourites and Recent, and both draw the same pages the tree does — so
+ * `getByRole('button', { name: 'Welcome' })` inside the navigation landmark began resolving to
+ * three elements and every test that opens a page failed on strict mode. That is the features
+ * working, not a defect: the same page legitimately appears three times.
+ *
+ * A tree row is a direct child of the scroll container; a Favourites or Recent row is nested inside
+ * that group's own `.group > .stack`. Scoping by the child combinator is what separates them
+ * without naming any of the three.
+ *
+ * It would be better if the tree said what it was — an `aria-label` on it, or the `role="tree"` the
+ * accessibility sweep already wants — and then this would be `getByRole('tree')`. Worth doing in
+ * the module; this is the shell-side half.
+ */
 const tree = (page: Page) => page.getByRole('complementary', { name: 'Navigation' }).getByRole('navigation')
+
+/** Just the tree's own rows — see the note above. Controls like "New page" live outside them. */
+const treeRows = (page: Page) => tree(page).locator('.scroll > .row')
 
 /**
  * One row of the page tree.
@@ -48,7 +67,7 @@ const tree = (page: Page) => page.getByRole('complementary', { name: 'Navigation
  * whose name has picked up the label of a control drawn inside it is precisely the defect that
  * makes a screen reader read the tree wrong.
  */
-const row = (page: Page, title: string) => tree(page).getByRole('button', { name: title, exact: true })
+const row = (page: Page, title: string) => treeRows(page).getByRole('button', { name: title, exact: true })
 
 /**
  * The disclosure twisty of a row with children.
@@ -56,7 +75,7 @@ const row = (page: Page, title: string) => tree(page).getByRole('button', { name
  * `aria-expanded` alone also matches the space switcher, which is a popup trigger rather than a
  * disclosure; `aria-haspopup` is what separates the two.
  */
-const twisty = (page: Page) => tree(page).locator('button[aria-expanded]:not([aria-haspopup])')
+const twisty = (page: Page) => treeRows(page).locator('button[aria-expanded]:not([aria-haspopup])')
 
 const titleField = (page: Page) => page.getByRole('textbox', { name: 'Page title' })
 const byline = (page: Page) => page.locator('.byline')
@@ -439,6 +458,12 @@ test('moving a page to the trash takes it out of the tree and hands you back the
   await expect(row(page, 'Fire drill')).toBeVisible()
 
   await openMenu(page, 'Move to trash')
+  /*
+   * Trashing is confirmed now, and the confirmation says how many pages go with it — a page used to
+   * disappear, subtree and all, on one click of a menu item. So the menu item opens a dialog and the
+   * dialog does the deed.
+   */
+  await page.getByRole('button', { name: 'Move to trash', exact: true }).click()
 
   await expect(page).toHaveURL(new RegExp(`${SPACE}$`))
   await expect(row(page, 'Fire drill')).toHaveCount(0)
@@ -483,13 +508,25 @@ test('the tree is worked entirely from the keyboard', async ({ page }) => {
 
   await page.getByRole('searchbox', { name: 'Search this space' }).focus()
 
-  // the first page of the space is a Tab away from the search box, not buried behind the tree
-  await page.keyboard.press('Tab')
-  await expect.poll(async () => (await focused()).label).toBe('Welcome')
+  /*
+   * The first page is a short walk from the search box, not buried behind the tree.
+   *
+   * It used to be exactly one Tab; the sidebar has since grown a label filter, which belongs beside
+   * the search rather than after the pages. Counting keystrokes tests the furniture; what matters is
+   * that the tree is near the top of the walk and reachable without passing every page in it.
+   */
+  await tabUntil('the first page of the space', (at) => at.label === 'Welcome')
 
-  // the twisty is drawn as an overlay rather than laid out in the row, which is exactly the shape
-  // that ends up unfocusable — so reaching it at all is the assertion
-  await tabUntil('the tree disclosure', (at) => at.expanded === 'false')
+  /*
+   * The twisty is drawn as an overlay rather than laid out in the row, which is exactly the shape
+   * that ends up unfocusable — so reaching it at all is the assertion.
+   *
+   * Matched on its name rather than on `aria-expanded` alone. The sidebar now has Favourites and
+   * Recent groups that are collapsible too, so "the first thing with aria-expanded=false" stopped
+   * meaning "a page's disclosure" — it found a group header and Enter collapsed the group. A tree
+   * disclosure is the one that names the page it would expand.
+   */
+  await tabUntil('the tree disclosure', (at) => at.expanded === 'false' && /^Expand /.test(at.label ?? ''))
 
   // expanding is a keystroke, and focus stays on the control that did it
   await page.keyboard.press('Enter')
@@ -520,8 +557,17 @@ test('the page menu and the version sheet are reachable from the keyboard', asyn
   await open(page, PAGES.welcome)
 
   await titleField(page).focus()
-  await page.keyboard.press('Tab')
-  expect(await page.evaluate(() => document.activeElement?.getAttribute('aria-label'))).toBe('Page actions')
+  /*
+   * Tabbed to rather than asserted as the very next stop. The header grew a favourites star between
+   * the title and the menu, and a test that pins an exact ordinal breaks every time a control is
+   * added beside it — which says nothing about whether the menu is reachable, which is the claim.
+   */
+  let landed: string | null = null
+  for (let i = 0; i < 8 && landed !== 'Page actions'; i++) {
+    await page.keyboard.press('Tab')
+    landed = await page.evaluate(() => document.activeElement?.getAttribute('aria-label') ?? null)
+  }
+  expect(landed, 'the page menu is not reachable by Tab from the title').toBe('Page actions')
 
   await page.keyboard.press('Enter')
   await expect(page.getByRole('menu')).toBeVisible()
