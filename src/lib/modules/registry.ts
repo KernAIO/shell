@@ -4,9 +4,8 @@ import type {
   SvelteSidebarContribution,
   SvelteWidgetDefinition,
 } from '@kernhq/ui'
-import { registerMessages } from '@kernhq/ui'
-
 import { hasCapability } from './capabilities'
+import { loadModuleMessages } from './messages'
 
 export { capabilitiesOf } from './capabilities'
 export { segmentOf } from './segment'
@@ -39,24 +38,13 @@ export function registerModule(mod: ClientModule) {
 /**
  * Merge a module's own strings into the framework's message runtime.
  *
- * The app's catalogues are compiled by Paraglide from `messages/*.json` and cannot see a module
- * that ships separately, so a module carries its bundles and declares them here. Keys are
- * namespaced by module (`chat.nav`), so one merged map per locale is collision-free.
- *
- * Bundles are thunks and this does not await them: a module's strings arrive a tick after it
- * registers, and `t()` renders the key until they do. That is the right trade — blocking module
- * registration on a network fetch would stall the whole shell for one module's translations, and a
- * key flashing once is visible only to whoever is looking for it.
- *
- * A bundle that fails to load is logged rather than thrown: the module still works in English,
- * which is a much better outcome than a locale gap taking the app down.
+ * Keys are namespaced by module (`chat.nav`), so one merged map per locale is collision-free.
+ * `loadModuleMessages` is the whole of it, and it is a separate file because a route that mounts a
+ * module component *outside* `(app)` needs the same merge and must not import this registry to get
+ * it — see the note there.
  */
 function loadMessages(mod: ClientModule) {
-  for (const [locale, load] of Object.entries(mod.messages ?? {})) {
-    void load()
-      .then((messages) => registerMessages(locale, messages))
-      .catch((err) => console.error(`[${mod.id}] could not load ${locale} messages`, err))
-  }
+  void loadModuleMessages(mod.id, mod.messages)
 }
 
 export function allModules(): ClientModule[] {
