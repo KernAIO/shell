@@ -265,6 +265,19 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
 - **`node scripts/check-i18n.mjs` before saying a screen is done.** It is in `pnpm lint`, and it is
   the only thing that sees a locale gap: Paraglide compiles a missing key to a silent English alias,
   so nothing else — not the compiler, not the build, not a test — ever notices.
+- **A module component mounted outside `(app)` has no strings, for ever.** `$lib/modules/registry`
+  is the only thing that calls `registerMessages`, and it is imported by the app routes — so
+  `/request/:token`, which mounts tracker's `IntakePage` with no session, rendered
+  `tracker.intake_unavailable` and `tracker.intake_thanks` as raw keys on the one screen a stranger
+  ever sees. Nothing arrives later to fix it. Such a route merges the bundle itself, in `+page.ts`
+  via `loadModuleMessages` — importing the registry instead would drag all eight module clients into
+  a page loaded by people with no account.
+- **A green `check-ranges` on a warm npm cache is not evidence.** It asks the registry what is
+  published, and `npm view` will happily serve metadata hours old: on 2026-08-28 it reported only
+  one stale range and passed the rest, three hours after `@kernhq/kernel@0.8.0` and
+  `@kernhq/ui@0.13.0` were published. CI runs cold and saw all three. Re-run it before believing it,
+  and expect the answer to move under you while you work — the framework is published from these
+  same repositories all day.
 - **A counted message is a variant message, not a string with `{count}` in it.** The plugin's shape
   is a one-element array carrying `declarations`, `selectors` and `match`; `local n = count: number`
   is what puts the number through `Intl`, which is the only reason a Persian screen reads «۱۱ کار»
