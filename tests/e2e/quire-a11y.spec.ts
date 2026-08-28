@@ -278,7 +278,21 @@ async function sweepControls(page: Page, sidebar: string) {
             where: `${region}: ${describe(el)}`,
           })
         }
-        const inside = Array.from(el.querySelectorAll(SELECTOR)).filter((c) => visible(c))
+        /*
+         * Nesting is about CONTROLS inside controls — a button inside a button, whose accessible
+         * name becomes the two labels run together. A focusable *container* is a different thing:
+         * `svelte-dnd-action` puts `tabindex="0"` and `role="listitem"` on every row of a
+         * reorderable list so it can be dragged from the keyboard, and ARIA is explicit that a
+         * listitem may hold interactive descendants. Counting those as controls made the sidebar's
+         * favourites list report nine nested controls while its markup was already right — the
+         * menu is a sibling of the row's button, not a child of it.
+         *
+         * The selector still sweeps them for the naming and focus-ring rules, where being focusable
+         * is exactly what matters. It is only this rule they are exempt from.
+         */
+        const CONTAINER_ROLES = ['listitem', 'list', 'group', 'row', 'rowgroup', 'presentation', 'none']
+        const containerish = CONTAINER_ROLES.includes(el.getAttribute('role') ?? '')
+        const inside = containerish ? [] : Array.from(el.querySelectorAll(SELECTOR)).filter((c) => visible(c))
         if (inside.length > 0) {
           findings.push({
             rule: 'nested',
