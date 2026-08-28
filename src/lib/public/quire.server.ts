@@ -71,20 +71,13 @@ export function __setPublicQuire(api: QuireApi | null) {
  * not no tenant*, so the request must name a workspace before anything touches `mod_quire` or
  * row-level security has nothing to fence with.
  *
- * Turning one into the other is a lookup nothing can currently do signed out. Every workspace read
- * in `core` is behind `workspaceScoped`, which requires membership, and a published site has no
- * member reading it. So this resolves the id form and refuses everything else, and the refusal is a
- * **404** rather than an error: a stranger asking for a URL is owed "there is nothing here", and
- * saying anything else about a segment would make this the oracle that the rest of the surface
- * carefully refuses to be.
+ * Turning one into the other is a lookup nothing in `core` can do signed out — every workspace read
+ * there is behind `workspaceScoped`, which requires membership, and a published site has no member
+ * reading it. The module closes that gap itself, so this hands the segment on whole rather than
+ * refusing anything: it used to accept the id form only, and a slug — the form the share dialog
+ * actually copies — reached a 404 it had no way to be right about.
  *
- * What closes the gap is one procedure in `core` — a signed-out `workspaces.publicBySlug` answering
- * `{ id }` for a slug and 404 otherwise. It belongs there rather than here: only core holds the
- * table, and it is the same lookup `[ws]` already does for a member. Until it exists, the link the
- * share dialog copies resolves only in its id form, and the shell half fails closed rather than
- * guessing.
- *
- * In mock mode the segment is passed through untouched: the in-memory Quire finds a publication by
+ * In mock mode it is passed through for the same reason: the in-memory Quire finds a publication by
  * slug alone and ignores the workspace entirely, which is what lets `dev:mock` and the UX sweep
  * open `/p/northstar/working-here` with no backend at all.
  */
