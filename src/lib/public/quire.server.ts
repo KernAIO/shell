@@ -91,8 +91,11 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
  * open `/p/northstar/working-here` with no backend at all.
  */
 export function resolveWorkspaceId(segment: string): string | null {
-  if (isMockApi()) return segment
-  return UUID.test(segment) ? segment : null
+  // The module resolves a slug itself now — see `publications.resolveWorkspace`. It is the right
+  // place for it: a slug that names a workspace with no such publication reaches the same 404 as a
+  // slug nobody has taken, so the answer says nothing a published site does not already say. Core
+  // could only have answered "does this workspace exist", which is a fact about private ones too.
+  return segment
 }
 
 /**
