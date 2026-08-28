@@ -306,8 +306,12 @@
   "billing_limit_storage": "امتلأت سعة التخزين في هذه الخطة",
   "billing_limit_storage_hint": "احذف بعض الملفات أو انتقل إلى خطة أوسع.",
   "billing_plan_section": "الخطة",
+  "billing_reactivate": "إعادة التفعيل",
   "billing_see_plans": "عرض الخطط",
   "billing_status": "الحالة",
+  "billing_suspended": "مساحة العمل هذه موقوفة",
+  "billing_suspended_hint": "اشتراكها غير سارٍ، لذا لا يمكن تغيير أي شيء. القراءة والتصدير ما زالا يعملان.",
+  "billing_suspended_hint_member": "اشتراكها غير سارٍ، لذا لا يمكن تغيير أي شيء. القراءة والتصدير ما زالا يعملان — اطلب من أحد المالكين إعادة تفعيلها.",
   "billing_trial_days_left": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],

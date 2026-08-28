@@ -50,6 +50,34 @@ export function reasonOf(err: unknown): string | null {
 }
 
 /**
+ * The workspace is suspended — its subscription lapsed, so the kernel refuses every write.
+ *
+ * Deliberately **not** a `PlanLimitReason`. A plan limit is a ceiling reached by a workspace that is
+ * working normally; this is the whole workspace held read-only, it can arrive from any procedure
+ * rather than from the one feature that ran out, and the way out is to reactivate rather than to
+ * pick a bigger plan. They read alike and want different sentences, so `planLimitOf` keeps
+ * returning `null` for it and this is its own question.
+ */
+export const SUSPENDED_REASON = 'billing.subscription.inactive'
+
+export interface Suspension {
+  /** The plan the workspace was on, when it was on a named one. */
+  plan: string | null
+}
+
+/**
+ * Whether this failure is the suspension gate, and what the server said about it.
+ *
+ * `kernel`'s `Entitlements.requireActive` throws `CONFLICT` with this reason and `{ plan }` from
+ * every non-GET workspace-scoped procedure while `active` is false — so it is the one refusal a
+ * caller can meet without having done anything unusual at all.
+ */
+export function suspensionOf(err: unknown): Suspension | null {
+  if (reasonOf(err) !== SUSPENDED_REASON) return null
+  return { plan: stringOr(dataOf(err)?.plan) }
+}
+
+/**
  * Whether this failure is a plan limit, and what the server said about it.
  *
  * `null` for everything else, including every other `CONFLICT`: a screen must not turn "you are not

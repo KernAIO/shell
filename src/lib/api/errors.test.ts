@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { planLimitOf, reasonOf } from '$lib/api/errors'
+import { planLimitOf, reasonOf, suspensionOf } from '$lib/api/errors'
 
 /**
  * The shapes here are the ones the kernel actually produces — `kernErrorToORPC` folds `reason` into
@@ -70,5 +70,50 @@ describe('planLimitOf', () => {
     expect(planLimitOf({ data: { reason: 'billing.subscription.inactive' } })).toBeNull()
     expect(planLimitOf(new Error('Seat limit reached'))).toBeNull()
     expect(planLimitOf(null)).toBeNull()
+  })
+})
+
+/**
+ * The other half of the same feature. `Entitlements.requireActive` gates every non-GET
+ * workspace-scoped procedure, so this reason can arrive from anywhere — which is exactly why it
+ * needs its own sentence rather than the generic conflict toast a suspended workspace used to get.
+ */
+describe('suspensionOf', () => {
+  const suspended = Object.assign(
+    new Error('This workspace is suspended because its subscription is not current'),
+    { code: 'CONFLICT', data: { reason: 'billing.subscription.inactive', plan: 'Team' } },
+  )
+
+  it('recognises the suspension gate and keeps the plan name', () => {
+    expect(suspensionOf(suspended)).toEqual({ plan: 'Team' })
+  })
+
+  it('reads a KernError that never crossed the wire', () => {
+    expect(suspensionOf({ reason: 'billing.subscription.inactive' })).toEqual({ plan: null })
+  })
+
+  it('leaves the plan null on an instance with no plans at all', () => {
+    expect(suspensionOf({ data: { reason: 'billing.subscription.inactive', plan: null } })).toEqual({
+      plan: null,
+    })
+  })
+
+  /*
+   * The mirror of the negative above, and it matters for the same reason. Suspension is the one
+   * refusal that says "everything is read-only", so offering to reactivate after a name clash or a
+   * refused role would be a far bigger lie than offering a plan page.
+   */
+  it('is null for a refusal that is not the suspension gate', () => {
+    expect(suspensionOf({ data: { reason: 'core.members.already_member' } })).toBeNull()
+    expect(suspensionOf({ data: { reason: 'billing.seats.limit_reached' } })).toBeNull()
+    expect(suspensionOf(new Error('This workspace is suspended'))).toBeNull()
+    expect(suspensionOf(null)).toBeNull()
+  })
+
+  /** A plan limit is never a suspension and a suspension is never a plan limit. */
+  it('does not overlap with planLimitOf', () => {
+    expect(planLimitOf(suspended)).toBeNull()
+    expect(suspensionOf(seatsError)).toBeNull()
+    expect(suspensionOf(moduleError)).toBeNull()
   })
 })

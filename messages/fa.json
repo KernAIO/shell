@@ -290,8 +290,12 @@
   "billing_limit_storage": "فضای ذخیره‌سازی این طرح پر است",
   "billing_limit_storage_hint": "چند پرونده را پاک کنید یا به طرحی با فضای بیشتر بروید.",
   "billing_plan_section": "طرح",
+  "billing_reactivate": "فعال‌سازی دوباره",
   "billing_see_plans": "دیدن طرح‌ها",
   "billing_status": "وضعیت",
+  "billing_suspended": "این فضای کاری معلق است",
+  "billing_suspended_hint": "اشتراکش به‌روز نیست، برای همین چیزی را نمی‌شود تغییر داد. خواندن و خروجی گرفتن همچنان کار می‌کند.",
+  "billing_suspended_hint_member": "اشتراکش به‌روز نیست، برای همین چیزی را نمی‌شود تغییر داد. خواندن و خروجی گرفتن همچنان کار می‌کند — از یکی از مالکان بخواهید دوباره فعالش کند.",
   "billing_trial_days_left": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],

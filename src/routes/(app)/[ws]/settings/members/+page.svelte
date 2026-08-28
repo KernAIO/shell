@@ -18,8 +18,8 @@ import {
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
+import { billingRefusalToast } from '$lib/api/billing-refusal'
 import { getApi } from '$lib/api/client'
-import { planLimitToast } from '$lib/api/plan-limit'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
 import { formatDate } from '$lib/format'
@@ -46,7 +46,8 @@ const canInvite = $derived(session.can('core.members.invite'))
  * Inviting is where a workspace runs out of seats, so it is where the plan has to be explainable.
  *
  * `billing.seats.limit_reached` used to arrive here as the server's own English sentence in a bare
- * toast, with no way forward from it — see `$lib/api/plan-limit.ts`.
+ * toast, with no way forward from it — see `$lib/api/billing-refusal.ts`. The same call carries the
+ * suspension gate, which refuses every write in a lapsed workspace and so can land on this one too.
  */
 const plan = $derived({ workspaceSlug: slug, canSeePlans: session.can('billing.subscription.view') })
 
@@ -167,7 +168,7 @@ const invite = createMutation(() => ({
     void queryClient.invalidateQueries({ queryKey: keys.invitations(workspaceId) })
   },
   onError: (err) => {
-    if (planLimitToast(err, plan)) return
+    if (billingRefusalToast(err, plan)) return
     toast.error(err instanceof Error ? err.message : m.error_generic())
   },
 }))
@@ -192,7 +193,7 @@ const resend = createMutation(() => ({
     void queryClient.invalidateQueries({ queryKey: keys.invitations(workspaceId) })
   },
   onError: (err) => {
-    if (planLimitToast(err, plan)) return
+    if (billingRefusalToast(err, plan)) return
     toast.error(err instanceof Error ? err.message : m.error_generic())
   },
 }))

@@ -2,8 +2,8 @@
 import { Badge, Button, Dialog, Icon, SearchBox, SectionLabel, Skeleton, Switch, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
+import { billingRefusalToast } from '$lib/api/billing-refusal'
 import { getApi } from '$lib/api/client'
-import { planLimitToast } from '$lib/api/plan-limit'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
@@ -27,7 +27,8 @@ const canManage = $derived(session.can('core.modules.manage'))
  * Switching a module on is where a plan refuses one, so it is where the plan has to be explainable.
  *
  * `billing.modules.not_included` used to arrive here as the server's own English sentence in a bare
- * toast — see `$lib/api/plan-limit.ts`.
+ * toast — see `$lib/api/billing-refusal.ts`. The same call carries the suspension gate, which
+ * refuses every write in a lapsed workspace and so can land on this one too.
  */
 const plan = $derived({ workspaceSlug: slug, canSeePlans: session.can('billing.subscription.view') })
 
@@ -93,7 +94,7 @@ const setEnabled = createMutation(() => ({
     void queryClient.invalidateQueries({ queryKey: ['core'] })
   },
   onError: (err) => {
-    if (planLimitToast(err, plan)) return
+    if (billingRefusalToast(err, plan)) return
     toast.error(err instanceof Error ? err.message : m.error_generic())
   },
 }))

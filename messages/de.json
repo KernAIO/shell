@@ -290,8 +290,12 @@
   "billing_limit_storage": "Der Speicher dieses Tarifs ist voll",
   "billing_limit_storage_hint": "Lösche einige Dateien oder wechsle zu einem Tarif mit mehr Platz.",
   "billing_plan_section": "Tarif",
+  "billing_reactivate": "Reaktivieren",
   "billing_see_plans": "Tarife ansehen",
   "billing_status": "Status",
+  "billing_suspended": "Dieser Workspace ist gesperrt",
+  "billing_suspended_hint": "Das Abo ist nicht aktuell, deshalb lässt sich nichts ändern. Lesen und Exportieren gehen weiterhin.",
+  "billing_suspended_hint_member": "Das Abo ist nicht aktuell, deshalb lässt sich nichts ändern. Lesen und Exportieren gehen weiterhin — bitte einen Eigentümer, ihn zu reaktivieren.",
   "billing_trial_days_left": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],

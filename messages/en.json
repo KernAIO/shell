@@ -290,8 +290,12 @@
   "billing_limit_storage": "This plan's storage is full",
   "billing_limit_storage_hint": "Remove some files, or move to a plan with more room.",
   "billing_plan_section": "Plan",
+  "billing_reactivate": "Reactivate",
   "billing_see_plans": "See plans",
   "billing_status": "Status",
+  "billing_suspended": "This workspace is suspended",
+  "billing_suspended_hint": "Its subscription is not current, so nothing can be changed. Reading and exporting still work.",
+  "billing_suspended_hint_member": "Its subscription is not current, so nothing can be changed. Reading and exporting still work — ask an owner to reactivate it.",
   "billing_trial_days_left": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],

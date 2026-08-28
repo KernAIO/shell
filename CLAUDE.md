@@ -265,6 +265,12 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
 - **`node scripts/check-i18n.mjs` before saying a screen is done.** It is in `pnpm lint`, and it is
   the only thing that sees a locale gap: Paraglide compiles a missing key to a silent English alias,
   so nothing else — not the compiler, not the build, not a test — ever notices.
+- **`session.can()` answers `true` for an owner and for an instance admin before it looks at the
+  permission at all**, and the mock's signed-in user is both. So a permission-gated branch cannot be
+  reached in `dev:mock` by editing the permission list — removing the key from `myPermissions`
+  changes nothing, twice over. To see the other branch, set `instanceAdmin: false` on the mock user
+  *and* the role to something other than `owner`. Worth knowing before concluding that a gate does
+  not work: the likelier reading is that you have never rendered the branch you are looking for.
 - **A module component mounted outside `(app)` has no strings, for ever.** `$lib/modules/registry`
   is the only thing that calls `registerMessages`, and it is imported by the app routes — so
   `/request/:token`, which mounts tracker's `IntakePage` with no session, rendered

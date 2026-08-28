@@ -290,8 +290,12 @@
   "billing_limit_storage": "Bu tarifenin depolama alanı doldu",
   "billing_limit_storage_hint": "Birkaç dosyayı sil ya da daha geniş bir tarifeye geç.",
   "billing_plan_section": "Tarife",
+  "billing_reactivate": "Yeniden etkinleştir",
   "billing_see_plans": "Tarifeleri gör",
   "billing_status": "Durum",
+  "billing_suspended": "Bu çalışma alanı askıya alındı",
+  "billing_suspended_hint": "Aboneliği güncel değil, bu yüzden hiçbir şey değiştirilemiyor. Okuma ve dışa aktarma çalışmaya devam ediyor.",
+  "billing_suspended_hint_member": "Aboneliği güncel değil, bu yüzden hiçbir şey değiştirilemiyor. Okuma ve dışa aktarma çalışmaya devam ediyor — yeniden etkinleştirmesi için bir sahibe söyle.",
   "billing_trial_days_left": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
