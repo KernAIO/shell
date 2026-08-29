@@ -393,6 +393,9 @@ test.describe('what the keyboard can do', () => {
     // it reachable, so a keyboard arriving at it is the whole test.
     await tabTo(page, (n) => n === 'New page inside Working here')
     await page.keyboard.press('Enter')
+    // creating now asks what the page starts from — the chooser stands between the key and the
+    // page — and the blank page is the keyboard's answer
+    await page.getByRole('button', { name: /Blank page/ }).click()
     await expect(page).not.toHaveURL(new RegExp(`/quire/handbook/${WORKING_HERE}$`))
     // a page created with no title puts the caret in the title, which is the only thing to do next
     await expect(page.getByRole('textbox', { name: 'Page title' })).toBeFocused()

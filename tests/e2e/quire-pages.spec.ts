@@ -276,6 +276,8 @@ test('creating a page from the sidebar puts it in the tree and leaves the caret 
   await expect(row(page, 'Untitled')).toHaveCount(0)
 
   await tree(page).getByRole('button', { name: 'New page', exact: true }).click()
+  // the template chooser stands between the request and the page; the blank one is "nothing at all"
+  await page.getByRole('button', { name: /Blank page/ }).click()
 
   // it is a real page with its own address, not a row in a list
   await expect(page).toHaveURL(new RegExp(`^.*${SPACE}/[0-9a-f-]{36}$`))
@@ -457,6 +459,8 @@ test('moving a page to the trash takes it out of the tree and hands you back the
 
   // a page of this test's own, so nothing seeded is destroyed and no other assertion depends on it
   await tree(page).getByRole('button', { name: 'New page', exact: true }).click()
+  // the template chooser stands between the request and the page; the blank one is "nothing at all"
+  await page.getByRole('button', { name: /Blank page/ }).click()
   await expect(titleField(page)).toBeFocused()
   await page.keyboard.type('Fire drill')
   await page.keyboard.press('Enter')
