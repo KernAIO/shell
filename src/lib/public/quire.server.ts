@@ -62,8 +62,6 @@ export function __setPublicQuire(api: QuireApi | null) {
   cached = api
 }
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-
 /**
  * The first segment of a published URL, turned into the workspace id the API asks for.
  *
