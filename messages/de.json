@@ -1,29 +1,8 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "add": "Hinzufügen",
-  "admin_activate": "Aktivieren",
   "admin_forbidden": "Dafür musst du Instanz-Administrator sein.",
-  "admin_healthy": "in Ordnung",
-  "admin_make_admin": "Zum Instanz-Administrator machen",
-  "admin_modules": "Module",
-  "admin_modules_col_health": "Zustand",
-  "admin_modules_col_host": "Dienst",
-  "admin_modules_col_module": "Modul",
-  "admin_remove_admin": "Instanz-Administrator entziehen",
   "admin_scope_hint": "Instanz",
   "admin_section_instance": "Instanz",
-  "admin_settings": "Instanz-Einstellungen",
-  "admin_settings_admins": "Nur Instanz-Administratoren",
-  "admin_settings_base_url": "Basis-URL",
-  "admin_settings_default_locale": "Standardsprache",
-  "admin_settings_everyone": "Alle",
-  "admin_settings_name": "Name der Instanz",
-  "admin_settings_saved": "Instanz-Einstellungen gespeichert",
-  "admin_settings_signup": "Öffentliche Registrierung erlauben",
-  "admin_settings_ws_creation": "Wer Workspaces erstellen darf",
-  "admin_suspend": "Sperren",
-  "admin_title": "Instanz-Administration",
-  "admin_unhealthy": "nicht erreichbar",
   "admin_updates_auto_requires_host": "Das Upgrade läuft auf dem Host, nicht in diesem Container. Es braucht den Update-Timer, den install.sh einrichtet, oder den optionalen Updater-Dienst.",
   "admin_updates_available": "Update verfügbar",
   "admin_updates_backup_note": "Das Skript sichert die Datenbank und kopiert deine .env, bevor es irgendetwas ändert, und gibt den Befehl aus, der beides zurückholt.",
@@ -93,16 +72,6 @@
   "admin_updates_window": "Update-Fenster",
   "admin_updates_window_hint": "Ein Upgrade startet nur innerhalb dieses Fensters. Es darf über Mitternacht gehen.",
   "admin_updates_window_to": "bis",
-  "admin_users": "Benutzer",
-  "admin_users_col_admin": "Administrator",
-  "admin_users_col_created": "Erstellt",
-  "admin_users_col_status": "Status",
-  "admin_users_col_user": "Benutzer",
-  "admin_workspaces": "Workspaces",
-  "admin_ws_col_created": "Erstellt",
-  "admin_ws_col_members": "Mitglieder",
-  "admin_ws_col_name": "Workspace",
-  "app_name": "Kern",
   "appearance_clock": "Ortszeit",
   "appearance_clock_hint": "Stadt und Uhrzeit dieses Geräts neben der Tableiste anzeigen.",
   "appearance_hint": "Design und Sprache für dieses Gerät.",
@@ -112,7 +81,6 @@
   "appearance_tabbar": "Tableiste",
   "appearance_tabbar_hint": "Mehrere Stellen im Workspace gleichzeitig offen halten, in einer Leiste über der App.",
   "appearance_title": "Darstellung",
-  "archive": "Archivieren",
   "audit_actor_system": "System",
   "audit_col_action": "Aktion",
   "audit_col_actor": "Ausgeführt von",
@@ -120,7 +88,6 @@
   "audit_col_when": "Wann",
   "audit_empty": "Noch keine Ereignisse im Protokoll",
   "audit_filter_module": "Modul",
-  "audit_load_more": "Mehr laden",
   "audit_title": "Ereignisprotokoll",
   "auth_back_to_sign_in": "Zurück zur Anmeldung",
   "auth_backup_code": "Backup-Code",
@@ -142,7 +109,6 @@
   "auth_invalid_credentials": "E-Mail oder Passwort ist falsch",
   "auth_magic_link": "Anmeldelink per E-Mail schicken",
   "auth_magic_link_sent": "Sieh in deinem Postfach nach — wir haben einen Anmeldelink an {email} geschickt.",
-  "auth_magic_link_title": "Anmeldelink",
   "auth_name": "Vollständiger Name",
   "auth_new_password": "Neues Passwort",
   "auth_no_account": "Neu bei Kern?",
@@ -200,152 +166,8 @@
   "auth_use_backup_code": "Backup-Code verwenden",
   "auth_verify": "Bestätigen",
   "auth_welcome_back": "Willkommen zurück",
-  "back": "Zurück",
-  "billing_actions": "Abrechnungsaktionen",
-  "billing_admin_action_clear_override": "Manuelle Grenzen aufheben",
-  "billing_admin_action_extend_trial": "Testphase um 14 Tage verlängern",
-  "billing_admin_action_resume": "Entsperren",
-  "billing_admin_action_set_plan": "Tarif wechseln",
-  "billing_admin_action_stripe": "In Stripe öffnen",
-  "billing_admin_action_suspend": "Sperren",
-  "billing_admin_archive_body": "Der Tarif wird nicht mehr angeboten und verschwindet von der Preisseite. Arbeitsbereiche, die ihn haben, behalten ihn und ihre Grenzen. Es wird nichts gelöscht.",
-  "billing_admin_archive_confirm": "Tarif archivieren",
-  "billing_admin_archive_title": "{name} archivieren?",
-  "billing_admin_cancel": "Abbrechen",
-  "billing_admin_col_plan": "Tarif",
-  "billing_admin_col_renews": "Verlängert am",
-  "billing_admin_col_revenue": "Pro Monat",
-  "billing_admin_col_seats": "Plätze",
-  "billing_admin_col_status": "Status",
-  "billing_admin_col_storage": "Speicher",
-  "billing_admin_col_workspace": "Arbeitsbereich",
-  "billing_admin_empty": "Noch keine Arbeitsbereiche",
-  "billing_admin_empty_hint": "Sobald jemand einen anlegt, erscheint er hier.",
-  "billing_admin_error": "Die Liste der Arbeitsbereiche konnte nicht geladen werden",
-  "billing_admin_mrr": "Pro Monat",
-  "billing_admin_no_payments": "Es ist kein Stripe-Schlüssel hinterlegt, diese Instanz kann also keine Zahlung annehmen. Tarife und Grenzen gelten trotzdem.",
-  "billing_admin_overridden": "Manuell",
-  "billing_admin_overridden_hint": "Die Grenzen dieses Arbeitsbereichs sind von Hand gesetzt, sein Tarif bestimmt sie nicht.",
-  "billing_admin_paying": "Zahlend",
-  "billing_admin_plan_archive": "Archivieren",
-  "billing_admin_plan_archived_toast": "{name} archiviert",
-  "billing_admin_plan_audit_days": "Auditprotokoll aufbewahren (Tage)",
-  "billing_admin_plan_changed_toast": "Tarif geändert",
-  "billing_admin_plan_currency": "Währung",
-  "billing_admin_plan_description": "Beschreibung",
-  "billing_admin_plan_draft": "Entwurf",
-  "billing_admin_plan_edit": "Bearbeiten",
-  "billing_admin_plan_interval": "Abrechnung",
-  "billing_admin_plan_interval_month": "Monatlich",
-  "billing_admin_plan_interval_year": "Jährlich",
-  "billing_admin_plan_limits": "Was enthalten ist",
-  "billing_admin_plan_limits_hint": "Für unbegrenzt das Feld leer lassen.",
-  "billing_admin_plan_name": "Name",
-  "billing_admin_plan_new": "Neuer Tarif",
-  "billing_admin_plan_none": "Kein Tarif (unbegrenzt)",
-  "billing_admin_plan_order": "Reihenfolge",
-  "billing_admin_plan_per_seat": "Pro Person berechnen",
-  "billing_admin_plan_per_seat_hint": "Ausgeschaltet wird der Preis einmal für den ganzen Arbeitsbereich berechnet.",
-  "billing_admin_plan_price": "Preis",
-  "billing_admin_plan_price_hint": "In ganzen Währungseinheiten, 8 bedeutet also 8,00 $.",
-  "billing_admin_plan_publish": "Veröffentlichen",
-  "billing_admin_plan_published": "Veröffentlicht",
-  "billing_admin_plan_published_toast": "{name} steht jetzt auf der Preisseite",
-  "billing_admin_plan_saved": "Tarif gespeichert",
-  "billing_admin_plan_seats": "Plätze",
-  "billing_admin_plan_slug": "Kennung",
-  "billing_admin_plan_slug_hint": "Erscheint in URLs und auf der Preisseite. Kein anderer Tarif kann sie verwenden.",
-  "billing_admin_plan_sso": "Single Sign-on",
-  "billing_admin_plan_storage_gb": "Speicher (GB)",
-  "billing_admin_plan_stripe_price": "Stripe-Preis-ID",
-  "billing_admin_plan_stripe_price_hint": "Ohne sie kann dieser Tarif nicht gekauft, sondern nur von einer Verwaltung zugewiesen werden.",
-  "billing_admin_plan_trial_days": "Testtage",
-  "billing_admin_plan_unpublish": "Zurückziehen",
-  "billing_admin_plan_unpublished_toast": "{name} wird nicht mehr angeboten",
-  "billing_admin_plans_empty": "Noch keine Tarife",
-  "billing_admin_plans_empty_hint": "Legen Sie einen an, um für Arbeitsbereiche dieser Instanz Geld zu verlangen.",
-  "billing_admin_plans_subtitle": "Was diese Instanz verkauft. Ein veröffentlichter Tarif ist das, was die Preisseite zeigt.",
-  "billing_admin_plans_title": "Tarife",
-  "billing_admin_resumed_toast": "{name} entsperrt",
-  "billing_admin_save": "Speichern",
-  "billing_admin_search": "Arbeitsbereiche suchen",
-  "billing_admin_set_plan_body": "Das wirkt sofort und läuft nicht über Stripe. Nutzen Sie es, um ein Konto freizugeben oder einen Fehler zu korrigieren, nicht um zu verkaufen.",
-  "billing_admin_set_plan_title": "Tarif für {name} ändern",
-  "billing_admin_subscriptions_subtitle": "Jeder Arbeitsbereich dieser Instanz und was er zahlt.",
-  "billing_admin_subscriptions_title": "Abonnements",
-  "billing_admin_suspend_body": "Alle in {name} können sich weiter anmelden und ihre Daten lesen und exportieren. Bis zur Entsperrung kann niemand schreiben. Es wird nichts gelöscht.",
-  "billing_admin_suspend_confirm": "Arbeitsbereich sperren",
-  "billing_admin_suspend_title": "Diesen Arbeitsbereich sperren?",
-  "billing_admin_suspended_count": "Gesperrt",
-  "billing_admin_suspended_toast": "{name} gesperrt",
-  "billing_admin_trial_extended_toast": "Testphase um 14 Tage verlängert",
-  "billing_admin_workspaces": "Arbeitsbereiche",
-  "billing_change_plan": "Tarif wechseln",
-  "billing_plan_section": "Tarif",
-  "billing_status": "Status",
-  "billing_trial_days_left": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "Noch {n} Tag",
-        "countPlural=other": "Noch {n} Tage"
-      }
-    }
-  ],
   "cancel": "Abbrechen",
-  "chart_empty": "Für diesen Zeitraum gibt es noch nichts zu zeigen",
-  "chart_max": "bis {value}",
-  "chart_when": "Wann",
-  "chat_attach_soon": "Dateianhänge sind noch nicht gebaut",
-  "chat_cmd_unread": "Nächste ungelesene Unterhaltung",
-  "chat_convert_to_issue": "In Vorgang umwandeln",
-  "chat_emoji_empty": "Kein passendes Emoji",
-  "chat_emoji_group_people": "Menschen",
-  "chat_emoji_group_reactions": "Reaktionen",
-  "chat_emoji_group_work": "Arbeit",
-  "chat_emoji_search": "Emoji suchen",
-  "chat_member_count_one": "1 Mitglied",
-  "chat_members_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Mitglied",
-        "countPlural=other": "{n} Mitglieder"
-      }
-    }
-  ],
-  "chat_mention_empty": "Niemand passt",
-  "chat_mention_loading": "Leute werden gesucht…",
-  "chat_muted": "Stumm",
-  "chat_offline": "Verbindung wird wiederhergestellt — Nachrichten gehen raus, sobald sie steht",
-  "chat_replies": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Antwort",
-        "countPlural=other": "{n} Antworten"
-      }
-    }
-  ],
-  "chat_search_results": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Treffer",
-        "countPlural=other": "{n} Treffer"
-      }
-    }
-  ],
-  "chat_thread_reply_placeholder": "Antworten…",
-  "chat_video_message": "Videonachricht",
-  "chat_voice_message": "Sprachnachricht",
   "close": "Schließen",
-  "command_palette": "Befehlspalette",
-  "confirm": "Bestätigen",
   "copied": "Kopiert",
   "copy": "Kopieren",
   "create": "Erstellen",
@@ -399,7 +221,6 @@
   "dash_size_s": "Klein",
   "dash_size_xl": "Volle Breite",
   "dash_undo": "Rückgängig",
-  "dash_unsaved": "Du hast ungespeicherte Änderungen an diesem Dashboard.",
   "dash_widget_menu": "Widget-Optionen",
   "dash_widget_needs_setup": "Hier gibt es noch nichts zu zeigen.",
   "dash_widget_unavailable": "Nicht mehr verfügbar",
@@ -433,20 +254,14 @@
   "dev_modules_subscriptions": "Abonnements",
   "dev_modules_subscriptions_hint": "Ereignisse anderer Module, auf die dieses reagiert.",
   "dev_modules_title": "Module",
-  "disabled": "Aus",
   "discard": "Verwerfen",
   "done": "Fertig",
-  "edit": "Bearbeiten",
   "enabled": "An",
   "error_generic": "Etwas ist schiefgelaufen. Bitte erneut versuchen.",
   "error_page_title": "Da ist etwas kaputtgegangen",
-  "forbidden_body": "Du hast keine Berechtigung dafür. Bitte einen Administrator, dir Zugriff zu geben.",
-  "forbidden_title": "Kein Zugriff",
   "go_home": "Zur Startseite",
   "groups_created": "Gruppe erstellt",
-  "groups_deleted": "Gruppe gelöscht",
   "groups_description": "Beschreibung",
-  "groups_edit_members": "Mitglieder bearbeiten",
   "groups_empty": "Mit Gruppen erwähnst du viele Leute auf einmal und gibst ihnen gemeinsam Rechte.",
   "groups_handle": "Kürzel",
   "groups_members": [
@@ -462,24 +277,13 @@
   "groups_name": "Gruppenname",
   "groups_new": "Neue Gruppe",
   "groups_title": "Gruppen",
-  "groups_updated": "Gruppe aktualisiert",
   "home_greeting_afternoon": "Guten Tag, {name}",
   "home_greeting_evening": "Guten Abend, {name}",
   "home_greeting_morning": "Guten Morgen, {name}",
   "home_inbox_empty": "Nichts wartet auf dich",
-  "home_inbox_preview": "Wartet auf dich",
-  "home_open_inbox": "Posteingang öffnen",
   "home_stat_mentions": "Erwähnungen",
   "home_stat_unread": "Ungelesene Benachrichtigungen",
   "home_stat_workspaces": "Workspaces",
-  "home_subtitle": "{date}",
-  "home_widgets": "Aus deinen Modulen",
-  "hr_att_late": "Verspätet",
-  "hr_balance": "Guthaben",
-  "hr_feature_off": "Aus",
-  "hr_feature_on": "An",
-  "hr_position": "Stelle",
-  "hr_requested_by": "Beantragt von {name}",
   "inbox_all_workspaces": "Alle Workspaces",
   "inbox_archive": "Archivieren",
   "inbox_archived": "Benachrichtigung archiviert",
@@ -487,7 +291,6 @@
   "inbox_empty_unread": "Du bist auf dem neuesten Stand",
   "inbox_empty_unread_body": "Neue Erwähnungen, Zuweisungen und Änderungen landen hier.",
   "inbox_mark_read": "Als gelesen markieren",
-  "inbox_mark_unread_only_read": "Als gelesen markieren",
   "inbox_marked_read": "{count} als gelesen markiert",
   "inbox_open_object": "Öffnen",
   "inbox_scope": "Angezeigt",
@@ -504,13 +307,10 @@
   "integrations_title": "Integrationen",
   "integrations_webhooks": "Webhooks",
   "integrations_webhooks_desc": "Signierte ausgehende Ereignisse für deine eigenen Dienste",
-  "invite_accept": "Einladung annehmen",
-  "invite_body": "{inviter} hat {email} zur Mitarbeit in {workspace} eingeladen.",
   "invite_by_email": "Per E-Mail",
   "invite_dialog_title": "Zu {workspace} einladen",
   "invite_directory_empty": "Niemand gefunden — versuch eine andere Suche",
   "invite_email_placeholder": "kollege@firma.de — mehrere durch Komma trennen",
-  "invite_expired": "Diese Einladung ist abgelaufen. Bitte um eine neue.",
   "invite_expires": "Läuft ab {date}",
   "invite_from_directory": "Aus deinen anderen Workspaces",
   "invite_message": "Nachricht",
@@ -541,16 +341,11 @@
       }
     }
   ],
-  "invite_sign_in_first": "Melde dich an oder erstelle ein Konto, um anzunehmen.",
-  "invite_title": "{workspace} beitreten",
-  "invite_wrong_account": "Angemeldet als {current}. Diese Einladung gilt für {email}.",
   "language": "Sprache",
-  "loading": "Wird geladen…",
   "mark_all_read": "Alle als gelesen markieren",
   "members_actions": "Mitgliedsaktionen",
   "members_cannot_change_own_role": "Sie können Ihre eigene Rolle nicht ändern",
   "members_change_role": "Rolle ändern",
-  "members_col_groups": "Gruppen",
   "members_col_joined": "Beigetreten",
   "members_col_name": "Name",
   "members_col_role": "Rolle",
@@ -579,7 +374,6 @@
   "members_reactivated_toast": "{name} entsperrt",
   "members_remove": "Aus dem Workspace entfernen",
   "members_remove_body": "Der Zugriff auf alles in diesem Workspace endet sofort. Nachrichten, Vorgänge und Kommentare bleiben erhalten, und Sie können die Person jederzeit erneut einladen.",
-  "members_remove_confirm": "{name} aus diesem Workspace entfernen?",
   "members_remove_title": "{name} entfernen?",
   "members_removed": "{name} entfernt",
   "members_role_admin": "Administrator",
@@ -597,8 +391,6 @@
   "members_title_label": "Position",
   "members_title_updated": "Position aktualisiert",
   "members_you": "Sie",
-  "module_disabled_body": "{module} ist für diesen Workspace ausgeschaltet. Ein Administrator kann es unter Einstellungen → Module einschalten.",
-  "module_disabled_title": "Modul nicht aktiviert",
   "modules_configure": "Konfigurieren",
   "modules_core_badge": "Kern",
   "modules_core_locked": "Immer enthalten",
@@ -607,7 +399,6 @@
   "modules_disable_body": "Alle in diesem Workspace verlieren den Zugriff auf {name}, und es verschwindet aus ihrer Navigation. Nichts wird gelöscht: Beim erneuten Aktivieren sind die Daten unverändert da.",
   "modules_disable_title": "{name} abschalten?",
   "modules_disabled_toast": "{name} ausgeschaltet",
-  "modules_enable": "Einschalten",
   "modules_enabled_toast": "{name} eingeschaltet",
   "modules_group_available": "Verfügbar",
   "modules_group_enabled": "Aktiviert",
@@ -645,21 +436,16 @@
   ],
   "modules_min_kernel": "Benötigt Kern {version}",
   "modules_moves_to": "Wechselt in Kern {release} auf {version}",
-  "modules_no_settings": "Dieses Modul hat keine Workspace-Einstellungen.",
   "modules_none_match": "Keine Module passen zu „{query}“.",
   "modules_page_hint": "Funktionen für diesen Workspace aktivieren. Was ein Modul mitbringt — Navigation, Berechtigungen, Suche — erscheint nur dort, wo es aktiviert ist.",
   "modules_read_only": "Sie sehen, welche Module genutzt werden; ändern können sie nur Workspace-Admins.",
   "modules_required_by": "Wird von {modules} benötigt — diese zuerst abschalten.",
   "modules_search": "Module suchen",
-  "modules_settings_for": "Einstellungen für {name}",
   "modules_title": "Module",
-  "nav_account": "Konto",
   "nav_admin": "Administration",
   "nav_home": "Meine Arbeit",
   "nav_inbox": "Posteingang",
-  "nav_modules": "Module",
   "nav_more": "Mehr",
-  "nav_preferences": "Einstellungen",
   "nav_settings": "Einstellungen",
   "nav_workspace": "Workspace",
   "no_notifications": "Du bist auf dem neuesten Stand",
@@ -690,22 +476,14 @@
   "onboarding_title": "Erstelle deinen ersten Workspace",
   "onboarding_ws_name": "Name des Workspace",
   "onboarding_ws_slug": "URL",
-  "open": "Öffnen",
-  "open_inbox": "Posteingang öffnen",
   "optional": "optional",
   "palette_empty": "Keine Treffer",
   "palette_group_commands": "Befehle",
   "palette_group_navigation": "Navigation",
-  "palette_group_recent": "Zuletzt",
   "palette_group_search": "Suchergebnisse",
   "palette_group_workspaces": "Workspaces",
-  "palette_language": "Sprache wechseln",
   "palette_placeholder": "Springen oder Befehl ausführen…",
   "palette_switch_theme": "Design wechseln",
-  "presence_away": "Abwesend",
-  "presence_dnd": "Bitte nicht stören",
-  "presence_offline": "Offline",
-  "presence_online": "Online",
   "profile_avatar": "Profilbild",
   "profile_hint": "Wie Sie anderen in Kern erscheinen.",
   "profile_name": "Name",
@@ -740,19 +518,6 @@
   "pwa_ios_step1": "Tippe auf „Teilen“",
   "pwa_ios_step2": "Wähle „Zum Home-Bildschirm“",
   "pwa_ios_title": "Kern zum Home-Bildschirm hinzufügen",
-  "pwa_update_ready": "Eine neue Version von Kern ist bereit",
-  "pwa_update_reload": "Neu laden",
-  "quire_people_here": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} weitere Person hier",
-        "countPlural=other": "{n} weitere Personen hier"
-      }
-    }
-  ],
-  "quire_switch_space": "Bereich wechseln",
   "connecting_banner": "Verbindung wird hergestellt…",
   "reconnecting": "Verbindung wird wiederhergestellt…",
   "remove": "Entfernen",
@@ -787,12 +552,9 @@
   "roles_title": "Rollen & Berechtigungen",
   "roles_updated": "Rolle aktualisiert",
   "save": "Speichern",
-  "saved": "Gespeichert",
   "search": "Suchen",
-  "search_everything": "{workspace} durchsuchen…",
   "search_placeholder": "Suchen",
   "security_2fa": "Zwei-Faktor-Authentifizierung",
-  "security_2fa_disable": "2FA deaktivieren",
   "security_2fa_enable": "2FA aktivieren",
   "security_2fa_hint": "Beim Anmelden einen Code aus deiner Authenticator-App verlangen.",
   "security_2fa_scan": "Scanne dieses Geheimnis in deine Authenticator-App und gib dann einen Code zur Bestätigung ein.",
@@ -802,16 +564,10 @@
   "security_passkey_add": "Passkey hinzufügen",
   "security_passkey_added": "Passkey hinzugefügt",
   "security_passkey_hint": "Ersetzt auf unterstützten Geräten Ihr Passwort.",
-  "security_passkey_removed": "Passkey entfernt",
   "security_passkeys": "Passkeys",
   "security_passkeys_hint": "Melde dich mit Face ID, Touch ID oder einem Sicherheitsschlüssel an.",
   "security_password": "Passwort",
   "security_password_updated": "Passwort aktualisiert",
-  "security_session_current": "Dieses Gerät",
-  "security_session_revoke": "Abmelden",
-  "security_session_revoked": "Sitzung beendet",
-  "security_sessions": "Sitzungen",
-  "security_sessions_hint": "Geräte, die bei deinem Konto angemeldet sind.",
   "security_title": "Sicherheit",
   "settings_account_section": "Dein Konto",
   "settings_appearance": "Darstellung",
@@ -830,9 +586,6 @@
   "settings_security": "Sicherheit",
   "settings_title": "Einstellungen",
   "settings_workspace_section": "Workspace",
-  "shortcut_go_home": "Zu „Meine Arbeit“",
-  "shortcut_go_inbox": "Zum Posteingang",
-  "shortcut_go_settings": "Zu den Einstellungen",
   "tabs_close": "Tab schließen",
   "tabs_close_others": "Andere Tabs schließen",
   "tabs_close_right": "Tabs danach schließen",
@@ -848,38 +601,6 @@
   "theme_dark": "Dunkel",
   "theme_light": "Hell",
   "theme_system": "System",
-  "time_just_now": "gerade eben",
-  "tracker_bulk_done": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Vorgang aktualisiert",
-        "countPlural=other": "{n} Vorgänge aktualisiert"
-      }
-    }
-  ],
-  "tracker_components_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Komponente",
-        "countPlural=other": "{n} Komponenten"
-      }
-    }
-  ],
-  "tracker_field_not_editable": "Dieses Feld lässt sich hier noch nicht bearbeiten",
-  "tracker_hours": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Std.",
-        "countPlural=other": "{n} Std."
-      }
-    }
-  ],
   "tracker_issues_count": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
@@ -890,81 +611,6 @@
       }
     }
   ],
-  "tracker_planning_issue_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Vorgang",
-        "countPlural=other": "{n} Vorgänge"
-      }
-    }
-  ],
-  "tracker_points": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Pkt.",
-        "countPlural=other": "{n} Pkt."
-      }
-    }
-  ],
-  "tracker_project_page": "Projekt öffnen",
-  "tracker_project_weeks": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Woche",
-        "countPlural=other": "{n} Wochen"
-      }
-    }
-  ],
-  "tracker_template_subitems": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "legt {n} Unterelement an",
-        "countPlural=other": "legt {n} Unterelemente an"
-      }
-    }
-  ],
-  "tracker_templates_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Vorlage",
-        "countPlural=other": "{n} Vorlagen"
-      }
-    }
-  ],
-  "tracker_workflow_asks": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "Fragt zuerst nach {n} Feld",
-        "countPlural=other": "Fragt zuerst nach {n} Feldern"
-      }
-    }
-  ],
-  "tracker_workflow_status_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} Status",
-        "countPlural=other": "{n} Status"
-      }
-    }
-  ],
-  "tracker_workflow_statuses": "Status",
-  "tracker_workflow_transitions": "Übergänge",
-  "tracker_workflow_used_by": "Verwendet von {types}.",
-  "tracker_workflow_used_by_label": "Vorgangstypen, die auf diesem Workflow laufen",
   "tz_region_africa": "Afrika",
   "tz_region_america": "Amerika",
   "tz_region_antarctica": "Antarktis",
@@ -985,8 +631,6 @@
   "widget_people_desc": "Wer in diesem Arbeitsbereich ist und wer gerade da ist.",
   "widget_people_title": "Personen",
   "widget_setting_rows": "Zeilen",
-  "widget_setting_show": "Anzeigen",
-  "widget_setting_status": "Status",
   "widget_unread_desc": "Wie viel in diesem Arbeitsbereich wartet.",
   "widget_unread_title": "Ungelesen",
   "widget_waiting_desc": "Ungelesene Benachrichtigungen, mit den beiden Aktionen dafür.",
@@ -1003,14 +647,12 @@
       }
     }
   ],
-  "workspace_switcher_label": "Workspace wechseln",
   "workspaces_choose_hint": "Wähle, wo du arbeiten willst.",
   "workspaces_choose_title": "Workspace wählen",
   "workspaces_filter_empty": "Kein Workspace passt zu „{query}“.",
   "workspaces_filter_placeholder": "Workspaces filtern…",
   "workspaces_last_used": "Zuletzt genutzt",
   "workspaces_signed_in_as": "Angemeldet als {email}",
-  "ws_accent": "Akzentfarbe",
   "ws_archive": "Workspace archivieren",
   "ws_archive_confirm_body": "Der Workspace verschwindet für seine Mitglieder und seine Inhalte tauchen nicht mehr in der Suche auf. Nichts wird gelöscht; ein Admin kann ihn später wiederherstellen.",
   "ws_archive_confirm_title": "{name} archivieren?",

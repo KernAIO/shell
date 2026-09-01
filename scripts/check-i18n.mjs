@@ -178,8 +178,18 @@ async function* files(dir) {
 }
 const referenced = new Set()
 for (const dir of ['src', 'tests']) {
-  for await (const file of files(join(root, dir)))
-    for (const [, key] of readFileSync(file, 'utf8').matchAll(/\bm\.([a-z][a-z0-9_]*)/g)) referenced.add(key)
+  for await (const file of files(join(root, dir))) {
+    const source = readFileSync(file, 'utf8')
+    for (const [, key] of source.matchAll(/\bm\.([a-z][a-z0-9_]*)/g)) referenced.add(key)
+    /*
+     * A message imported by name is invisible to the `m.` pattern above, and deleting it breaks
+     * the typecheck rather than the check — which is exactly the wrong way round.
+     */
+    for (const [, bindings] of source.matchAll(
+      /import\s*\{([^}]+)\}\s*from\s*['"][^'"]*paraglide\/messages(?:\.js)?['"]/g,
+    ))
+      for (const binding of bindings.split(',')) referenced.add(binding.split(/\bas\b/)[0].trim())
+  }
 }
 
 let failed = false

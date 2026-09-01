@@ -1,29 +1,8 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "add": "Ekle",
-  "admin_activate": "Etkinleştir",
   "admin_forbidden": "Bunu görmek için sunucu yöneticisi olmalısınız.",
-  "admin_healthy": "sağlıklı",
-  "admin_make_admin": "Sunucu yöneticisi yap",
-  "admin_modules": "Modüller",
-  "admin_modules_col_health": "Durum",
-  "admin_modules_col_host": "Sunucu",
-  "admin_modules_col_module": "Modül",
-  "admin_remove_admin": "Sunucu yöneticiliğini kaldır",
   "admin_scope_hint": "sunucu",
   "admin_section_instance": "Sunucu",
-  "admin_settings": "Sunucu ayarları",
-  "admin_settings_admins": "Yalnızca sunucu yöneticileri",
-  "admin_settings_base_url": "Temel URL",
-  "admin_settings_default_locale": "Varsayılan dil",
-  "admin_settings_everyone": "Herkes",
-  "admin_settings_name": "Sunucu adı",
-  "admin_settings_saved": "Sunucu ayarları kaydedildi",
-  "admin_settings_signup": "Herkese açık kayda izin ver",
-  "admin_settings_ws_creation": "Kimler çalışma alanı oluşturabilir",
-  "admin_suspend": "Askıya al",
-  "admin_title": "Sunucu yönetimi",
-  "admin_unhealthy": "ulaşılamıyor",
   "admin_updates_auto_requires_host": "Yükseltme bu kapsayıcıda değil, ana makinede çalışır. install.sh'in kurduğu güncelleme zamanlayıcısına ya da isteğe bağlı güncelleyici servise ihtiyaç duyar.",
   "admin_updates_available": "Güncelleme var",
   "admin_updates_backup_note": "Betik, hiçbir şeyi değiştirmeden önce veritabanının yedeğini alır ve .env dosyanızı kopyalar, sonra ikisini geri getiren komutu yazdırır.",
@@ -93,16 +72,6 @@
   "admin_updates_window": "Güncelleme penceresi",
   "admin_updates_window_hint": "Yükseltme yalnızca bu pencere içinde başlar. Gece yarısını geçebilir.",
   "admin_updates_window_to": "—",
-  "admin_users": "Kullanıcılar",
-  "admin_users_col_admin": "Yönetici",
-  "admin_users_col_created": "Oluşturma",
-  "admin_users_col_status": "Durum",
-  "admin_users_col_user": "Kullanıcı",
-  "admin_workspaces": "Çalışma alanları",
-  "admin_ws_col_created": "Oluşturma",
-  "admin_ws_col_members": "Üyeler",
-  "admin_ws_col_name": "Çalışma alanı",
-  "app_name": "Kern",
   "appearance_clock": "Yerel saat",
   "appearance_clock_hint": "Bu cihazın şehrini ve saatini sekme şeridinin yanında göster.",
   "appearance_hint": "Bu cihaz için tema ve dil.",
@@ -112,7 +81,6 @@
   "appearance_tabbar": "Sekme şeridi",
   "appearance_tabbar_hint": "Çalışma alanında birden çok yeri aynı anda açık tutun, uygulamanın üstündeki bir şeritte.",
   "appearance_title": "Görünüm",
-  "archive": "Arşivle",
   "audit_actor_system": "Sistem",
   "audit_col_action": "İşlem",
   "audit_col_actor": "Yapan",
@@ -120,7 +88,6 @@
   "audit_col_when": "Ne zaman",
   "audit_empty": "Henüz kayıt yok",
   "audit_filter_module": "Modül",
-  "audit_load_more": "Daha fazla yükle",
   "audit_title": "Denetim kaydı",
   "auth_back_to_sign_in": "Girişe dön",
   "auth_backup_code": "Yedek kod",
@@ -142,7 +109,6 @@
   "auth_invalid_credentials": "E-posta ya da parola hatalı",
   "auth_magic_link": "Bana giriş bağlantısı gönder",
   "auth_magic_link_sent": "Gelen kutunuza bakın — {email} adresine bir giriş bağlantısı gönderdik.",
-  "auth_magic_link_title": "Giriş bağlantısı",
   "auth_name": "Ad soyad",
   "auth_new_password": "Yeni parola",
   "auth_no_account": "Kern'de yeni misiniz?",
@@ -200,152 +166,8 @@
   "auth_use_backup_code": "Yedek kod kullan",
   "auth_verify": "Doğrula",
   "auth_welcome_back": "Tekrar hoş geldiniz",
-  "back": "Geri",
-  "billing_actions": "Ödeme işlemleri",
-  "billing_admin_action_clear_override": "Elle konan sınırı kaldır",
-  "billing_admin_action_extend_trial": "Deneme süresini 14 gün uzat",
-  "billing_admin_action_resume": "Sürdür",
-  "billing_admin_action_set_plan": "Tarifeyi değiştir",
-  "billing_admin_action_stripe": "Stripe'ta aç",
-  "billing_admin_action_suspend": "Askıya al",
-  "billing_admin_archive_body": "Artık sunulmaz ve fiyat sayfasından kalkar. Hâlihazırda bu tarifedeki çalışma alanları tarifede kalır ve sınırlarını korur. Hiçbir şey silinmez.",
-  "billing_admin_archive_confirm": "Tarifeyi arşivle",
-  "billing_admin_archive_title": "{name} arşivlensin mi?",
-  "billing_admin_cancel": "Vazgeç",
-  "billing_admin_col_plan": "Tarife",
-  "billing_admin_col_renews": "Yenilenme",
-  "billing_admin_col_revenue": "Aylık",
-  "billing_admin_col_seats": "Kullanıcı",
-  "billing_admin_col_status": "Durum",
-  "billing_admin_col_storage": "Depolama",
-  "billing_admin_col_workspace": "Çalışma alanı",
-  "billing_admin_empty": "Henüz çalışma alanı yok",
-  "billing_admin_empty_hint": "Biri oluşturur oluşturmaz burada görünür.",
-  "billing_admin_error": "Çalışma alanı listesi yüklenemedi",
-  "billing_admin_mrr": "Aylık",
-  "billing_admin_no_payments": "Stripe anahtarı tanımlı değil, bu yüzden bu sunucu ödeme alamaz. Tarifeler ve sınırlar yine de geçerlidir.",
-  "billing_admin_overridden": "Elle ayarlı",
-  "billing_admin_overridden_hint": "Bu çalışma alanının sınırları elle konmuş, dolayısıyla tarifesi belirlemiyor.",
-  "billing_admin_paying": "Ödeyen",
-  "billing_admin_plan_archive": "Arşivle",
-  "billing_admin_plan_archived_toast": "{name} arşivlendi",
-  "billing_admin_plan_audit_days": "Denetim kaydı saklama (gün)",
-  "billing_admin_plan_changed_toast": "Tarife değişti",
-  "billing_admin_plan_currency": "Para birimi",
-  "billing_admin_plan_description": "Açıklama",
-  "billing_admin_plan_draft": "Taslak",
-  "billing_admin_plan_edit": "Düzenle",
-  "billing_admin_plan_interval": "Faturalama",
-  "billing_admin_plan_interval_month": "Aylık",
-  "billing_admin_plan_interval_year": "Yıllık",
-  "billing_admin_plan_limits": "Neleri kapsıyor",
-  "billing_admin_plan_limits_hint": "Sınırsız olması için boş bırakın.",
-  "billing_admin_plan_name": "Ad",
-  "billing_admin_plan_new": "Yeni tarife",
-  "billing_admin_plan_none": "Tarife yok (sınırsız)",
-  "billing_admin_plan_order": "Sıra",
-  "billing_admin_plan_per_seat": "Kullanıcı başına ücretlendir",
-  "billing_admin_plan_per_seat_hint": "Kapalıyken ücret tüm çalışma alanı için bir kez alınır.",
-  "billing_admin_plan_price": "Fiyat",
-  "billing_admin_plan_price_hint": "Tam para birimi olarak, yani 8 demek 8,00 $ demektir.",
-  "billing_admin_plan_publish": "Yayımla",
-  "billing_admin_plan_published": "Yayımlandı",
-  "billing_admin_plan_published_toast": "{name} artık fiyat sayfasında",
-  "billing_admin_plan_saved": "Tarife kaydedildi",
-  "billing_admin_plan_seats": "Kullanıcı",
-  "billing_admin_plan_slug": "Kısa ad",
-  "billing_admin_plan_slug_hint": "URL'lerde ve fiyat sayfasında görünür. Başka bir tarife aynısını kullanamaz.",
-  "billing_admin_plan_sso": "Tek oturum açma",
-  "billing_admin_plan_storage_gb": "Depolama (GB)",
-  "billing_admin_plan_stripe_price": "Stripe fiyat kimliği",
-  "billing_admin_plan_stripe_price_hint": "Bu olmadan tarife satın alınamaz — yalnızca bir yönetici atayabilir.",
-  "billing_admin_plan_trial_days": "Deneme günü",
-  "billing_admin_plan_unpublish": "Yayımdan kaldır",
-  "billing_admin_plan_unpublished_toast": "{name} artık sunulmuyor",
-  "billing_admin_plans_empty": "Henüz tarife yok",
-  "billing_admin_plans_empty_hint": "Bu sunucudaki çalışma alanlarından ücret almaya başlamak için bir tane oluşturun.",
-  "billing_admin_plans_subtitle": "Bu sunucunun sattıkları. Fiyat sayfasında görünen, yayımlanmış tarifedir.",
-  "billing_admin_plans_title": "Tarifeler",
-  "billing_admin_resumed_toast": "{name} sürdürüldü",
-  "billing_admin_save": "Kaydet",
-  "billing_admin_search": "Çalışma alanlarında ara",
-  "billing_admin_set_plan_body": "Bu hemen etkili olur ve Stripe'tan geçmez. Bir hesabı bedava yapmak ya da bir hatayı düzeltmek için kullanın, satış için değil.",
-  "billing_admin_set_plan_title": "{name} için tarifeyi değiştir",
-  "billing_admin_subscriptions_subtitle": "Bu sunucudaki her çalışma alanı ve ne ödediği.",
-  "billing_admin_subscriptions_title": "Abonelikler",
-  "billing_admin_suspend_body": "{name} içindeki herkes girişini korur, kendine ait olanı okuyup dışa aktarabilir. Siz sürdürene kadar kimse yazamaz. Hiçbir şey silinmez.",
-  "billing_admin_suspend_confirm": "Çalışma alanını askıya al",
-  "billing_admin_suspend_title": "Bu çalışma alanı askıya alınsın mı?",
-  "billing_admin_suspended_count": "Askıda",
-  "billing_admin_suspended_toast": "{name} askıya alındı",
-  "billing_admin_trial_extended_toast": "Deneme süresi 14 gün uzatıldı",
-  "billing_admin_workspaces": "Çalışma alanları",
-  "billing_change_plan": "Tarifeyi değiştir",
-  "billing_plan_section": "Tarife",
-  "billing_status": "Durum",
-  "billing_trial_days_left": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} gün kaldı",
-        "countPlural=other": "{n} gün kaldı"
-      }
-    }
-  ],
   "cancel": "Vazgeç",
-  "chart_empty": "Bu dönem için henüz gösterilecek bir şey yok",
-  "chart_max": "{value} değerine kadar",
-  "chart_when": "Ne zaman",
-  "chat_attach_soon": "Dosya ekleme henüz yapılmadı",
-  "chat_cmd_unread": "Sonraki okunmamış sohbet",
-  "chat_convert_to_issue": "İşe dönüştür",
-  "chat_emoji_empty": "Eşleşen emoji yok",
-  "chat_emoji_group_people": "İnsanlar",
-  "chat_emoji_group_reactions": "Tepkiler",
-  "chat_emoji_group_work": "İş",
-  "chat_emoji_search": "Emoji ara",
-  "chat_member_count_one": "1 üye",
-  "chat_members_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} üye",
-        "countPlural=other": "{n} üye"
-      }
-    }
-  ],
-  "chat_mention_empty": "Eşleşen kimse yok",
-  "chat_mention_loading": "Kişiler bulunuyor…",
-  "chat_muted": "Sessiz",
-  "chat_offline": "Yeniden bağlanılıyor — bağlantı dönünce iletiler gönderilecek",
-  "chat_replies": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} yanıt",
-        "countPlural=other": "{n} yanıt"
-      }
-    }
-  ],
-  "chat_search_results": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} sonuç",
-        "countPlural=other": "{n} sonuç"
-      }
-    }
-  ],
-  "chat_thread_reply_placeholder": "Yanıtla…",
-  "chat_video_message": "Video ileti",
-  "chat_voice_message": "Sesli ileti",
   "close": "Kapat",
-  "command_palette": "Komut paleti",
-  "confirm": "Onayla",
   "copied": "Kopyalandı",
   "copy": "Kopyala",
   "create": "Oluştur",
@@ -399,7 +221,6 @@
   "dash_size_s": "Küçük",
   "dash_size_xl": "Tam genişlik",
   "dash_undo": "Geri al",
-  "dash_unsaved": "Bu panoda kaydedilmemiş değişiklikleriniz var.",
   "dash_widget_menu": "Bileşen seçenekleri",
   "dash_widget_needs_setup": "Burada gösterilecek bir şey yok.",
   "dash_widget_unavailable": "Artık kullanılamıyor",
@@ -433,20 +254,14 @@
   "dev_modules_subscriptions": "Abonelikler",
   "dev_modules_subscriptions_hint": "Bu modülün tepki verdiği, diğer modüllerden gelen olaylar.",
   "dev_modules_title": "Modüller",
-  "disabled": "Kapalı",
   "discard": "Vazgeç",
   "done": "Bitti",
-  "edit": "Düzenle",
   "enabled": "Açık",
   "error_generic": "Bir şeyler ters gitti. Yeniden deneyin.",
   "error_page_title": "Bir şey bozuldu",
-  "forbidden_body": "Bunun için yetkiniz yok. Bir yöneticiden erişim isteyin.",
-  "forbidden_title": "Erişim yok",
   "go_home": "Ana sayfaya dön",
   "groups_created": "Grup oluşturuldu",
-  "groups_deleted": "Grup silindi",
   "groups_description": "Açıklama",
-  "groups_edit_members": "Üyeleri düzenle",
   "groups_empty": "Gruplar sayesinde birçok kişiyi bir arada anabilir ve onlara topluca yetki verebilirsiniz.",
   "groups_handle": "Kısa ad",
   "groups_members": [
@@ -462,24 +277,13 @@
   "groups_name": "Grup adı",
   "groups_new": "Yeni grup",
   "groups_title": "Gruplar",
-  "groups_updated": "Grup güncellendi",
   "home_greeting_afternoon": "İyi günler, {name}",
   "home_greeting_evening": "İyi akşamlar, {name}",
   "home_greeting_morning": "Günaydın, {name}",
   "home_inbox_empty": "Sizi bekleyen bir şey yok",
-  "home_inbox_preview": "Sizi bekleyenler",
-  "home_open_inbox": "Gelen kutusunu aç",
   "home_stat_mentions": "Bahsedilmeler",
   "home_stat_unread": "Okunmamış bildirimler",
   "home_stat_workspaces": "Çalışma alanları",
-  "home_subtitle": "{date}",
-  "home_widgets": "Modüllerinizden",
-  "hr_att_late": "Geç",
-  "hr_balance": "Bakiye",
-  "hr_feature_off": "Kapalı",
-  "hr_feature_on": "Açık",
-  "hr_position": "Pozisyon",
-  "hr_requested_by": "{name} tarafından talep edildi",
   "inbox_all_workspaces": "Tüm çalışma alanları",
   "inbox_archive": "Arşivle",
   "inbox_archived": "Bildirim arşivlendi",
@@ -487,7 +291,6 @@
   "inbox_empty_unread": "Her şey güncel",
   "inbox_empty_unread_body": "Yeni bahsetmeler, atamalar ve güncellemeler buraya düşer.",
   "inbox_mark_read": "Okundu say",
-  "inbox_mark_unread_only_read": "Okundu say",
   "inbox_marked_read": "{count} okundu sayıldı",
   "inbox_open_object": "Aç",
   "inbox_scope": "Gösterilen",
@@ -504,13 +307,10 @@
   "integrations_title": "Entegrasyonlar",
   "integrations_webhooks": "Webhook'lar",
   "integrations_webhooks_desc": "Kendi servisleriniz için imzalı giden olaylar",
-  "invite_accept": "Daveti kabul et",
-  "invite_body": "{inviter}, {workspace} içinde birlikte çalışmak üzere {email} adresini davet etti.",
   "invite_by_email": "E-posta ile",
   "invite_dialog_title": "{workspace} çalışma alanına davet et",
   "invite_directory_empty": "Kimse bulunamadı — başka bir arama deneyin",
   "invite_email_placeholder": "meslektas@sirket.com — birden fazlaysa virgülle ayırın",
-  "invite_expired": "Bu davetin süresi dolmuş. Yenisini isteyin.",
   "invite_expires": "{date} tarihinde doluyor",
   "invite_from_directory": "Diğer çalışma alanlarınızdan",
   "invite_message": "Mesaj",
@@ -541,16 +341,11 @@
       }
     }
   ],
-  "invite_sign_in_first": "Kabul etmek için giriş yapın ya da hesap oluşturun.",
-  "invite_title": "{workspace} çalışma alanına katıl",
-  "invite_wrong_account": "{current} olarak giriş yaptınız. Bu davet {email} için.",
   "language": "Dil",
-  "loading": "Yükleniyor…",
   "mark_all_read": "Tümünü okundu say",
   "members_actions": "Üye işlemleri",
   "members_cannot_change_own_role": "Kendi rolünüzü değiştiremezsiniz",
   "members_change_role": "Rolü değiştir",
-  "members_col_groups": "Gruplar",
   "members_col_joined": "Katılma",
   "members_col_name": "Ad",
   "members_col_role": "Rol",
@@ -579,7 +374,6 @@
   "members_reactivated_toast": "{name} yeniden etkinleştirildi",
   "members_remove": "Çalışma alanından kaldır",
   "members_remove_body": "Bu çalışma alanındaki her şeye erişimini hemen kaybeder. İletileri, işleri ve yorumları olduğu yerde kalır ve istediğiniz zaman yeniden davet edebilirsiniz.",
-  "members_remove_confirm": "{name} bu çalışma alanından kaldırılsın mı?",
   "members_remove_title": "{name} kaldırılsın mı?",
   "members_removed": "{name} kaldırıldı",
   "members_role_admin": "Yönetici",
@@ -597,8 +391,6 @@
   "members_title_label": "Unvan",
   "members_title_updated": "Unvan güncellendi",
   "members_you": "siz",
-  "module_disabled_body": "{module} bu çalışma alanı için kapalı. Bir yönetici Ayarlar → Modüller'den açabilir.",
-  "module_disabled_title": "Modül etkin değil",
   "modules_configure": "Yapılandır",
   "modules_core_badge": "Çekirdek",
   "modules_core_locked": "Her zaman dahil",
@@ -607,7 +399,6 @@
   "modules_disable_body": "Bu çalışma alanındaki herkes {name} erişimini kaybeder ve modül gezinmelerinden kalkar. Hiçbir şey silinmez: yeniden açtığınızda veriler olduğu gibi geri gelir.",
   "modules_disable_title": "{name} kapatılsın mı?",
   "modules_disabled_toast": "{name} kapatıldı",
-  "modules_enable": "Aç",
   "modules_enabled_toast": "{name} açıldı",
   "modules_group_available": "Kullanılabilir",
   "modules_group_enabled": "Açık",
@@ -645,21 +436,16 @@
   ],
   "modules_min_kernel": "Kern {version} gerekir",
   "modules_moves_to": "Kern {release} sürümünde {version}'a geçer",
-  "modules_no_settings": "Bu modülün çalışma alanı ayarı yok.",
   "modules_none_match": "“{query}” ile eşleşen modül yok.",
   "modules_page_hint": "Bu çalışma alanı için özellikleri açın. Bir modülün eklediği her şey — gezinme, yetkiler, arama — yalnızca açık olduğu yerde görünür.",
   "modules_read_only": "Hangi modüllerin kullanıldığını görebilirsiniz, ama yalnızca çalışma alanı yöneticileri değiştirebilir.",
   "modules_required_by": "{modules} buna ihtiyaç duyuyor — önce onları kapatın.",
   "modules_search": "Modüllerde ara",
-  "modules_settings_for": "{name} ayarları",
   "modules_title": "Modüller",
-  "nav_account": "Hesap",
   "nav_admin": "Yönetim",
   "nav_home": "İşlerim",
   "nav_inbox": "Gelen kutusu",
-  "nav_modules": "Modüller",
   "nav_more": "Daha fazla",
-  "nav_preferences": "Tercihler",
   "nav_settings": "Ayarlar",
   "nav_workspace": "Çalışma alanı",
   "no_notifications": "Her şey güncel",
@@ -690,22 +476,14 @@
   "onboarding_title": "İlk çalışma alanınızı oluşturun",
   "onboarding_ws_name": "Çalışma alanı adı",
   "onboarding_ws_slug": "URL",
-  "open": "Aç",
-  "open_inbox": "Gelen kutusunu aç",
   "optional": "isteğe bağlı",
   "palette_empty": "Sonuç yok",
   "palette_group_commands": "Komutlar",
   "palette_group_navigation": "Gezinme",
-  "palette_group_recent": "Son kullanılanlar",
   "palette_group_search": "Arama sonuçları",
   "palette_group_workspaces": "Çalışma alanları",
-  "palette_language": "Dili değiştir",
   "palette_placeholder": "Bir yere gidin ya da komut çalıştırın…",
   "palette_switch_theme": "Temayı değiştir",
-  "presence_away": "Uzakta",
-  "presence_dnd": "Rahatsız etmeyin",
-  "presence_offline": "Çevrimdışı",
-  "presence_online": "Çevrimiçi",
   "profile_avatar": "Profil resmi",
   "profile_hint": "Kern'de diğer insanlara nasıl göründüğünüz.",
   "profile_name": "Ad",
@@ -740,19 +518,6 @@
   "pwa_ios_step1": "Paylaş düğmesine dokunun",
   "pwa_ios_step2": "“Ana Ekrana Ekle”yi seçin",
   "pwa_ios_title": "Kern'i ana ekranınıza ekleyin",
-  "pwa_update_ready": "Kern'in yeni bir sürümü hazır",
-  "pwa_update_reload": "Yeniden yükle",
-  "quire_people_here": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} kişi daha burada",
-        "countPlural=other": "{n} kişi daha burada"
-      }
-    }
-  ],
-  "quire_switch_space": "Alan değiştir",
   "connecting_banner": "Bağlanılıyor…",
   "reconnecting": "Yeniden bağlanılıyor…",
   "remove": "Kaldır",
@@ -787,12 +552,9 @@
   "roles_title": "Roller ve yetkiler",
   "roles_updated": "Rol güncellendi",
   "save": "Kaydet",
-  "saved": "Kaydedildi",
   "search": "Ara",
-  "search_everything": "{workspace} içinde ara…",
   "search_placeholder": "Ara",
   "security_2fa": "İki adımlı doğrulama",
-  "security_2fa_disable": "İki adımlı doğrulamayı kapat",
   "security_2fa_enable": "İki adımlı doğrulamayı aç",
   "security_2fa_hint": "Giriş yaparken kimlik doğrulama uygulamanızdan kod iste.",
   "security_2fa_scan": "Bu gizli anahtarı kimlik doğrulama uygulamanıza okutun, sonra onaylamak için bir kod girin.",
@@ -802,16 +564,10 @@
   "security_passkey_add": "Geçiş anahtarı ekle",
   "security_passkey_added": "Geçiş anahtarı eklendi",
   "security_passkey_hint": "Destekleyen cihazlarda parolanızın yerini alır.",
-  "security_passkey_removed": "Geçiş anahtarı kaldırıldı",
   "security_passkeys": "Geçiş anahtarları",
   "security_passkeys_hint": "Face ID, Touch ID ya da güvenlik anahtarıyla giriş yapın.",
   "security_password": "Parola",
   "security_password_updated": "Parola güncellendi",
-  "security_session_current": "Bu cihaz",
-  "security_session_revoke": "Sonlandır",
-  "security_session_revoked": "Oturum sonlandırıldı",
-  "security_sessions": "Oturumlar",
-  "security_sessions_hint": "Hesabınızda oturum açmış cihazlar.",
   "security_title": "Güvenlik",
   "settings_account_section": "Hesabınız",
   "settings_appearance": "Görünüm",
@@ -830,9 +586,6 @@
   "settings_security": "Güvenlik",
   "settings_title": "Ayarlar",
   "settings_workspace_section": "Çalışma alanı",
-  "shortcut_go_home": "İşlerim'e git",
-  "shortcut_go_inbox": "Gelen kutusuna git",
-  "shortcut_go_settings": "Ayarlar'a git",
   "tabs_close": "Sekmeyi kapat",
   "tabs_close_others": "Diğer sekmeleri kapat",
   "tabs_close_right": "Sonraki sekmeleri kapat",
@@ -848,38 +601,6 @@
   "theme_dark": "Koyu",
   "theme_light": "Açık",
   "theme_system": "Sistem",
-  "time_just_now": "az önce",
-  "tracker_bulk_done": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} iş güncellendi",
-        "countPlural=other": "{n} iş güncellendi"
-      }
-    }
-  ],
-  "tracker_components_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} bileşen",
-        "countPlural=other": "{n} bileşen"
-      }
-    }
-  ],
-  "tracker_field_not_editable": "Bu alan burada henüz düzenlenemiyor",
-  "tracker_hours": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} sa",
-        "countPlural=other": "{n} sa"
-      }
-    }
-  ],
   "tracker_issues_count": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
@@ -890,81 +611,6 @@
       }
     }
   ],
-  "tracker_planning_issue_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} iş",
-        "countPlural=other": "{n} iş"
-      }
-    }
-  ],
-  "tracker_points": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} puan",
-        "countPlural=other": "{n} puan"
-      }
-    }
-  ],
-  "tracker_project_page": "Projeyi aç",
-  "tracker_project_weeks": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} hafta",
-        "countPlural=other": "{n} hafta"
-      }
-    }
-  ],
-  "tracker_template_subitems": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} alt öğe oluşturur",
-        "countPlural=other": "{n} alt öğe oluşturur"
-      }
-    }
-  ],
-  "tracker_templates_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} şablon",
-        "countPlural=other": "{n} şablon"
-      }
-    }
-  ],
-  "tracker_workflow_asks": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "Önce {n} alan ister",
-        "countPlural=other": "Önce {n} alan ister"
-      }
-    }
-  ],
-  "tracker_workflow_status_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} durum",
-        "countPlural=other": "{n} durum"
-      }
-    }
-  ],
-  "tracker_workflow_statuses": "Durumlar",
-  "tracker_workflow_transitions": "Geçişler",
-  "tracker_workflow_used_by": "{types} tarafından kullanılıyor.",
-  "tracker_workflow_used_by_label": "Bu iş akışında çalışan iş türleri",
   "tz_region_africa": "Afrika",
   "tz_region_america": "Amerika kıtası",
   "tz_region_antarctica": "Antarktika",
@@ -985,8 +631,6 @@
   "widget_people_desc": "Bu çalışma alanında kimler var ve şu anda kim burada.",
   "widget_people_title": "Kişiler",
   "widget_setting_rows": "Satır",
-  "widget_setting_show": "Göster",
-  "widget_setting_status": "Durum",
   "widget_unread_desc": "Bu çalışma alanında ne kadarı bekliyor.",
   "widget_unread_title": "Okunmamış",
   "widget_waiting_desc": "Okunmamış bildirimler ve onlarla yapılacak iki şey.",
@@ -1003,14 +647,12 @@
       }
     }
   ],
-  "workspace_switcher_label": "Çalışma alanını değiştir",
   "workspaces_choose_hint": "Nerede çalışacağını seç.",
   "workspaces_choose_title": "Bir çalışma alanı seç",
   "workspaces_filter_empty": "“{query}” ile eşleşen çalışma alanı yok.",
   "workspaces_filter_placeholder": "Çalışma alanlarını süz…",
   "workspaces_last_used": "Son kullanılan",
   "workspaces_signed_in_as": "{email} olarak girildi",
-  "ws_accent": "Vurgu rengi",
   "ws_archive": "Çalışma alanını arşivle",
   "ws_archive_confirm_body": "Çalışma alanı üyeleri için kaybolur ve içeriği aramalarda görünmez olur. Hiçbir şey silinmez, bir yönetici sonradan geri getirebilir.",
   "ws_archive_confirm_title": "{name} arşivlensin mi?",

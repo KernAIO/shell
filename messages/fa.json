@@ -1,29 +1,8 @@
 {
   "$schema": "https://inlang.com/schema/inlang-message-format",
-  "add": "افزودن",
-  "admin_activate": "فعال‌سازی",
   "admin_forbidden": "برای دیدن این بخش باید مدیر نمونه باشید.",
-  "admin_healthy": "سالم",
-  "admin_make_admin": "ارتقا به مدیر نمونه",
-  "admin_modules": "ماژول‌ها",
-  "admin_modules_col_health": "سلامت",
-  "admin_modules_col_host": "میزبان",
-  "admin_modules_col_module": "ماژول",
-  "admin_remove_admin": "حذف مدیریت نمونه",
   "admin_scope_hint": "نمونه",
   "admin_section_instance": "نمونه",
-  "admin_settings": "تنظیمات نمونه",
-  "admin_settings_admins": "فقط مدیران نمونه",
-  "admin_settings_base_url": "نشانی پایه",
-  "admin_settings_default_locale": "زبان پیش‌فرض",
-  "admin_settings_everyone": "همه",
-  "admin_settings_name": "نام نمونه",
-  "admin_settings_saved": "تنظیمات نمونه ذخیره شد",
-  "admin_settings_signup": "اجازه ثبت‌نام عمومی",
-  "admin_settings_ws_creation": "چه کسی می‌تواند فضای کاری بسازد",
-  "admin_suspend": "تعلیق",
-  "admin_title": "مدیریت نمونه",
-  "admin_unhealthy": "در دسترس نیست",
   "admin_updates_auto_requires_host": "ارتقا روی میزبان اجرا می‌شود، نه در این کانتینر. به زمان‌سنجی نیاز دارد که install.sh برپا می‌کند، یا به سرویس به‌روزرسان اختیاری.",
   "admin_updates_available": "به‌روزرسانی موجود است",
   "admin_updates_backup_note": "اسکریپت پیش از هر تغییری از پایگاه‌داده نسخه‌ی پشتیبان می‌گیرد و از .env رونوشت برمی‌دارد، و فرمان بازگرداندن آن‌ها را چاپ می‌کند.",
@@ -93,16 +72,6 @@
   "admin_updates_window": "بازه‌ی به‌روزرسانی",
   "admin_updates_window_hint": "ارتقا فقط درون این بازه آغاز می‌شود. می‌تواند از نیمه‌شب بگذرد.",
   "admin_updates_window_to": "تا",
-  "admin_users": "کاربران",
-  "admin_users_col_admin": "مدیر",
-  "admin_users_col_created": "تاریخ ایجاد",
-  "admin_users_col_status": "وضعیت",
-  "admin_users_col_user": "کاربر",
-  "admin_workspaces": "فضاهای کاری",
-  "admin_ws_col_created": "تاریخ ایجاد",
-  "admin_ws_col_members": "اعضا",
-  "admin_ws_col_name": "فضای کاری",
-  "app_name": "کرن",
   "appearance_clock": "زمان محلی",
   "appearance_clock_hint": "شهر و ساعت این دستگاه را کنار نوار زبانه‌ها نشان بده.",
   "appearance_hint": "پوسته و زبان این دستگاه.",
@@ -112,7 +81,6 @@
   "appearance_tabbar": "نوار زبانه‌ها",
   "appearance_tabbar_hint": "چند جای کاری را هم‌زمان در نواری بالای برنامه باز نگه دار.",
   "appearance_title": "ظاهر",
-  "archive": "بایگانی",
   "audit_actor_system": "سامانه",
   "audit_col_action": "عملیات",
   "audit_col_actor": "کاربر",
@@ -120,7 +88,6 @@
   "audit_col_when": "زمان",
   "audit_empty": "هنوز رویدادی ثبت نشده",
   "audit_filter_module": "ماژول",
-  "audit_load_more": "بارگذاری بیشتر",
   "audit_title": "گزارش رویدادها",
   "auth_back_to_sign_in": "بازگشت به ورود",
   "auth_backup_code": "کد پشتیبان",
@@ -142,7 +109,6 @@
   "auth_invalid_credentials": "ایمیل یا گذرواژه اشتباه است",
   "auth_magic_link": "ارسال پیوند ورود به ایمیل",
   "auth_magic_link_sent": "ایمیل خود را بررسی کنید — پیوند ورود به {email} فرستادیم.",
-  "auth_magic_link_title": "پیوند جادویی",
   "auth_name": "نام و نام خانوادگی",
   "auth_new_password": "گذرواژه جدید",
   "auth_no_account": "تازه‌وارد هستید؟",
@@ -200,152 +166,8 @@
   "auth_use_backup_code": "استفاده از کد پشتیبان",
   "auth_verify": "تأیید",
   "auth_welcome_back": "خوش برگشتید",
-  "back": "بازگشت",
-  "billing_actions": "کارهای پرداخت",
-  "billing_admin_action_clear_override": "برداشتن محدودیت دستی",
-  "billing_admin_action_extend_trial": "۱۴ روز تمدید دوره آزمایشی",
-  "billing_admin_action_resume": "از سرگیری",
-  "billing_admin_action_set_plan": "تغییر طرح",
-  "billing_admin_action_stripe": "باز کردن در Stripe",
-  "billing_admin_action_suspend": "تعلیق",
-  "billing_admin_archive_body": "دیگر ارائه نمی‌شود و از صفحه‌ی قیمت‌ها برداشته می‌شود. فضاهای کاری که روی آن هستند، روی آن می‌مانند و محدودیت‌هایشان را نگه می‌دارند. چیزی حذف نمی‌شود.",
-  "billing_admin_archive_confirm": "بایگانی طرح",
-  "billing_admin_archive_title": "{name} بایگانی شود؟",
-  "billing_admin_cancel": "صرف‌نظر",
-  "billing_admin_col_plan": "طرح",
-  "billing_admin_col_renews": "تمدید",
-  "billing_admin_col_revenue": "ماهانه",
-  "billing_admin_col_seats": "کاربران",
-  "billing_admin_col_status": "وضعیت",
-  "billing_admin_col_storage": "فضای ذخیره‌سازی",
-  "billing_admin_col_workspace": "فضای کاری",
-  "billing_admin_empty": "هنوز فضای کاری‌ای نیست",
-  "billing_admin_empty_hint": "به‌محض اینکه کسی فضای کاری بسازد، اینجا نمایان می‌شود.",
-  "billing_admin_error": "فهرست فضاهای کاری بارگذاری نشد",
-  "billing_admin_mrr": "ماهانه",
-  "billing_admin_no_payments": "کلید Stripe تنظیم نشده است، پس این نمونه نمی‌تواند پرداختی بگیرد. طرح‌ها و محدودیت‌ها همچنان اعمال می‌شوند.",
-  "billing_admin_overridden": "دست‌نویس",
-  "billing_admin_overridden_hint": "محدودیت‌های این فضای کاری دستی تعیین شده، پس طرحش آن‌ها را تعیین نمی‌کند.",
-  "billing_admin_paying": "پرداخت‌کننده",
-  "billing_admin_plan_archive": "بایگانی",
-  "billing_admin_plan_archived_toast": "{name} بایگانی شد",
-  "billing_admin_plan_audit_days": "نگه‌داری گزارش رویدادها (روز)",
-  "billing_admin_plan_changed_toast": "طرح تغییر کرد",
-  "billing_admin_plan_currency": "واحد پول",
-  "billing_admin_plan_description": "توضیح",
-  "billing_admin_plan_draft": "پیش‌نویس",
-  "billing_admin_plan_edit": "ویرایش",
-  "billing_admin_plan_interval": "دوره",
-  "billing_admin_plan_interval_month": "ماهانه",
-  "billing_admin_plan_interval_year": "سالانه",
-  "billing_admin_plan_limits": "آنچه در بر می‌گیرد",
-  "billing_admin_plan_limits_hint": "محدودیت را خالی بگذارید تا بی‌حد باشد.",
-  "billing_admin_plan_name": "نام",
-  "billing_admin_plan_new": "طرح جدید",
-  "billing_admin_plan_none": "بدون طرح (بی‌حد)",
-  "billing_admin_plan_order": "ترتیب",
-  "billing_admin_plan_per_seat": "دریافت به‌ازای هر کاربر",
-  "billing_admin_plan_per_seat_hint": "اگر خاموش باشد، قیمت یک‌بار برای کل فضای کاری گرفته می‌شود.",
-  "billing_admin_plan_price": "قیمت",
-  "billing_admin_plan_price_hint": "به واحد کامل پول، پس ۸ یعنی ۸٫۰۰ دلار.",
-  "billing_admin_plan_publish": "انتشار",
-  "billing_admin_plan_published": "منتشرشده",
-  "billing_admin_plan_published_toast": "{name} اکنون در صفحه‌ی قیمت‌ها است",
-  "billing_admin_plan_saved": "طرح ذخیره شد",
-  "billing_admin_plan_seats": "کاربران",
-  "billing_admin_plan_slug": "شناسه",
-  "billing_admin_plan_slug_hint": "در نشانی‌ها و صفحه‌ی قیمت‌ها می‌آید. طرح دیگری نمی‌تواند دوباره از آن استفاده کند.",
-  "billing_admin_plan_sso": "ورود یکپارچه",
-  "billing_admin_plan_storage_gb": "فضای ذخیره‌سازی (گیگابایت)",
-  "billing_admin_plan_stripe_price": "شناسه‌ی قیمت در Stripe",
-  "billing_admin_plan_stripe_price_hint": "بدون آن، این طرح خریدنی نیست — فقط مدیر می‌تواند آن را بدهد.",
-  "billing_admin_plan_trial_days": "روزهای آزمایشی",
-  "billing_admin_plan_unpublish": "برداشتن از انتشار",
-  "billing_admin_plan_unpublished_toast": "{name} دیگر ارائه نمی‌شود",
-  "billing_admin_plans_empty": "هنوز طرحی نیست",
-  "billing_admin_plans_empty_hint": "یکی بسازید تا بتوانید برای فضاهای کاری این نمونه هزینه بگیرید.",
-  "billing_admin_plans_subtitle": "آنچه این نمونه می‌فروشد. طرح منتشرشده همان است که در صفحه‌ی قیمت‌ها دیده می‌شود.",
-  "billing_admin_plans_title": "طرح‌ها",
-  "billing_admin_resumed_toast": "{name} از سر گرفته شد",
-  "billing_admin_save": "ذخیره",
-  "billing_admin_search": "جست‌وجوی فضاهای کاری",
-  "billing_admin_set_plan_body": "این بی‌درنگ اثر می‌گذارد و از Stripe نمی‌گذرد. برای رایگان‌کردن یک حساب یا جبران اشتباه از آن استفاده کنید، نه برای فروش.",
-  "billing_admin_set_plan_title": "تغییر طرح {name}",
-  "billing_admin_subscriptions_subtitle": "هر فضای کاری روی این نمونه، و آنچه می‌پردازد.",
-  "billing_admin_subscriptions_title": "اشتراک‌ها",
-  "billing_admin_suspend_body": "همه در {name} ورودشان را نگه می‌دارند و می‌توانند آنچه را مال خودشان است بخوانند و برون‌ریزی کنند. تا از سرگیری، کسی نمی‌تواند چیزی بنویسد. چیزی حذف نمی‌شود.",
-  "billing_admin_suspend_confirm": "تعلیق فضای کاری",
-  "billing_admin_suspend_title": "این فضای کاری معلق شود؟",
-  "billing_admin_suspended_count": "معلق",
-  "billing_admin_suspended_toast": "{name} معلق شد",
-  "billing_admin_trial_extended_toast": "دوره آزمایشی ۱۴ روز تمدید شد",
-  "billing_admin_workspaces": "فضاهای کاری",
-  "billing_change_plan": "تغییر طرح",
-  "billing_plan_section": "طرح",
-  "billing_status": "وضعیت",
-  "billing_trial_days_left": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} روز مانده",
-        "countPlural=other": "{n} روز مانده"
-      }
-    }
-  ],
   "cancel": "انصراف",
-  "chart_empty": "هنوز چیزی برای این بازه نیست",
-  "chart_max": "تا {value}",
-  "chart_when": "زمان",
-  "chat_attach_soon": "پیوست فایل هنوز ساخته نشده است",
-  "chat_cmd_unread": "گفتگوی خوانده‌نشدهٔ بعدی",
-  "chat_convert_to_issue": "تبدیل به کار",
-  "chat_emoji_empty": "ایموجی‌ای پیدا نشد",
-  "chat_emoji_group_people": "افراد",
-  "chat_emoji_group_reactions": "واکنش‌ها",
-  "chat_emoji_group_work": "کار",
-  "chat_emoji_search": "جست‌وجوی ایموجی",
-  "chat_member_count_one": "۱ عضو",
-  "chat_members_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} عضو",
-        "countPlural=other": "{n} عضو"
-      }
-    }
-  ],
-  "chat_mention_empty": "کسی مطابقت ندارد",
-  "chat_mention_loading": "در حال یافتن افراد…",
-  "chat_muted": "بی‌صدا",
-  "chat_offline": "در حال اتصال دوباره — پیام‌ها پس از برقراری ارسال می‌شوند",
-  "chat_replies": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} پاسخ",
-        "countPlural=other": "{n} پاسخ"
-      }
-    }
-  ],
-  "chat_search_results": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} نتیجه",
-        "countPlural=other": "{n} نتیجه"
-      }
-    }
-  ],
-  "chat_thread_reply_placeholder": "پاسخ…",
-  "chat_video_message": "پیام ویدیویی",
-  "chat_voice_message": "پیام صوتی",
   "close": "بستن",
-  "command_palette": "پالت فرمان",
-  "confirm": "تأیید",
   "copied": "کپی شد",
   "copy": "کپی",
   "create": "ایجاد",
@@ -399,7 +221,6 @@
   "dash_size_s": "کوچک",
   "dash_size_xl": "تمام‌عرض",
   "dash_undo": "برگرداندن",
-  "dash_unsaved": "تغییرات ذخیره‌نشده‌ای در این داشبورد دارید.",
   "dash_widget_menu": "گزینه‌های ابزارک",
   "dash_widget_needs_setup": "هنوز چیزی برای نمایش نیست.",
   "dash_widget_unavailable": "دیگر در دسترس نیست",
@@ -433,20 +254,14 @@
   "dev_modules_subscriptions": "اشتراک‌ها",
   "dev_modules_subscriptions_hint": "رویدادهای ماژول‌های دیگر که این ماژول به آن‌ها واکنش نشان می‌دهد.",
   "dev_modules_title": "ماژول‌ها",
-  "disabled": "غیرفعال",
   "discard": "صرف‌نظر",
   "done": "انجام شد",
-  "edit": "ویرایش",
   "enabled": "فعال",
   "error_generic": "مشکلی پیش آمد. دوباره تلاش کنید.",
   "error_page_title": "خطایی رخ داد",
-  "forbidden_body": "اجازه دیدن این بخش را ندارید.",
-  "forbidden_title": "دسترسی ندارید",
   "go_home": "بازگشت به خانه",
   "groups_created": "گروه ایجاد شد",
-  "groups_deleted": "گروه حذف شد",
   "groups_description": "توضیحات",
-  "groups_edit_members": "ویرایش اعضا",
   "groups_empty": "با گروه‌ها می‌توانید هم‌زمان به چند نفر اشاره یا دسترسی بدهید.",
   "groups_handle": "شناسه",
   "groups_members": [
@@ -462,24 +277,13 @@
   "groups_name": "نام گروه",
   "groups_new": "گروه جدید",
   "groups_title": "گروه‌ها",
-  "groups_updated": "گروه به‌روزرسانی شد",
   "home_greeting_afternoon": "ظهر بخیر، {name}",
   "home_greeting_evening": "عصر بخیر، {name}",
   "home_greeting_morning": "صبح بخیر، {name}",
   "home_inbox_empty": "چیزی در انتظار شما نیست",
-  "home_inbox_preview": "در انتظار شما",
-  "home_open_inbox": "باز کردن صندوق ورودی",
   "home_stat_mentions": "اشاره‌ها",
   "home_stat_unread": "اعلان‌های خوانده‌نشده",
   "home_stat_workspaces": "فضاهای کاری",
-  "home_subtitle": "{date}",
-  "home_widgets": "از ماژول‌های شما",
-  "hr_att_late": "تأخیر",
-  "hr_balance": "مانده",
-  "hr_feature_off": "خاموش",
-  "hr_feature_on": "روشن",
-  "hr_position": "سمت",
-  "hr_requested_by": "درخواست از {name}",
   "inbox_all_workspaces": "همه فضاهای کاری",
   "inbox_archive": "بایگانی",
   "inbox_archived": "اعلان بایگانی شد",
@@ -487,7 +291,6 @@
   "inbox_empty_unread": "همه‌چیز به‌روز است",
   "inbox_empty_unread_body": "اشاره‌ها، واگذاری‌ها و به‌روزرسانی‌های جدید اینجا می‌آیند.",
   "inbox_mark_read": "علامت خوانده‌شده",
-  "inbox_mark_unread_only_read": "علامت‌گذاری به‌عنوان خوانده‌شده",
   "inbox_marked_read": "{count} مورد خوانده شد",
   "inbox_open_object": "باز کردن",
   "inbox_scope": "نمایش از",
@@ -504,13 +307,10 @@
   "integrations_title": "یکپارچه‌سازی‌ها",
   "integrations_webhooks": "وب‌هوک‌ها",
   "integrations_webhooks_desc": "رویدادهای خروجی امضاشده برای سرویس‌های شما",
-  "invite_accept": "پذیرش دعوت",
-  "invite_body": "{inviter} از {email} برای همکاری در {workspace} دعوت کرده است.",
   "invite_by_email": "با ایمیل",
   "invite_dialog_title": "دعوت به {workspace}",
   "invite_directory_empty": "کسی یافت نشد — جست‌وجوی دیگری امتحان کنید",
   "invite_email_placeholder": "colleague@company.com — چند ایمیل را با ویرگول جدا کنید",
-  "invite_expired": "این دعوت منقضی شده است. دعوت جدیدی درخواست کنید.",
   "invite_expires": "انقضا {date}",
   "invite_from_directory": "از فضاهای کاری دیگر شما",
   "invite_message": "پیام",
@@ -541,16 +341,11 @@
       }
     }
   ],
-  "invite_sign_in_first": "برای پذیرش، وارد شوید یا حساب بسازید.",
-  "invite_title": "پیوستن به {workspace}",
-  "invite_wrong_account": "با {current} وارد شده‌اید. این دعوت برای {email} است.",
   "language": "زبان",
-  "loading": "در حال بارگذاری…",
   "mark_all_read": "علامت‌گذاری همه به‌عنوان خوانده‌شده",
   "members_actions": "کنش‌های عضو",
   "members_cannot_change_own_role": "نمی‌توانید نقش خودتان را تغییر دهید",
   "members_change_role": "تغییر نقش",
-  "members_col_groups": "گروه‌ها",
   "members_col_joined": "تاریخ عضویت",
   "members_col_name": "نام",
   "members_col_role": "نقش",
@@ -579,7 +374,6 @@
   "members_reactivated_toast": "{name} دوباره فعال شد",
   "members_remove": "حذف از فضای کاری",
   "members_remove_body": "دسترسی او به همه‌چیز در این فضای کاری بی‌درنگ قطع می‌شود. پیام‌ها، مسائل و دیدگاه‌هایش سر جای خود می‌مانند و هر زمان می‌توانید دوباره دعوتش کنید.",
-  "members_remove_confirm": "{name} از این فضای کاری حذف شود؟",
   "members_remove_title": "{name} حذف شود؟",
   "members_removed": "{name} حذف شد",
   "members_role_admin": "مدیر",
@@ -597,8 +391,6 @@
   "members_title_label": "عنوان شغلی",
   "members_title_updated": "عنوان شغلی به‌روزرسانی شد",
   "members_you": "شما",
-  "module_disabled_body": "{module} برای این فضای کاری خاموش است. مدیر می‌تواند آن را در تنظیمات ← ماژول‌ها فعال کند.",
-  "module_disabled_title": "ماژول فعال نیست",
   "modules_configure": "پیکربندی",
   "modules_core_badge": "هسته",
   "modules_core_locked": "همیشه فعال",
@@ -607,7 +399,6 @@
   "modules_disable_body": "همهٔ اعضای این فضای کاری دسترسی خود را به {name} از دست می‌دهند و از ناوبری آن‌ها حذف می‌شود. چیزی پاک نمی‌شود: با روشن کردن دوباره، داده‌ها دقیقاً مثل قبل بازمی‌گردند.",
   "modules_disable_title": "{name} خاموش شود؟",
   "modules_disabled_toast": "{name} غیرفعال شد",
-  "modules_enable": "فعال‌سازی",
   "modules_enabled_toast": "{name} فعال شد",
   "modules_group_available": "در دسترس",
   "modules_group_enabled": "فعال",
@@ -645,21 +436,16 @@
   ],
   "modules_min_kernel": "نیازمند کرن {version}",
   "modules_moves_to": "در کرن {release} به {version} می‌رود",
-  "modules_no_settings": "این ماژول تنظیمات فضای کاری ندارد.",
   "modules_none_match": "هیچ ماژولی با «{query}» مطابقت ندارد.",
   "modules_page_hint": "قابلیت‌ها را برای این فضای کاری روشن کنید. هر چیزی که یک ماژول اضافه می‌کند — ناوبری، دسترسی‌ها، جست‌وجو — تنها جایی دیده می‌شود که فعال باشد.",
   "modules_read_only": "می‌توانید ماژول‌های فعال را ببینید، اما تنها مدیران فضای کاری می‌توانند آن‌ها را تغییر دهند.",
   "modules_required_by": "مورد نیاز {modules} است — ابتدا آن‌ها را خاموش کنید.",
   "modules_search": "جست‌وجوی ماژول‌ها",
-  "modules_settings_for": "تنظیمات {name}",
   "modules_title": "ماژول‌ها",
-  "nav_account": "حساب کاربری",
   "nav_admin": "مدیریت",
   "nav_home": "کارهای من",
   "nav_inbox": "صندوق ورودی",
-  "nav_modules": "ماژول‌ها",
   "nav_more": "بیشتر",
-  "nav_preferences": "ترجیحات",
   "nav_settings": "تنظیمات",
   "nav_workspace": "فضای کاری",
   "no_notifications": "همه‌چیز به‌روز است",
@@ -690,22 +476,14 @@
   "onboarding_title": "اولین فضای کاری خود را بسازید",
   "onboarding_ws_name": "نام فضای کاری",
   "onboarding_ws_slug": "نشانی",
-  "open": "باز کردن",
-  "open_inbox": "باز کردن صندوق ورودی",
   "optional": "اختیاری",
   "palette_empty": "نتیجه‌ای یافت نشد",
   "palette_group_commands": "فرمان‌ها",
   "palette_group_navigation": "ناوبری",
-  "palette_group_recent": "اخیر",
   "palette_group_search": "نتایج جست‌وجو",
   "palette_group_workspaces": "فضاهای کاری",
-  "palette_language": "تغییر زبان",
   "palette_placeholder": "برو به، یا اجرای فرمان…",
   "palette_switch_theme": "تغییر پوسته",
-  "presence_away": "غایب",
-  "presence_dnd": "مزاحم نشوید",
-  "presence_offline": "آفلاین",
-  "presence_online": "آنلاین",
   "profile_avatar": "تصویر",
   "profile_hint": "دیگران در کرن شما را چگونه می‌بینند.",
   "profile_name": "نام",
@@ -740,19 +518,6 @@
   "pwa_ios_step1": "دکمه اشتراک‌گذاری را بزنید",
   "pwa_ios_step2": "«افزودن به صفحه اصلی» را انتخاب کنید",
   "pwa_ios_title": "افزودن کرن به صفحه اصلی",
-  "pwa_update_ready": "نسخه جدید کرن آماده است",
-  "pwa_update_reload": "بارگذاری مجدد",
-  "quire_people_here": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} نفر دیگر اینجاست",
-        "countPlural=other": "{n} نفر دیگر اینجا هستند"
-      }
-    }
-  ],
-  "quire_switch_space": "تغییر فضا",
   "connecting_banner": "در حال اتصال…",
   "reconnecting": "در حال اتصال دوباره…",
   "remove": "برداشتن",
@@ -787,12 +552,9 @@
   "roles_title": "نقش‌ها و دسترسی‌ها",
   "roles_updated": "نقش به‌روزرسانی شد",
   "save": "ذخیره",
-  "saved": "ذخیره شد",
   "search": "جست‌وجو",
-  "search_everything": "جست‌وجو در {workspace}…",
   "search_placeholder": "جست‌وجو",
   "security_2fa": "احراز هویت دومرحله‌ای",
-  "security_2fa_disable": "غیرفعال‌سازی",
   "security_2fa_enable": "فعال‌سازی",
   "security_2fa_hint": "هنگام ورود، کدی از برنامه احراز هویت خواسته می‌شود.",
   "security_2fa_scan": "این کلید را در برنامه احراز هویت خود وارد و سپس یک کد تأیید وارد کنید.",
@@ -802,16 +564,10 @@
   "security_passkey_add": "افزودن کلید عبور",
   "security_passkey_added": "کلید عبور افزوده شد",
   "security_passkey_hint": "روی دستگاه‌های پشتیبانی‌شده جایگزین گذرواژه می‌شود.",
-  "security_passkey_removed": "کلید عبور حذف شد",
   "security_passkeys": "کلیدهای عبور",
   "security_passkeys_hint": "ورود با Face ID، Touch ID یا کلید امنیتی.",
   "security_password": "گذرواژه",
   "security_password_updated": "گذرواژه به‌روزرسانی شد",
-  "security_session_current": "همین دستگاه",
-  "security_session_revoke": "قطع دسترسی",
-  "security_session_revoked": "نشست قطع شد",
-  "security_sessions": "نشست‌ها",
-  "security_sessions_hint": "دستگاه‌هایی که به حساب شما وارد شده‌اند.",
   "security_title": "امنیت",
   "settings_account_section": "حساب شما",
   "settings_appearance": "ظاهر",
@@ -830,9 +586,6 @@
   "settings_security": "امنیت",
   "settings_title": "تنظیمات",
   "settings_workspace_section": "فضای کاری",
-  "shortcut_go_home": "رفتن به کارهای من",
-  "shortcut_go_inbox": "رفتن به صندوق ورودی",
-  "shortcut_go_settings": "رفتن به تنظیمات",
   "tabs_close": "بستن زبانه",
   "tabs_close_others": "بستن زبانه‌های دیگر",
   "tabs_close_right": "بستن زبانه‌های بعد از این",
@@ -848,38 +601,6 @@
   "theme_dark": "تیره",
   "theme_light": "روشن",
   "theme_system": "سیستم",
-  "time_just_now": "هم‌اکنون",
-  "tracker_bulk_done": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} کار به‌روز شد",
-        "countPlural=other": "{n} کار به‌روز شد"
-      }
-    }
-  ],
-  "tracker_components_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} جزء",
-        "countPlural=other": "{n} جزء"
-      }
-    }
-  ],
-  "tracker_field_not_editable": "این فیلد هنوز اینجا قابل ویرایش نیست",
-  "tracker_hours": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n}س",
-        "countPlural=other": "{n}س"
-      }
-    }
-  ],
   "tracker_issues_count": [
     {
       "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
@@ -890,81 +611,6 @@
       }
     }
   ],
-  "tracker_planning_issue_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} کار",
-        "countPlural=other": "{n} کار"
-      }
-    }
-  ],
-  "tracker_points": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} امتیاز",
-        "countPlural=other": "{n} امتیاز"
-      }
-    }
-  ],
-  "tracker_project_page": "باز کردن پروژه",
-  "tracker_project_weeks": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} هفته",
-        "countPlural=other": "{n} هفته"
-      }
-    }
-  ],
-  "tracker_template_subitems": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} زیرمورد می‌سازد",
-        "countPlural=other": "{n} زیرمورد می‌سازد"
-      }
-    }
-  ],
-  "tracker_templates_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} قالب",
-        "countPlural=other": "{n} قالب"
-      }
-    }
-  ],
-  "tracker_workflow_asks": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "نخست {n} فیلد می‌خواهد",
-        "countPlural=other": "نخست {n} فیلد می‌خواهد"
-      }
-    }
-  ],
-  "tracker_workflow_status_count": [
-    {
-      "declarations": ["input count", "local n = count: number", "local countPlural = count: plural"],
-      "selectors": ["countPlural"],
-      "match": {
-        "countPlural=one": "{n} وضعیت",
-        "countPlural=other": "{n} وضعیت"
-      }
-    }
-  ],
-  "tracker_workflow_statuses": "وضعیت‌ها",
-  "tracker_workflow_transitions": "جابه‌جایی‌ها",
-  "tracker_workflow_used_by": "استفاده‌شده در {types}.",
-  "tracker_workflow_used_by_label": "انواع موردی که روی این گردش کار اجرا می‌شوند",
   "tz_region_africa": "آفریقا",
   "tz_region_america": "قاره آمریکا",
   "tz_region_antarctica": "جنوبگان",
@@ -985,8 +631,6 @@
   "widget_people_desc": "چه کسانی در این فضای کاری هستند و چه کسی اکنون حاضر است.",
   "widget_people_title": "افراد",
   "widget_setting_rows": "تعداد ردیف",
-  "widget_setting_show": "نمایش",
-  "widget_setting_status": "وضعیت",
   "widget_unread_desc": "چه مقدار در این فضای کاری منتظر است.",
   "widget_unread_title": "خوانده‌نشده",
   "widget_waiting_desc": "اعلان‌های خوانده‌نشده، همراه با دو کاری که با آن‌ها می‌کنید.",
@@ -1003,14 +647,12 @@
       }
     }
   ],
-  "workspace_switcher_label": "تغییر فضای کاری",
   "workspaces_choose_hint": "انتخاب کنید کجا کار می‌کنید.",
   "workspaces_choose_title": "یک فضای کاری انتخاب کنید",
   "workspaces_filter_empty": "هیچ فضای کاری با «{query}» جور نیست.",
   "workspaces_filter_placeholder": "جست‌وجو در فضاهای کاری…",
   "workspaces_last_used": "آخرین بار",
   "workspaces_signed_in_as": "واردشده با {email}",
-  "ws_accent": "رنگ تأکیدی",
   "ws_archive": "بایگانی فضای کاری",
   "ws_archive_confirm_body": "این فضای کاری برای اعضایش ناپدید می‌شود و محتوایش دیگر در جست‌وجو نمی‌آید. چیزی پاک نمی‌شود و مدیر می‌تواند بعداً آن را بازگرداند.",
   "ws_archive_confirm_title": "{name} بایگانی شود؟",
