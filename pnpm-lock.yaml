@@ -21,26 +21,26 @@ importers:
         specifier: ^0.9.1
         version: 0.9.1(kysely@0.29.5)
       '@kernhq/module-billing':
-        specifier: ^0.4.1
-        version: 0.4.1(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@types/node@24.13.3)(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
+        specifier: ^0.5.2
+        version: 0.5.2(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@types/node@24.13.3)(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
       '@kernhq/module-chat':
-        specifier: ^0.4.13
-        version: 0.4.13(@floating-ui/dom@1.8.0)(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
+        specifier: ^0.4.16
+        version: 0.4.16(@floating-ui/dom@1.8.0)(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
       '@kernhq/module-hr':
-        specifier: ^0.23.0
-        version: 0.23.0(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
+        specifier: ^0.23.1
+        version: 0.23.1(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
       '@kernhq/module-inventory':
-        specifier: ^0.5.0
-        version: 0.5.0(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
+        specifier: ^0.5.1
+        version: 0.5.1(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
       '@kernhq/module-mail':
-        specifier: ^0.4.7
-        version: 0.4.7(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)(svgo@4.1.0)(terser@5.51.2)
+        specifier: ^0.5.0
+        version: 0.5.0(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)(svgo@4.1.0)(terser@5.51.2)
       '@kernhq/module-quire':
-        specifier: ^0.16.2
-        version: 0.16.2(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0)(y-protocols@1.0.7(yjs@13.6.32))
+        specifier: ^0.16.3
+        version: 0.16.3(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0)(y-protocols@1.0.7(yjs@13.6.32))
       '@kernhq/module-tracker':
-        specifier: ^0.11.15
-        version: 0.11.15(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
+        specifier: ^0.11.16
+        version: 0.11.16(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
       '@kernhq/sdk':
         specifier: ^0.1.9
         version: 0.1.9
@@ -1115,8 +1115,8 @@ packages:
   '@kernhq/kernel@0.9.1':
     resolution: {integrity: sha512-s5Q1vhUYxk0MwFLjSWODNzDVCgY+WjmHi4ZjMiFBsxSoxby4tUlGsGEBAabwn4fOS6UZEQ0D6GD58qKVnB2B2A==}
 
-  '@kernhq/module-billing@0.4.1':
-    resolution: {integrity: sha512-Gq0VzS7YhFXulUxVTqt90itUWMuUQvMELsP0xixYGMdrHASPObkr6y7Sq8oieJz+qymMP2WEivRN28Ko2+93KQ==}
+  '@kernhq/module-billing@0.5.2':
+    resolution: {integrity: sha512-gBppQXqdnzfxKbZRYnFhmwB2eMWAkKGt5ejKF/45zWQ42zFvNCZZjv9pm/ijG/KBVC+EmYgxkZDDLvEgcpZ60Q==}
     engines: {node: '>=24'}
     peerDependencies:
       '@kernhq/contracts': ^0.7.0
@@ -1132,8 +1132,8 @@ packages:
       svelte:
         optional: true
 
-  '@kernhq/module-chat@0.4.13':
-    resolution: {integrity: sha512-/4i4s3+gIRuNXniKOxS0klxbIFfjKe19fKc9v+NGUJigTVnMbEMTr3up9Rl/vQxjWQfkD1mIC8pHtx0Po8pi2g==}
+  '@kernhq/module-chat@0.4.16':
+    resolution: {integrity: sha512-Y9Rt6XW62XNBhpcx00Bd8NFgrQv+hapW/errV6MBimwIWUV+w//da4Ngu6B0EZqobrxyZI141w5Z+eJfI1jsPA==}
     engines: {node: '>=24'}
     peerDependencies:
       '@kernhq/contracts': ^0.7.0
@@ -1149,8 +1149,8 @@ packages:
       svelte:
         optional: true
 
-  '@kernhq/module-hr@0.23.0':
-    resolution: {integrity: sha512-5/BJcEAsfoh3dBLk6TmQiFNn57rWChZjz2jtLu9x5Okx+ICfiXdWjmGdqcwU50svrqtZ7Xjf0au0SnSmiPOYEg==}
+  '@kernhq/module-hr@0.23.1':
+    resolution: {integrity: sha512-/gN01Iuy9MKuREuixjTun6s4s91kyiQXr40p05aJDRHOna/RyK5z8JWKZhRp+obvyDvtOiwbCrlsINYnRjxPVg==}
     engines: {node: '>=24'}
     peerDependencies:
       '@kernhq/contracts': ^0.7.0
@@ -1166,8 +1166,8 @@ packages:
       svelte:
         optional: true
 
-  '@kernhq/module-inventory@0.5.0':
-    resolution: {integrity: sha512-QGVtivpODlbGstsxPAyFAESa2q404FZCwui/A7PkAnfKB7yKgN29ebC4dW9Foz9GeI5vT/l2d05VHpa0G+0CRQ==}
+  '@kernhq/module-inventory@0.5.1':
+    resolution: {integrity: sha512-giOeo+jC+umZGuPS3gWkz70uyPbz0uDBN1dlG9lMzs2ZJ7UxDwlQL7I2Amkgv4lAPvZIZ8Y5uEdXpN3/4PwE9w==}
     engines: {node: '>=24'}
     peerDependencies:
       '@kernhq/contracts': ^0.7.0
@@ -1183,8 +1183,8 @@ packages:
       svelte:
         optional: true
 
-  '@kernhq/module-mail@0.4.7':
-    resolution: {integrity: sha512-eF5EQ62Y4u/zzW5Q61GL/rEMvJ493wSPDXsKoYAR9DY6Nf7ubnIHCgHW66TDGJZ6UKTE1+ELY/cUNQzaTHUAMQ==}
+  '@kernhq/module-mail@0.5.0':
+    resolution: {integrity: sha512-IBnfT1F56qjM1Mk6sf5zPo2tgIX8xyzzHEsWlPokLQ370uiqJsxkdSC8lzJoW+umwIft5kuIkyxQNvfUrlCOWQ==}
     engines: {node: '>=24'}
     peerDependencies:
       '@kernhq/contracts': ^0.7.0
@@ -1203,8 +1203,8 @@ packages:
       svelte:
         optional: true
 
-  '@kernhq/module-quire@0.16.2':
-    resolution: {integrity: sha512-d21QaB/4v65JS417PnS7b205qbTqwU+A4cqG24yeXghXx89gRzU2s84nhezf3ZG4MZ8eY/I5KnPbhFhGzm+VTg==}
+  '@kernhq/module-quire@0.16.3':
+    resolution: {integrity: sha512-qiS/BMzDVKcn4zm3+KxpuS5k+8rX+APTC5kiQqceEJIFWK9I61KoOUStbPQbSQZMArMM3n6A4c2oWNiItBAW+g==}
     engines: {node: '>=24'}
     peerDependencies:
       '@kernhq/contracts': ^0.7.0
@@ -1218,8 +1218,8 @@ packages:
       svelte:
         optional: true
 
-  '@kernhq/module-tracker@0.11.15':
-    resolution: {integrity: sha512-hPfONGLpjgdgrsvnX44YY4y7DAkUS/P8lh4l6pBHToXadzROJ9k1nld0B0mjW2lsPQXskpI3LerdgLSIzWGhew==}
+  '@kernhq/module-tracker@0.11.16':
+    resolution: {integrity: sha512-YeLVFSYfWDnRDtosQ7AgFKMG9I/50hi0RVkdZaHShB2aOkBunh2n0PTTaHTPxOGw5ovDFxWBtq/zInvpZGJrCA==}
     engines: {node: '>=24'}
     peerDependencies:
       '@kernhq/contracts': ^0.7.0
@@ -6262,7 +6262,7 @@ snapshots:
       - supports-color
       - ws
 
-  '@kernhq/module-billing@0.4.1(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@types/node@24.13.3)(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)':
+  '@kernhq/module-billing@0.5.2(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@types/node@24.13.3)(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)':
     dependencies:
       '@kernhq/contracts': 0.7.0
       '@kernhq/kernel': 0.9.1(kysely@0.29.5)
@@ -6311,7 +6311,7 @@ snapshots:
       - sqlite3
       - ws
 
-  '@kernhq/module-chat@0.4.13(@floating-ui/dom@1.8.0)(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)':
+  '@kernhq/module-chat@0.4.16(@floating-ui/dom@1.8.0)(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)':
     dependencies:
       '@kernhq/contracts': 0.7.0
       '@kernhq/kernel': 0.9.1(kysely@0.29.5)
@@ -6367,7 +6367,7 @@ snapshots:
       - sqlite3
       - ws
 
-  '@kernhq/module-hr@0.23.0(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)':
+  '@kernhq/module-hr@0.23.1(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)':
     dependencies:
       '@kernhq/contracts': 0.7.0
       '@kernhq/kernel': 0.9.1(kysely@0.29.5)
@@ -6414,7 +6414,7 @@ snapshots:
       - sqlite3
       - ws
 
-  '@kernhq/module-inventory@0.5.0(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)':
+  '@kernhq/module-inventory@0.5.1(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)':
     dependencies:
       '@kernhq/contracts': 0.7.0
       '@kernhq/kernel': 0.9.1(kysely@0.29.5)
@@ -6462,7 +6462,7 @@ snapshots:
       - sqlite3
       - ws
 
-  '@kernhq/module-mail@0.4.7(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)(svgo@4.1.0)(terser@5.51.2)':
+  '@kernhq/module-mail@0.5.0(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)(svgo@4.1.0)(terser@5.51.2)':
     dependencies:
       '@aws-sdk/client-sesv2': 3.1124.0
       '@kernhq/contracts': 0.7.0
@@ -6520,7 +6520,7 @@ snapshots:
       - uncss
       - ws
 
-  '@kernhq/module-quire@0.16.2(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0)(y-protocols@1.0.7(yjs@13.6.32))':
+  '@kernhq/module-quire@0.16.3(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0)(y-protocols@1.0.7(yjs@13.6.32))':
     dependencies:
       '@kernhq/contracts': 0.7.0
       '@kernhq/kernel': 0.9.1(kysely@0.29.5)
@@ -6574,7 +6574,7 @@ snapshots:
       - ws
       - y-protocols
 
-  '@kernhq/module-tracker@0.11.15(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)':
+  '@kernhq/module-tracker@0.11.16(@kernhq/contracts@0.7.0)(@kernhq/kernel@0.9.1(kysely@0.29.5))(@kernhq/ui@0.14.0(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)':
     dependencies:
       '@kernhq/contracts': 0.7.0
       '@kernhq/kernel': 0.9.1(kysely@0.29.5)
