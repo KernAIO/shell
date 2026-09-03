@@ -18,6 +18,7 @@ import { mailClientModule } from '@kernhq/module-mail/client'
 import { quireClientModule } from '@kernhq/module-quire/client'
 import { trackerClientModule } from '@kernhq/module-tracker/client'
 import { coreClientModule } from './core/client'
+import { extraModules } from './extra'
 
 /**
  * The client-side module registry.
@@ -187,6 +188,8 @@ registerModule(hrClientModule)
 registerModule(mailClientModule)
 registerModule(billingClientModule)
 registerModule(inventoryClientModule)
+// whatever KERN_EXTRA_MODULES put into this image; see scripts/extra-modules.mjs
+for (const mod of extraModules) registerModule(mod)
 
 export interface ModuleSettingsLink {
   moduleId: string
