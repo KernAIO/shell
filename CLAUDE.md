@@ -268,9 +268,25 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
 - **`session.can()` answers `true` for an owner and for an instance admin before it looks at the
   permission at all**, and the mock's signed-in user is both. So a permission-gated branch cannot be
   reached in `dev:mock` by editing the permission list — removing the key from `myPermissions`
-  changes nothing, twice over. To see the other branch, set `instanceAdmin: false` on the mock user
-  *and* the role to something other than `owner`. Worth knowing before concluding that a gate does
-  not work: the likelier reading is that you have never rendered the branch you are looking for.
+  changes nothing, twice over. **Both have to go together**: `me` must return
+  `instanceAdmin: false` *and* `myPermissions` a role other than `owner`, or `can()` short-circuits
+  before the permission set is read and you are still looking at the owner's screen. That is what
+  `localStorage['kern.mock.role'] = 'member'` does — set it (with
+  `page.addInitScript`, before the app loads) and the mock gives up both.
+  `localStorage['kern.mock.suspended'] = '1'` is its neighbour: it makes every mock write fail the
+  way a lapsed subscription does. `tests/e2e/billing-suspended.spec.ts` uses both.
+  Worth knowing before concluding that a gate does not work — the likelier reading is that you have
+  never rendered the branch you are looking for, and **every** permission-gated branch in this app
+  has that problem until somebody flips both switches.
+- **A refusal that can arrive from any mutation belongs on the mutation cache, not at call sites.**
+  The kernel refuses *every* non-GET workspace-scoped procedure while a subscription is not current,
+  so wiring `billing.subscription.inactive` per screen would mean remembering it at each of two
+  dozen mutations and every one added later — and the forgotten ones are the ones a customer meets.
+  `installSuspensionToast` sets `queryClient.getMutationCache().config.onError`, which is public,
+  writable, and runs **before** the mutation's own `onError`; every other handler then calls
+  `toastMutationError`, which stands down for that one reason. Both halves are needed: the global
+  hook alone double-toasts with the per-site handler that follows it. A plan limit is the opposite
+  case and stays at its call site — a ceiling belongs to the screen that reached it.
 - **A module component mounted outside `(app)` has no strings, for ever.** `$lib/modules/registry`
   is the only thing that calls `registerMessages`, and it is imported by the app routes — so
   `/request/:token`, which mounts tracker's `IntakePage` with no session, rendered

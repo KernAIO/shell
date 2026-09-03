@@ -17,6 +17,7 @@ import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-qu
 import { page } from '$app/state'
 import { env } from '$env/dynamic/public'
 import { getApi } from '$lib/api/client'
+import { toastMutationError } from '$lib/api/mutation-errors'
 import CapabilityAudiencePicker from '$lib/components/settings/CapabilityAudiencePicker.svelte'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
@@ -89,7 +90,7 @@ const setCapability = createMutation(() => ({
     // Navigation, consent and this page all derive from the resolved set, so re-read everything.
     void queryClient.invalidateQueries({ queryKey: ['core'] })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 const setAudience = createMutation(() => ({
@@ -103,7 +104,7 @@ const setAudience = createMutation(() => ({
     toast.success(m.audience_saved_toast())
     void queryClient.invalidateQueries({ queryKey: ['core'] })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 const groups = createQuery(() => ({
@@ -207,7 +208,7 @@ const revoke = createMutation(() => ({
     pendingRevoke = null
     void queryClient.invalidateQueries({ queryKey: ['core', 'mcp'] })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 /**
@@ -246,7 +247,7 @@ const createKey = createMutation(() => ({
     newKeyExpiry = '30'
     void queryClient.invalidateQueries({ queryKey: ['core', 'apiKeys'] })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 let keyCopied = $state(false)
@@ -272,7 +273,7 @@ const revokeKey = createMutation(() => ({
     pendingRevokeKey = null
     void queryClient.invalidateQueries({ queryKey: ['core', 'apiKeys'] })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 /** Every key in the workspace, whoever holds it — an integration manager's oversight, not self-service. */

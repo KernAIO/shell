@@ -3,6 +3,7 @@ import { Badge, Button, Checkbox, Dialog, Field, Icon, Input, Skeleton, Textarea
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
+import { toastMutationError } from '$lib/api/mutation-errors'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
 import { keys } from '$lib/query'
@@ -85,7 +86,7 @@ const save = createMutation(() => ({
     draft = null
     void queryClient.invalidateQueries({ queryKey: keys.roles(workspaceId) })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 const create = createMutation(() => ({
@@ -104,7 +105,7 @@ const create = createMutation(() => ({
     selectedId = role.id
     void queryClient.invalidateQueries({ queryKey: keys.roles(workspaceId) })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 const remove = createMutation(() => ({

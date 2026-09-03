@@ -1,7 +1,7 @@
 import { type CoreClient, createCoreClient } from '@kernhq/sdk'
 import { browser } from '$app/environment'
 import { env } from '$env/dynamic/public'
-import { createMockApi } from './mock'
+import { createMockApi, suspendable } from './mock'
 
 /**
  * The Kern API client.
@@ -19,7 +19,9 @@ export const isMock = () => env.PUBLIC_API_MOCK === '1' || env.PUBLIC_API_MOCK =
 
 export function getApi(): Api {
   if (cached) return cached
-  cached = isMock() ? (createMockApi() as unknown as Api) : createRealClient()
+  // `suspendable` is a no-op unless a test has marked the workspace suspended; it is what lets the
+  // end-to-end suite drive the global suspension handler from any screen at all.
+  cached = isMock() ? (suspendable(createMockApi()) as unknown as Api) : createRealClient()
   return cached
 }
 

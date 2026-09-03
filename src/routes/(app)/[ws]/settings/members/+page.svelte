@@ -18,8 +18,9 @@ import {
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
-import { billingRefusalToast } from '$lib/api/billing-refusal'
+import { planLimitToast } from '$lib/api/billing-refusal'
 import { getApi } from '$lib/api/client'
+import { toastMutationError } from '$lib/api/mutation-errors'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
 import { formatDate } from '$lib/format'
@@ -46,8 +47,9 @@ const canInvite = $derived(session.can('core.members.invite'))
  * Inviting is where a workspace runs out of seats, so it is where the plan has to be explainable.
  *
  * `billing.seats.limit_reached` used to arrive here as the server's own English sentence in a bare
- * toast, with no way forward from it — see `$lib/api/billing-refusal.ts`. The same call carries the
- * suspension gate, which refuses every write in a lapsed workspace and so can land on this one too.
+ * toast, with no way forward from it — see `$lib/api/billing-refusal.ts`. Wired by hand because a
+ * seat ceiling belongs to the screen that reached it; the suspension gate, which refuses every
+ * write in a lapsed workspace, is handled globally instead and needs nothing here.
  */
 const plan = $derived({ workspaceSlug: slug, canSeePlans: session.can('billing.subscription.view') })
 
@@ -120,7 +122,7 @@ const update = createMutation(() => ({
     toast.success(vars.done)
     void queryClient.invalidateQueries({ queryKey: ['core'] })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 const remove = createMutation(() => ({
@@ -131,7 +133,7 @@ const remove = createMutation(() => ({
     removing = null
     void queryClient.invalidateQueries({ queryKey: ['core'] })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 const leave = createMutation(() => ({
@@ -140,7 +142,7 @@ const leave = createMutation(() => ({
     toast.success(m.members_left({ workspace: workspace?.name ?? '' }))
     void goto('/')
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 const invite = createMutation(() => ({
@@ -168,8 +170,8 @@ const invite = createMutation(() => ({
     void queryClient.invalidateQueries({ queryKey: keys.invitations(workspaceId) })
   },
   onError: (err) => {
-    if (billingRefusalToast(err, plan)) return
-    toast.error(err instanceof Error ? err.message : m.error_generic())
+    if (planLimitToast(err, plan)) return
+    toastMutationError(err)
   },
 }))
 
@@ -193,8 +195,8 @@ const resend = createMutation(() => ({
     void queryClient.invalidateQueries({ queryKey: keys.invitations(workspaceId) })
   },
   onError: (err) => {
-    if (billingRefusalToast(err, plan)) return
-    toast.error(err instanceof Error ? err.message : m.error_generic())
+    if (planLimitToast(err, plan)) return
+    toastMutationError(err)
   },
 }))
 

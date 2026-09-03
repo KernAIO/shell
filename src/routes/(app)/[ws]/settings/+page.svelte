@@ -4,6 +4,7 @@ import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-qu
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
+import { toastMutationError } from '$lib/api/mutation-errors'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsRow from '$lib/components/settings/SettingsRow.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
@@ -62,7 +63,7 @@ const save = createMutation(() => ({
     toast.success(m.ws_updated())
     void queryClient.invalidateQueries({ queryKey: ['core'] })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 const archive = createMutation(() => ({

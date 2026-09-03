@@ -1,8 +1,9 @@
 <script lang="ts">
 import type { WidgetProps } from '@kernhq/ui'
-import { Icon, toast } from '@kernhq/ui'
+import { Icon } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { getApi } from '$lib/api/client'
+import { toastMutationError } from '$lib/api/mutation-errors'
 import WidgetState from '$lib/dashboard/WidgetState.svelte'
 import { relativeTime } from '$lib/format'
 import { keys } from '$lib/query'
@@ -36,13 +37,13 @@ const invalidate = () => {
 const markRead = createMutation(() => ({
   mutationFn: (id: string) => api.notifications.markRead({ ids: [id] }),
   onSuccess: invalidate,
-  onError: (e: unknown) => toast.error(e instanceof Error ? e.message : m.error_generic()),
+  onError: (e: unknown) => toastMutationError(e),
 }))
 
 const archive = createMutation(() => ({
   mutationFn: (id: string) => api.notifications.archive({ id }),
   onSuccess: invalidate,
-  onError: (e: unknown) => toast.error(e instanceof Error ? e.message : m.error_generic()),
+  onError: (e: unknown) => toastMutationError(e),
 }))
 
 const items = $derived(query.data?.items ?? [])

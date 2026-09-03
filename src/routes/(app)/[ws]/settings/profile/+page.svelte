@@ -2,6 +2,7 @@
 import { Avatar, Button, Input, Select, toast } from '@kernhq/ui'
 import { createMutation, useQueryClient } from '@tanstack/svelte-query'
 import { getApi } from '$lib/api/client'
+import { toastMutationError } from '$lib/api/mutation-errors'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsRow from '$lib/components/settings/SettingsRow.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
@@ -41,7 +42,7 @@ const save = createMutation(() => ({
     toast.success(m.profile_updated())
     void queryClient.invalidateQueries({ queryKey: ['core', 'me'] })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 // the browser knows every zone it supports; only the city names are ours to translate

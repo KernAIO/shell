@@ -4,6 +4,7 @@ import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-qu
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
+import { toastMutationError } from '$lib/api/mutation-errors'
 import { DEFAULT_PRESET_ID, PRESETS } from '$lib/dashboard/presets'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
@@ -36,7 +37,7 @@ const save = createMutation(() => ({
     toast.success(m.dash_policy_saved())
     void client.invalidateQueries({ queryKey: ['core', 'dashboard'] })
   },
-  onError: (e: unknown) => toast.error(e instanceof Error ? e.message : m.error_generic()),
+  onError: (e: unknown) => toastMutationError(e),
 }))
 
 const policy = $derived(query.data?.policy ?? 'default')

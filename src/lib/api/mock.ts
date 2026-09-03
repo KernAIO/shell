@@ -8,9 +8,95 @@
  */
 
 import { type CapabilityDef, resolveCapabilities } from '@kernhq/contracts'
-import { hrCapabilities } from '@kernhq/module-hr/contract'
-import { inventoryCapabilities } from '@kernhq/module-inventory/contract'
+import { hrCapabilities, hrEvents, hrPermissions } from '@kernhq/module-hr/contract'
+import {
+  inventoryCapabilities,
+  inventoryEvents,
+  inventoryPermissions,
+} from '@kernhq/module-inventory/contract'
 import { mockObjectUrl } from '$lib/files/mock-storage'
+
+/**
+ * Two switches the mock reads from `localStorage`, so a test can put the app in a state the seed
+ * data cannot express. Both are off unless something sets them, and with both off nothing here
+ * changes any answer at all.
+ *
+ * They exist because the interesting branches are otherwise unreachable in `dev:mock`. The demo
+ * workspace is healthy and its signed-in user is an owner *and* an instance admin, so the screens
+ * for a lapsed subscription and for somebody without a permission had no way to be rendered —
+ * which is exactly how a branch stays broken while looking finished.
+ */
+const MOCK_SUSPENDED = 'kern.mock.suspended'
+const MOCK_ROLE = 'kern.mock.role'
+
+function mockFlag(key: string): string | null {
+  // Read per call rather than once: a test sets these before the app loads, and reading them live
+  // means no ordering to get wrong. Wrapped because a browser set to block site data throws here.
+  if (typeof localStorage === 'undefined') return null
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+/** Whether the mock is pretending the workspace's subscription has lapsed. */
+const mockSuspended = () => mockFlag(MOCK_SUSPENDED) === '1'
+
+/**
+ * Who the mock is signed in as. `owner` unless a test asks otherwise.
+ *
+ * `session.can()` returns true for an owner and for an instance admin *before* it consults the
+ * permission set, so a member is only really a member when both are given up — see this repo's
+ * CLAUDE.md.
+ */
+const mockIsOwner = () => mockFlag(MOCK_ROLE) !== 'member'
+
+/**
+ * The refusal `Entitlements.requireActive` raises, copied exactly.
+ *
+ * Same code, same reason and same `data` shape as the kernel's, because a mock that refuses in a
+ * shape the client does not recognise tests the client against a fiction.
+ */
+function suspendedError() {
+  return Object.assign(new Error('This workspace is suspended because its subscription is not current'), {
+    code: 'CONFLICT',
+    data: { reason: 'billing.subscription.inactive', plan: 'Team' },
+  })
+}
+
+/**
+ * Names that change something. The kernel decides by the contract's declared HTTP method, which the
+ * mock has no access to, so this approximates it by verb — good enough to put the app in a
+ * believably suspended state, and inert unless the flag is on.
+ */
+const WRITES =
+  /^(create|update|delete|remove|archive|unarchive|add|set|rename|invite|revoke|resend|leave|reset|save|enable|disable|move|reorder|mark|send|upload|restore|publish|unpublish|join|accept|decline|approve|reject|assign|unassign|toggle|complete|duplicate|rotate|regenerate|clear)/
+
+/**
+ * Wrap a mock API so that every write is refused while the workspace is marked suspended.
+ *
+ * This is what lets the end-to-end suite exercise the global suspension handler from any screen
+ * rather than from the two that wire a plan limit by hand. With the flag off every call passes
+ * straight through, so the wrapper cannot affect any other test.
+ */
+export function suspendable<T>(api: T): T {
+  const walk = (node: unknown, name: string): unknown => {
+    if (typeof node === 'function') {
+      if (!WRITES.test(name)) return node
+      const call = node as (...a: unknown[]) => unknown
+      return (...args: unknown[]) => {
+        if (mockSuspended()) throw suspendedError()
+        return call(...args)
+      }
+    }
+    if (node && typeof node === 'object' && !Array.isArray(node)) {
+      return Object.fromEntries(Object.entries(node).map(([k, v]) => [k, walk(v, k)]))
+    }
+    return node
+  }
+  return walk(api, '') as T
+}
 
 /**
  * Capabilities each module declares, mirroring what its server half declares.
@@ -355,8 +441,8 @@ export const moduleManifests = [
     icon: 'users',
     core: false,
     dependsOn: ['core'],
-    permissionCount: 29,
-    eventCount: 13,
+    permissionCount: hrPermissions.length,
+    eventCount: Object.keys(hrEvents).length,
     objectTypeCount: 2,
     hasSettings: true,
   },
@@ -421,11 +507,11 @@ export const moduleManifests = [
     icon: 'briefcase',
     core: false,
     dependsOn: ['core'],
-    // Five permissions, seven events and the `asset` object type — held to the module's own
-    // declarations by `mock-manifests.test.ts`, because these were written when it had two of each
-    // and Settings → Modules went on reporting that number for three phases of work.
-    permissionCount: 5,
-    eventCount: 7,
+    // Read off the contract rather than typed: these were written when the module had two of each
+    // and Settings → Modules went on reporting that number for three phases of work, then broke
+    // `main` the day the reach moved the module and the literal did not.
+    permissionCount: inventoryPermissions.length,
+    eventCount: Object.keys(inventoryEvents).length,
     objectTypeCount: 1,
     hasSettings: true,
   },
@@ -781,7 +867,9 @@ export function createMockApi() {
 
     users: {
       me: async () => ({
-        user: clone(user),
+        // `instanceAdmin` short-circuits every `session.can()`, so the mock member has to give it up
+        // as well as the owner role — otherwise "member" is a label with no consequences.
+        user: { ...clone(user), instanceAdmin: mockIsOwner() },
         workspaces: state.workspaces.map(summary),
         permissionVersion: 1,
       }),
@@ -816,7 +904,14 @@ export function createMockApi() {
         ...clone(wsById(workspaceId) ?? workspaces[0]!),
         archivedAt: new Date().toISOString(),
       }),
-      myPermissions: async () => ({ role: 'owner', permissions: CORE_PERMISSIONS, version: 1 }),
+      myPermissions: async () =>
+        mockIsOwner()
+          ? { role: 'owner', permissions: CORE_PERMISSIONS, version: 1 }
+          : {
+              role: 'member',
+              permissions: CORE_PERMISSIONS.filter((p) => p !== 'billing.subscription.view'),
+              version: 1,
+            },
 
       members: {
         list: async ({ workspaceId }: { workspaceId: string }) => ({

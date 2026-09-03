@@ -4,36 +4,21 @@ import * as m from '$msg'
 import { planLimitOf, suspensionOf } from './errors'
 
 /**
- * Turn a billing refusal into something a person can act on, instead of the server's English
- * sentence.
+ * What to say when billing refuses something, instead of the server's English sentence.
  *
- * Two refusals arrive here and they are not the same thing:
+ * Two refusals live here and they are told apart deliberately, because they reach a person by
+ * completely different routes:
  *
- * - A **plan limit** (`PLAN_LIMIT_REASONS`) is a ceiling. The workspace works; this one action
- *   needs more room than the plan has.
- * - A **suspension** (`SUSPENDED_REASON`) is the whole workspace held read-only because the
- *   subscription lapsed. It can arrive from any write at all, so the person meeting it has very
- *   likely done nothing unusual and is owed the explanation more than in any other case.
+ * - A **plan limit** is a ceiling, and it belongs to the feature that hit it. Only two actions in
+ *   this app can raise one, so both are wired by hand at the call site, where the surrounding screen
+ *   already explains what was being attempted.
+ * - A **suspension** is the whole workspace held read-only, and `Entitlements.requireActive` gates
+ *   every non-GET workspace-scoped procedure — so it can arrive from any mutation in the product,
+ *   including ones nobody would remember to wire. That one is installed once, globally, by
+ *   `$lib/api/mutation-errors`.
  *
- * Neither is a mistake: nothing was typed wrongly and trying again will not help. Every one of them
- * used to arrive as a bare toast reading "This workspace is suspended because its subscription is
- * not current" — the server's own words, in English whatever the reader's language, with nowhere to
- * go from there.
- *
- * Returns `false` when the failure is neither, so a caller keeps its own error handling:
- *
- * ```ts
- * onError: (err) => {
- *   if (billingRefusalToast(err, plan)) return
- *   toast.error(err instanceof Error ? err.message : m.error_generic())
- * }
- * ```
- *
- * The action is offered only to somebody who may actually open the page. Without that check the
- * toast sends a member who cannot see billing to a route the module router answers with 404 — worse
- * than no button, because it looks like the product is broken rather than like the plan is the
- * limit. They are told to ask an owner instead, which is the one thing they can actually do; both
- * still get the translated sentence, which is the half that was missing.
+ * Neither is a mistake: nothing was typed wrongly and trying again will not help, so the only useful
+ * next step is the plan.
  */
 export interface PlanContext {
   /** The workspace whose plan was the limit — its slug, because that is what the URL carries. */
@@ -46,22 +31,33 @@ export interface PlanContext {
 // acknowledgement, and an action is useless if it has gone before it is reached.
 const READING_TIME = 10_000
 
-export function billingRefusalToast(err: unknown, ctx: PlanContext): boolean {
-  return suspendedToast(err, ctx) || planLimitToast(err, ctx)
-}
+/**
+ * One id for every suspension toast, which is what makes a suspended workspace say this once.
+ *
+ * The store replaces a toast carrying an id it already holds rather than stacking a second one, so
+ * a single click that fires two mutations — both refused, because *every* write is refused — leaves
+ * one message on screen instead of a pile that has to be dismissed one at a time.
+ */
+const SUSPENDED_TOAST = 'billing-suspended'
 
 /**
  * The workspace is suspended, so nothing can be changed until the subscription is current.
  *
  * Says what still works, because that is the part that stops this reading as an outage: the kernel
  * gates writes only, so everything the customer has is still theirs to read and to export. ADR 0003
- * §6 promises exactly that, and a person who cannot tell the difference between "suspended" and
- * "broken" has no reason to believe the promise.
+ * §6 promises exactly that, and a person who cannot tell "suspended" from "broken" has no reason to
+ * believe the promise.
+ *
+ * The action is offered only to somebody who may actually open the page. Without that check the
+ * toast sends a member who cannot see billing to a route the module router answers with 404 — worse
+ * than no button, because it looks like the product is broken rather than like the plan is the
+ * limit. They are told to ask an owner instead, which is the one thing they can actually do.
  */
-function suspendedToast(err: unknown, ctx: PlanContext): boolean {
+export function suspensionToast(err: unknown, ctx: PlanContext): boolean {
   if (!suspensionOf(err)) return false
 
   toast.error(m.billing_suspended(), {
+    id: SUSPENDED_TOAST,
     description: ctx.canSeePlans ? m.billing_suspended_hint() : m.billing_suspended_hint_member(),
     duration: READING_TIME,
     action: ctx.canSeePlans
@@ -71,7 +67,23 @@ function suspendedToast(err: unknown, ctx: PlanContext): boolean {
   return true
 }
 
-function planLimitToast(err: unknown, ctx: PlanContext): boolean {
+/**
+ * A plan limit, named and with the plans one click away.
+ *
+ * Returns `false` when the failure is not one, so a caller keeps its own error handling:
+ *
+ * ```ts
+ * onError: (err) => {
+ *   if (planLimitToast(err, plan)) return
+ *   toastMutationError(err)
+ * }
+ * ```
+ *
+ * Deliberately not installed globally the way suspension is. A ceiling is only ever reached by the
+ * one action that reached it, and a toast that arrives with no idea what was being attempted is
+ * worse than the screen that knows.
+ */
+export function planLimitToast(err: unknown, ctx: PlanContext): boolean {
   const limit = planLimitOf(err)
   if (!limit) return false
 

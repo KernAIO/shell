@@ -2,6 +2,7 @@
 import { Button, Checkbox, Select, Skeleton, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { getApi } from '$lib/api/client'
+import { toastMutationError } from '$lib/api/mutation-errors'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsRow from '$lib/components/settings/SettingsRow.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
@@ -63,7 +64,7 @@ const save = createMutation(() => ({
     digest = null
     void queryClient.invalidateQueries({ queryKey: keys.notificationSettings() })
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 // the push state lives in the browser, not the API, so read it when the page opens

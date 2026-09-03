@@ -6,6 +6,7 @@ import '../app.css'
 import { browser } from '$app/environment'
 import { env } from '$env/dynamic/public'
 import { getApi, isMock } from '$lib/api/client'
+import { installSuspensionToast } from '$lib/api/mutation-errors'
 import { putMockObject } from '$lib/files/mock-storage'
 import { loadTimezoneCities } from '$lib/i18n/timezones.svelte'
 import { getLocale } from '$lib/paraglide/runtime'
@@ -14,6 +15,12 @@ import { theme } from '$lib/state/theme.svelte'
 
 let { children } = $props()
 const queryClient = createQueryClient()
+
+/**
+ * A suspended workspace refuses every write, from anywhere, so the explanation is installed once
+ * here rather than repeated at each mutation — see `$lib/api/mutation-errors`.
+ */
+installSuspensionToast(queryClient)
 
 /**
  * Hand the framework the few things only the application can build, before anything renders.

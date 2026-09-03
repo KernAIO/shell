@@ -2,6 +2,7 @@
 import { Badge, Button, EmptyState, Icon, Input, SegmentedControl, Select, Skeleton, toast } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { getApi } from '$lib/api/client'
+import { toastMutationError } from '$lib/api/mutation-errors'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsRow from '$lib/components/settings/SettingsRow.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
@@ -42,7 +43,7 @@ const check = createMutation(() => ({
         : m.admin_updates_current(),
     )
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 type Policy = NonNullable<typeof status.data>['policy']
@@ -53,7 +54,7 @@ const setPolicy = createMutation(() => ({
     queryClient.setQueryData(keys.adminUpdates(), next)
     toast.success(m.admin_updates_policy_saved())
   },
-  onError: (err) => toast.error(err instanceof Error ? err.message : m.error_generic()),
+  onError: (err) => toastMutationError(err),
 }))
 
 const modes = $derived([

@@ -6,6 +6,7 @@ import { untrack } from 'svelte'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
+import { toastMutationError } from '$lib/api/mutation-errors'
 import NotificationBell from '$lib/components/NotificationBell.svelte'
 import Dashboard, { type BoardItem } from '$lib/dashboard/Dashboard.svelte'
 import { compact, SIZE_SPAN } from '$lib/dashboard/grid'
@@ -171,7 +172,7 @@ const save = createMutation(() => ({
     void client.invalidateQueries({ queryKey: ['core', 'dashboard'] })
     void goto(`/${slug}`)
   },
-  onError: (e: unknown) => toast.error(e instanceof Error ? e.message : m.error_generic()),
+  onError: (e: unknown) => toastMutationError(e),
 }))
 
 const reset = createMutation(() => ({
@@ -182,7 +183,7 @@ const reset = createMutation(() => ({
     resetOpen = false
     void client.invalidateQueries({ queryKey: ['core', 'dashboard'] })
   },
-  onError: (e: unknown) => toast.error(e instanceof Error ? e.message : m.error_generic()),
+  onError: (e: unknown) => toastMutationError(e),
 }))
 
 // ------------------------------------------------------------------ editing
