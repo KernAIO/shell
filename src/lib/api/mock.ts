@@ -836,6 +836,11 @@ export function createMockApi() {
     approvals: true,
     attendance: true,
     overtime: true,
+    // The three that arrived with hr 0.22–0.23. Off, their settings pages answer the 404 a
+    // disabled capability answers, which the UX sweep reads as the page throwing.
+    rosters: true,
+    checklists: true,
+    payroll_export: true,
   })
 
   const summary = (w: (typeof workspaces)[number]) => {
