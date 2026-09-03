@@ -91,6 +91,7 @@ const ROUTES: { path: string; name: string }[] = [
   { path: `/${WS}/settings/hr/general`, name: 'settings hr general' },
   { path: `/${WS}/settings/hr/capabilities`, name: 'settings hr capabilities' },
   { path: `/${WS}/settings/hr/offices`, name: 'settings hr offices' },
+  { path: `/${WS}/settings/hr/entities`, name: 'settings hr entities' },
   { path: `/${WS}/settings/hr/calendars`, name: 'settings hr calendars' },
   { path: `/${WS}/settings/hr/leave`, name: 'settings hr leave' },
   { path: `/${WS}/settings/hr/schedules`, name: 'settings hr schedules' },
