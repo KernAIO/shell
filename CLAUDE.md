@@ -184,6 +184,11 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   either has a working page and no way to reach it, in exactly the environment used for demos.
 - Every user-facing string goes through Paraglide (`messages/*.json`), and the layout must survive
   `dir="rtl"` — use logical properties, never `left`/`right`.
+- **The module clients are not in Tailwind's automatic sources, because they live in
+  `node_modules`.** `src/app.css` names them with `@source` since 2026-09-04; before that a
+  utility a module used that no file under `src/` also used was never generated, and the
+  module's screen silently lost it (`p-5`, `content-between`, `grid-cols-2` on the billing page).
+  A class that "does nothing" in a module screen: check `getComputedStyle` before the markup.
 - **The module clients ship Svelte source, so they must be in `optimizeDeps.exclude`.**
   `@kernhq/module-*`'s `./client` export points at `src/client/index.ts`. Vite's pre-bundler hands
   `store.svelte.ts` to Svelte's *module* compiler, which does not strip TypeScript, and the whole

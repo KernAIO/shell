@@ -1,4 +1,12 @@
 @import "tailwindcss";
+/*
+ * The module clients ship as source and are rendered by this app, but Tailwind's automatic
+ * source detection skips node_modules — so a utility a module used that nothing in this
+ * repository happened to use as well (`p-5`, `content-between`) was never generated, and the
+ * module's screen silently lost it. Found on 2026-09-04 when a billing card's inner padding
+ * computed to 0px. In CI the packages come from the registry; `./client` is source there too.
+ */
+@source "../node_modules/@kernhq/module-*/src/client";
 @import "@kernhq/ui/styles/index.css";
 @import "@kernhq/ui/styles/theme.css";
 @import "@kernhq/ui/styles/prose.css";
