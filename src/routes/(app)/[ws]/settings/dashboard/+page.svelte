@@ -114,8 +114,7 @@ const presetUnused = $derived(policy === 'default' && hasWorkspaceLayout)
   <Card>
     <div class="edit">
       <p>{m.dash_editing_workspace()}</p>
-      <Button variant="secondary" onclick={() => goto(`/${slug}?edit=workspace`)}>
-        <Icon name="layout-grid" size={15} />
+      <Button variant="secondary" icon="layout-grid" onclick={() => goto(`/${slug}?edit=workspace`)}>
         {m.dash_edit_workspace_layout()}
       </Button>
     </div>

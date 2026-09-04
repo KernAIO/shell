@@ -1,8 +1,11 @@
 <script lang="ts">
 import { Badge, Button, Icon } from '@kernhq/ui'
+import { createQuery } from '@tanstack/svelte-query'
 import { page } from '$app/state'
+import { getApi } from '$lib/api/client'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
+import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
 
@@ -11,6 +14,22 @@ import * as m from '$msg'
  * list reflects which modules are switched on rather than a fixed catalogue.
  */
 const slug = $derived(page.params.ws!)
+const workspaceId = $derived(session.workspaces.find((w) => w.slug === slug)?.id ?? '')
+const api = getApi()
+
+/**
+ * Which modules are on. Email delivery is the mail module's own settings page, and this list said
+ * "Coming soon" beside it long after that page existed — the entry never asked whether the module
+ * was enabled, so the one integration that was built read as the one that was not.
+ */
+const modulesQuery = createQuery(() => ({
+  queryKey: keys.modules(workspaceId),
+  queryFn: () => api.workspaces.modules.list({ workspaceId }),
+  enabled: workspaceId !== '',
+}))
+const enabled = $derived(
+  new Set((modulesQuery.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
+)
 
 interface Integration {
   id: string
@@ -21,13 +40,14 @@ interface Integration {
   module?: string
 }
 
-const integrations: Integration[] = [
+const integrations: Integration[] = $derived([
   {
     id: 'mail',
     name: m.integrations_mail(),
     description: m.integrations_mail_desc(),
     icon: 'mail',
     module: 'mail',
+    ...(enabled.has('mail') ? { href: `/${slug}/settings/mail` } : {}),
   },
   {
     id: 'webhooks',
@@ -41,7 +61,7 @@ const integrations: Integration[] = [
     description: m.integrations_api_desc(),
     icon: 'key-round',
   },
-]
+])
 </script>
 
 

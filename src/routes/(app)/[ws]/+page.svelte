@@ -267,8 +267,7 @@ const greeting = $derived.by(() => {
           <NotificationBell workspaceId={workspace.id} workspaceSlug={slug} />
         {/if}
         {#if canCustomise}
-          <Button variant="ghost" onclick={() => goto(`/${slug}?edit=1`)}>
-            <Icon name="sliders-vertical" size={15} />
+          <Button variant="ghost" icon="sliders-vertical" onclick={() => goto(`/${slug}?edit=1`)}>
             {m.dash_customise()}
           </Button>
         {/if}
