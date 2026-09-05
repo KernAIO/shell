@@ -26,7 +26,6 @@ const workspace = createQuery(() => ({
 let name = $state('')
 let description = $state('')
 let defaultRole = $state('member')
-let autoJoinDomains = $state('')
 let loaded = $state(false)
 let archiveOpen = $state(false)
 
@@ -37,23 +36,26 @@ $effect(() => {
     name = w.name
     description = w.description ?? ''
     defaultRole = w.defaultRole
-    autoJoinDomains = (w.autoJoinDomains ?? []).join(', ')
     loaded = true
   }
 })
 
+/*
+ * There is no auto-join field here, and that is deliberate.
+ *
+ * `workspaces.autoJoinDomains` is on the contract and core stores it, but nothing in core ever
+ * reads it: no sign-up hook, no subscription to `core.user.created`, nothing. So the field saved,
+ * read back, and quietly did nothing — an administrator typed their company domain, watched it
+ * persist, and stopped inviting people. A control that lies is worse than an absent one. Bringing
+ * it back means implementing the join in core first; the field is the last step, not the first.
+ */
 const patch = $derived.by(() => {
   const w = workspace.data
   if (!w) return null
-  const domains = autoJoinDomains
-    .split(',')
-    .map((d) => d.trim().toLowerCase())
-    .filter(Boolean)
   const changed: Record<string, unknown> = {}
   if (name !== w.name) changed.name = name
   if (description !== (w.description ?? '')) changed.description = description
   if (defaultRole !== w.defaultRole) changed.defaultRole = defaultRole
-  if (domains.join(',') !== (w.autoJoinDomains ?? []).join(',')) changed.autoJoinDomains = domains
   return Object.keys(changed).length ? changed : null
 })
 
@@ -81,7 +83,6 @@ function reset() {
   name = w.name
   description = w.description ?? ''
   defaultRole = w.defaultRole
-  autoJoinDomains = (w.autoJoinDomains ?? []).join(', ')
 }
 
 const roleOptions = [
@@ -130,10 +131,6 @@ const roleOptions = [
     <SettingsSection title={m.ws_joining()} description={m.ws_joining_hint()}>
       <SettingsRow label={m.ws_default_role()} hint={m.ws_default_role_hint()} for="ws-role" first>
         <Select id="ws-role" bind:value={defaultRole} options={roleOptions} width="180px" />
-      </SettingsRow>
-
-      <SettingsRow label={m.ws_auto_join()} hint={m.ws_auto_join_hint()} for="ws-domains" wide>
-        <Input id="ws-domains" bind:value={autoJoinDomains} placeholder="example.com, team.example.com" />
       </SettingsRow>
 
       {#snippet footer()}

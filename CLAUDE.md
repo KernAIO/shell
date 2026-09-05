@@ -486,6 +486,12 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   are also editing, for no change anybody asked for. Insert into the order that is there. And read
   the file's *keys* rather than its diff when checking whose work is in it: a re-sorted file shows
   another session's untouched keys as additions.
+- **A field on the contract is not a feature, and a saved value proves nothing.** "Auto-join
+  domains" persisted and read back perfectly for as long as it existed, and nothing in core has ever
+  read `workspaces.autoJoinDomains` — no sign-up hook, no `core.user.created` subscriber. So an
+  administrator typed their company domain, watched it stick, and stopped inviting people. Before
+  binding an input to a contract field, grep the service for something that *reads* it; a round-trip
+  through the API is the test everyone applies and it passes for a field nobody consumes.
 - **The QR encoder is `$lib/qr.ts`, and it is verified rather than eyeballed.** Byte mode, level M,
   versions 1–14; `qr.test.ts` compares whole matrices against a reference encoder with the mask
   pinned, because *which* mask an encoder picks is a heuristic implementations disagree about
