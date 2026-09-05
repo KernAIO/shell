@@ -3,6 +3,7 @@ import { Button, Field, Input, Separator } from '@kernhq/ui'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { auth, authDisabled, landingFor, socialProviders } from '$lib/auth/client'
+import { twoFactorPending } from '$lib/auth/two-factor'
 import AuthAlert from '$lib/components/auth/AuthAlert.svelte'
 import PasswordField from '$lib/components/auth/PasswordField.svelte'
 import ProviderButton from '$lib/components/auth/ProviderButton.svelte'
@@ -32,10 +33,10 @@ async function signIn(e: SubmitEvent) {
   error = null
   const res = await auth.signIn.email({ email, password })
   busy = null
+  // a pending second factor is a success as far as the password goes, so it is answered before the
+  // error branch rather than inside it — see `twoFactorPending`
+  if (twoFactorPending(res)) return void goto(`/two-factor?next=${encodeURIComponent(next)}`)
   if (res.error) {
-    // a second factor is not a failure: continue the flow instead of showing an error
-    if ((res.data as { twoFactorRedirect?: boolean } | null)?.twoFactorRedirect)
-      return void goto(`/two-factor?next=${encodeURIComponent(next)}`)
     error = res.error.message ?? m.auth_invalid_credentials()
     return
   }

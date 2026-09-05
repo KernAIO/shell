@@ -39,6 +39,7 @@ side. A glossary row is what stops the second word being invented.
 | leave | مرخصی | إجازة | Abwesenheit | İzin | time off |
 | office | دفتر | مكتب | Standort | Ofis | a place of work |
 | attendance | حضور | حضور | Anwesenheit | Devam | clock in/out |
+| recovery code | کد بازیابی | رمز استرداد | Wiederherstellungscode | Kurtarma kodu | the one-shot code that gets you past 2FA without your authenticator — never "backup code", which is what `admin_updates_backup_note` means by backup |
 
 ## Spelling and orthography
 

@@ -468,3 +468,28 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   landed it where the page never looks, `kern_locale` was never read, and the two Persian renderings
   swept an English left-to-right page while reporting that RTL was clean. It takes `baseURL` now.
   Any test that sets a cookie by URL has this.
+- **A pending second factor is a 200, not a refusal.** Better Auth answers a *correct* password on a
+  2FA account with `{ twoFactorRedirect: true }`, no session cookie and `error: null` — the password
+  succeeded, the session has not started. `sign-in/+page.svelte` read that flag inside `if
+  (res.error)`, so it was never read: every 2FA account signed in as far as a blank page, on an
+  enrolment flow that did not exist either. The predicate is `twoFactorPending` in
+  `$lib/auth/two-factor` with a test, because a branch that is never taken never fails.
+- **`enable` does not turn 2FA on; the first verified code does.** `auth.twoFactor.enable` writes the
+  secret with `verified: false` and leaves `user.twoFactorEnabled` alone (unless the server sets
+  `skipVerificationOnEnable`, and core does not), so an enrolment dialog that stops after showing the
+  QR leaves the account exactly as it was while looking finished. `verifyTotp` is the write. The
+  recovery codes come back from `enable`, before any of that — hold them and show them after the
+  code, or you have handed somebody codes for a factor they never turned on.
+- **`messages/*.json` is not stored in sorted order, so do not let a script sort it.**
+  `api_keys_expiry_days` sits above `api_keys_create` in every locale. A `json.dumps(sorted(...))`
+  round-trip therefore rewrote about 250 lines per file for 20 new keys — five files other sessions
+  are also editing, for no change anybody asked for. Insert into the order that is there. And read
+  the file's *keys* rather than its diff when checking whose work is in it: a re-sorted file shows
+  another session's untouched keys as additions.
+- **The QR encoder is `$lib/qr.ts`, and it is verified rather than eyeballed.** Byte mode, level M,
+  versions 1–14; `qr.test.ts` compares whole matrices against a reference encoder with the mask
+  pinned, because *which* mask an encoder picks is a heuristic implementations disagree about
+  (`qrcode` for Python scores the penalty with the format bits blanked, ISO/IEC 18004 scores the
+  finished symbol) while everything else in the matrix is fixed by the standard. Segno is not usable
+  as a reference here: it appends a whole zero byte whenever the bit stream is already byte-aligned
+  after the terminator, which in byte mode is always.
