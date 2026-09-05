@@ -4,6 +4,7 @@
   "account_close_confirm_body": "Dein Konto wird sofort gesperrt und du wirst überall abgemeldet. In {days} Tagen wird alles gelöscht. Meldest du dich vorher wieder an, wird das abgebrochen.",
   "account_close_confirm_prompt": "Gib zur Bestätigung deine E-Mail-Adresse ein",
   "account_close_hint": "Du wirst sofort überall abgemeldet. Deine Daten werden {days} Tage später gelöscht; meldest du dich vorher an, wird es abgebrochen.",
+  "account_close_last_admin": "Du bist die einzige Administratorin dieser Instanz. Mach zuerst jemand anderen zur Instanz-Administratorin, sonst käme niemand mehr hinein.",
   "account_close_sole_owner": "Du bist die einzige Inhaberin eines Workspace, in dem noch andere Menschen arbeiten. Mach jemand anderen zur Inhaberin oder lösche den Workspace, und schließe dann dein Konto.",
   "account_close_title": "Konto schließen",
   "account_closed_body": "Dein Konto ist geschlossen und du bist überall abgemeldet. Am {date} wird alles gelöscht.",

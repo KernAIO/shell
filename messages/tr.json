@@ -4,6 +4,7 @@
   "account_close_confirm_body": "Hesabınız hemen askıya alınır ve her yerde oturumunuz kapatılır. {days} gün sonra her şey silinir. O zamana kadar yeniden giriş yapmanız bunu iptal eder.",
   "account_close_confirm_prompt": "Onaylamak için e-posta adresinizi yazın",
   "account_close_hint": "Her yerde oturumunuz hemen kapatılır. Verileriniz {days} gün sonra silinir; öncesinde giriş yapmanız işlemi iptal eder.",
+  "account_close_last_admin": "Bu kurulumun tek yöneticisisiniz. Önce başka birini kurulum yöneticisi yapın, yoksa geri girmenin yolu kalmaz.",
   "account_close_sole_owner": "Başka kişilerin de bulunduğu bir çalışma alanının tek sahibisiniz. Başka birini sahip yapın ya da çalışma alanını silin, sonra hesabınızı kapatın.",
   "account_close_title": "Hesabınızı kapatın",
   "account_closed_body": "Hesabınız kapatıldı ve her yerde oturumunuz sonlandırıldı. Her şey {date} tarihinde silinecek.",

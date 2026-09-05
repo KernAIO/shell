@@ -33,13 +33,21 @@ import * as m from '$msg'
  * app can be shown afterwards — any further call is a 401 that bounces to sign-in — so the flow
  * ends on a card that says what happened and when the data goes, and the person leaves from there.
  *
- * **The undo is built against the contract, and the contract is being repaired as this ships.**
- * `DELETE /api/core/account/deletion` needs an authenticated principal, and a closed account is
- * suspended — which `principal.ts` resolves as anonymous — so today the only person entitled to
- * undo it is answered 401. Core is fixing that. This screen is the client half and is correct
- * either way: it reads `GET /account/deletion`, and when a scheduled closure comes back it offers
- * the cancel. The day a suspended-pending-deletion account can sign in, the undo is reachable with
- * no change here. Until then the section simply never renders, because the person cannot get here.
+ * **The undo is reachable, and it was not when this screen was written.**
+ * `DELETE /api/core/account/deletion` went through the ordinary authenticated path, and a closed
+ * account is `suspended` — which `principal.ts` answers `ANONYMOUS` for on every credential path
+ * there is — so it returned 401 to the only person entitled to call it, for the whole of the grace
+ * period. Core's `db7c6e3` narrowed that door rather than widening it: a closed account's own
+ * Better Auth session is admitted (Better Auth knows nothing of `users.status`, so signing in again
+ * still works) and no machine credential is. So the flow this screen describes — close, sign in
+ * again before the date, press *Keep my account* — works end to end.
+ *
+ * **A closure can also be refused, which is why the dialogue has an error line rather than a toast.**
+ * Two reasons come back and each gets its own sentence: `core.account.sole_owner` (you are the last
+ * owner of a workspace other people are still in) and `core.account.last_instance_admin` (you are
+ * the last administrator of the instance — closing would leave `KERN_ADMIN_EMAIL` at boot, or SQL,
+ * as the only way back in). Both are facts about what has to happen first, not failures, so they
+ * belong beside the control rather than in a toast that disappears.
  */
 const queryClient = useQueryClient()
 
@@ -71,16 +79,19 @@ const close = createMutation(() => ({
   },
   onError: (err) => {
     /*
-     * The one refusal that is a fact about the workspaces rather than a failure. Core will not
-     * close an account that is the only active owner of a workspace somebody else is still in —
-     * doing so would strand those members with nobody able to administer them.
+     * Two refusals that are facts about what has to happen first rather than failures, and both are
+     * shown in the reader's language rather than as the English sentence core wrote. Branching on
+     * the reason code is the only half of a refusal that can be translated.
      */
+    const reason = reasonOf(err)
     dialogError =
-      reasonOf(err) === 'core.account.sole_owner'
+      reason === 'core.account.sole_owner'
         ? m.account_close_sole_owner()
-        : err instanceof Error
-          ? err.message
-          : m.error_generic()
+        : reason === 'core.account.last_instance_admin'
+          ? m.account_close_last_admin()
+          : err instanceof Error
+            ? err.message
+            : m.error_generic()
   },
   onSettled: () => {
     working = false

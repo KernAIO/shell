@@ -499,3 +499,32 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   finished symbol) while everything else in the matrix is fixed by the standard. Segno is not usable
   as a reference here: it appends a whole zero byte whenever the bit stream is already byte-aligned
   after the terminator, which in byte mode is always.
+- **`app.inject` sends no `Origin`, and Better Auth refuses its state-changing endpoints without
+  one.** Driving core's auth API from a test — the only honest way to prove two-factor works, since
+  `dev:mock` has no auth server — answers `403 {"code":"MISSING_OR_NULL_ORIGIN"}` on
+  `two-factor/enable` and its neighbours. Sign-up passes without the header, so the failure reads as
+  a broken 2FA plugin rather than a missing header, and the response body is the only thing that
+  says otherwise. Send `origin: kernel.env.KERN_BASE_URL` — the value `trustedOrigins()` builds its
+  set from. A browser always sends it, so this is a test artefact and never a product defect; it
+  cost half an hour to learn that by reading rather than by running.
+- **An unscoped `getByText` is how a browser test goes confidently green against the wrong
+  element.** Playwright's strict mode caught three of these in one session on the data-and-privacy
+  screens, and each was a *different* shape of the same mistake: `getByText('Your account')` matched
+  the sidebar's screen-reader heading, the page's `<h1>` and the section's `<h2>`;
+  `getByText('Your account is closed')` matched the heading *and* the paragraph that opens with the
+  same words; `getByText(/data is not in this archive/)` matched the disclosure summary and all
+  three lines inside it. Strict mode turned every one into a failure rather than a silent match on
+  the first, which is the only reason they were found — so scope to the container that owns the
+  thing (`page.getByRole('dialog')`, `page.locator('h1')`) rather than reaching for `.first()`,
+  which passes and proves nothing about *which* element it found.
+- **A mock that keeps state in module memory cannot be swept.** `ux.spec.ts` visits every route with
+  `page.goto`, which is a full reload, and a full reload re-evaluates the module — so a record the
+  mock stored in a `Map` is gone and the screen renders its empty branch. The scheduled-erasure
+  panel on `/settings/data`, which is the whole point of that screen, was unreachable for exactly
+  that reason. Keep anything a screen's most important branch depends on in `localStorage`
+  (`kern.mock.deletions`), which also lets a test seed the branch instead of driving the flow first.
+- **`PHONE_ROUTES` is `ROUTES.slice(0, n)`, so inserting a route above it silently drops the last
+  one.** Adding the two admin routes at index 16 pushed `admin modules` and `admin updates` out of
+  the phone sweep, with nothing failing — the count is the only thing holding them in. The comment
+  in `ux.spec.ts` warns about it and it happened anyway. Grow `n` by however many you insert, and
+  name a route at the end of the list rather than counting to it.

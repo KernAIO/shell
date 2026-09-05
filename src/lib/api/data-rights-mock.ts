@@ -61,6 +61,18 @@ const exportsByWorkspace = new Map<string, MockExport[]>()
  */
 const DELETIONS_KEY = 'kern.mock.deletions'
 
+/** Reason code `accountDeletion.schedule` should refuse with, so both refusals can be rendered. */
+const CLOSE_REFUSAL_KEY = 'kern.mock.close_refusal'
+
+function mockFlag(key: string): string | null {
+  if (typeof localStorage === 'undefined') return null
+  try {
+    return localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
 interface StoredDeletions {
   workspaces: Record<string, DeletionRecord>
   account: DeletionRecord | null
@@ -206,6 +218,22 @@ export const mockDataRights = {
   accountDeletion: {
     pending: async () => readStore().account,
     schedule: async () => {
+      /*
+       * Core refuses a closure for two reasons, and neither is reachable here otherwise: the demo
+       * user is the only instance admin *and* the only owner of the demo workspace, so on a real
+       * instance both refusals would fire and in `dev:mock` neither could. A branch that is never
+       * taken never fails — and these two are the whole reason the dialogue has an error line
+       * rather than a toast.
+       *
+       * `kern.mock.close_refusal` holds the reason code to refuse with, in the same shape core
+       * sends it. Unset, nothing here changes any answer.
+       */
+      const refusal = mockFlag(CLOSE_REFUSAL_KEY)
+      if (refusal)
+        throw Object.assign(new Error('Refused'), {
+          code: 'CONFLICT',
+          data: { reason: refusal },
+        })
       const store = readStore()
       if (store.account) return store.account
       store.account = scheduled('account', 'mock-user')

@@ -55,6 +55,8 @@ const ROUTES: { path: string; name: string }[] = [
     name: 'inventory asset panel',
   },
   { path: `/${WS}/admin`, name: 'admin' },
+  { path: `/${WS}/admin/settings`, name: 'admin settings' },
+  { path: `/${WS}/admin/users`, name: 'admin users' },
   { path: `/${WS}/admin/modules`, name: 'admin modules' },
   { path: `/${WS}/admin/updates`, name: 'admin updates' },
   { path: `/${WS}/admin/billing/plans`, name: 'admin billing plans' },
@@ -316,9 +318,23 @@ test.describe('phone width', () => {
   // about a 390px viewport than most of the list above it.
   // 17 → 20 for the three published-site routes, which belong here more than most: a handbook
   // somebody published is read on a phone by people who have never seen the application.
+  // 20 → 22 for admin settings and admin users, inserted above this line — exactly the silent
+  // narrowing the first sentence warns about: without growing it, `admin modules` and
+  // `admin updates` would have dropped out of the phone sweep and nothing would have said so.
   // The invitation routes are named rather than counted because they sit at the end of the list:
   // an invitation arrives by email, and email is read on a phone.
-  const PHONE_ROUTES = [...ROUTES.slice(0, 20), ...ROUTES.filter((r) => r.path.startsWith('/invite/'))]
+  // The data-and-privacy and account routes are named for the same reason as the invitations: they
+  // sit at the end of the list, and a danger zone is worth checking at a width where the button and
+  // its explanation have to stack rather than sit side by side.
+  const PHONE_ROUTES = [
+    ...ROUTES.slice(0, 22),
+    ...ROUTES.filter(
+      (r) =>
+        r.path.startsWith('/invite/') ||
+        r.path.endsWith('/settings/data') ||
+        r.path.endsWith('/settings/account'),
+    ),
+  ]
   for (const route of PHONE_ROUTES) {
     test(`${route.name} does not scroll sideways`, async ({ page, baseURL }) => {
       await useRendering(page, RENDERINGS[0], baseURL!)

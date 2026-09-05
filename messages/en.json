@@ -4,6 +4,7 @@
   "account_close_confirm_body": "Your account is suspended immediately and you are signed out everywhere. Everything is erased {days} days from now. Until then, signing in again cancels it.",
   "account_close_confirm_prompt": "Type your email address to confirm",
   "account_close_hint": "You are signed out everywhere straight away. Your data is erased {days} days later, and signing in before then calls it off.",
+  "account_close_last_admin": "You are the only administrator of this instance. Make somebody else an instance admin first, or there would be no way back in.",
   "account_close_sole_owner": "You are the only owner of a workspace that other people are still in. Make somebody else an owner, or delete the workspace, and then close your account.",
   "account_close_title": "Close your account",
   "account_closed_body": "Your account is closed and you are signed out everywhere. Everything is erased on {date}.",
