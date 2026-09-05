@@ -481,8 +481,11 @@ const userMenu: MenuItem[] = $derived([
     a connection would be holding it against the wrong workspace. Keying on the id destroys them and
     mounts the new workspace's, which is also what the module's own state expects.
 
-    Signing out is the other half and needs nothing here: it leaves `(app)/[ws]` entirely, so the
-    layout goes and every overlay with it.
+    Signing out needs nothing here either, but not for the reason this comment used to give.
+    `signOut()` sets `window.location.href`, so the document is replaced rather than the route
+    changed: measured with probes recording their teardown into `localStorage`, a client-side
+    departure from this group records `destroy` and a sign-out records none. The overlay is gone
+    either way; a cleanup written as component teardown is not run.
   -->
   {#key workspace.id}
     <ModuleOverlays entries={overlays} workspaceId={workspace.id} workspaceSlug={slug} />

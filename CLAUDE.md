@@ -355,10 +355,19 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   through the switcher (`/northstar/chat → /atlas`) remounts the keyed one and **not** the unkeyed
   one — SvelteKit swaps the params on the layout it already has. So without `{#key workspace.id}`
   an overlay keeps running against the workspace its owner just left, which for anything holding a
-  connection is the wrong workspace rather than a stale render. Sign-out needs nothing: it leaves
-  `(app)/[ws]` and the layout goes with it. Anything else the shell mounts per workspace has the
-  same trap, and a `$derived` that reads `page.params` will not show it — the state inside a child
-  component is what survives.
+  connection is the wrong workspace rather than a stale render. Anything else the shell mounts per
+  workspace has the same trap, and a `$derived` that reads `page.params` will not show it — the
+  state inside a child component is what survives.
+- **Sign-out runs no component teardown, so an overlay's cleanup does not execute there.**
+  `signOut()` in `$lib/auth/client.ts` ends in `window.location.href = '/sign-in'`. Measured with
+  the same two probes recording `onMount`'s return into `localStorage`, which survives a document
+  load: leaving `(app)/[ws]` by a client-side navigation (`/atlas → /workspaces`) records `destroy`
+  for **both** probes, and sign-out records **neither** — the probes are simply absent from the
+  next document. This file said sign-out "leaves `(app)/[ws]` and the layout goes with it" until
+  2026-09-06, and the reproduction contradicts it: nothing leaves anything, the document is
+  replaced. The overlay does stop existing either way, so the guarantee holds; what does not hold
+  is any cleanup written as component teardown — telling a server the person left, stopping a media
+  track, releasing a camera. Do not attach that to `onDestroy` and expect sign-out to run it.
 - **Filter a stored dashboard layout, then compact it.** Dropping the widgets of a module that was
   switched off is right, but dropping them *in place* leaves holes where the cards were and the
   board reads as broken rather than tidy. The stored layout is left untouched, so turning the module
