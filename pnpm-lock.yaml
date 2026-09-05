@@ -4,6 +4,12 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@kernhq/contracts': ^0.8.0
+  '@kernhq/kernel': ^0.10.2
+  '@kernhq/sdk': ^0.1.10
+  '@kernhq/ui': ^0.14.3
+
 importers:
 
   .:
@@ -42,8 +48,8 @@ importers:
         specifier: ^0.12.0
         version: 0.12.0(@kernhq/contracts@0.8.0)(@kernhq/kernel@0.10.2(kysely@0.29.5))(@kernhq/ui@0.14.3(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(fastify@5.12.1)(kysely@0.29.5)(pg@8.23.0)(svelte@5.57.0)
       '@kernhq/sdk':
-        specifier: ^0.1.9
-        version: 0.1.9
+        specifier: ^0.1.10
+        version: 0.1.10
       '@kernhq/ui':
         specifier: ^0.14.3
         version: 0.14.3(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0)
@@ -1109,9 +1115,6 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@kernhq/contracts@0.7.0':
-    resolution: {integrity: sha512-cp+dM+ScKi7hZ7hwsg+t9VpLoX8+oRnSfCydWJa6iQAtvjt+RBmgZNv67X9Du4b0I+AA24FpI6hyb2NTaMcLUw==}
-
   '@kernhq/contracts@0.8.0':
     resolution: {integrity: sha512-UcQE9tYnlrwahW7v3ilUvgJSaiLdrA6CaOfONGhUBqh2s7LStPUa9skeyfbGU6TWJPFhhlOi2nKp30HVpxnATg==}
 
@@ -1122,9 +1125,9 @@ packages:
     resolution: {integrity: sha512-Q3lqbKQBOflS2GUf28gn2Q7+5/hVn1AZ+H9DmybnkdJS8SbS5QrbVsZWt9cFzohaIEPPpeUvi/lvGdkYEAkU2w==}
     engines: {node: '>=24'}
     peerDependencies:
-      '@kernhq/contracts': ^0.7.0
-      '@kernhq/kernel': ^0.9.1
-      '@kernhq/ui': ^0.14.0
+      '@kernhq/contracts': ^0.8.0
+      '@kernhq/kernel': ^0.10.2
+      '@kernhq/ui': ^0.14.3
       '@tanstack/svelte-query': ^6.1.0
       svelte: ^5.46.0
     peerDependenciesMeta:
@@ -1139,9 +1142,9 @@ packages:
     resolution: {integrity: sha512-aWTKZYD5v/LXbAXQQEc+WQdeoDRACPkDmsc+9jyhtc4OaEHay6MOxxdts/E1nTQA1unwkZlfHA3E83W9nPa2Dg==}
     engines: {node: '>=24'}
     peerDependencies:
-      '@kernhq/contracts': ^0.7.0
-      '@kernhq/kernel': ^0.10.0
-      '@kernhq/ui': ^0.14.0
+      '@kernhq/contracts': ^0.8.0
+      '@kernhq/kernel': ^0.10.2
+      '@kernhq/ui': ^0.14.3
       '@tanstack/svelte-query': ^6.1.0
       svelte: ^5.46.0
     peerDependenciesMeta:
@@ -1156,9 +1159,9 @@ packages:
     resolution: {integrity: sha512-DnNUbuYZTgpD7hVD72lyFl0fhr4XsVXnll7Nw5VBk2q8fKyCBQzgPu7Mg1mLcWQ11K9rGCPsmd2GL7v0I9bkUA==}
     engines: {node: '>=24'}
     peerDependencies:
-      '@kernhq/contracts': ^0.7.0
-      '@kernhq/kernel': ^0.9.1
-      '@kernhq/ui': ^0.14.0
+      '@kernhq/contracts': ^0.8.0
+      '@kernhq/kernel': ^0.10.2
+      '@kernhq/ui': ^0.14.3
       '@tanstack/svelte-query': ^6.1.0
       svelte: ^5.46.0
     peerDependenciesMeta:
@@ -1173,9 +1176,9 @@ packages:
     resolution: {integrity: sha512-giOeo+jC+umZGuPS3gWkz70uyPbz0uDBN1dlG9lMzs2ZJ7UxDwlQL7I2Amkgv4lAPvZIZ8Y5uEdXpN3/4PwE9w==}
     engines: {node: '>=24'}
     peerDependencies:
-      '@kernhq/contracts': ^0.7.0
-      '@kernhq/kernel': ^0.9.1
-      '@kernhq/ui': ^0.14.0
+      '@kernhq/contracts': ^0.8.0
+      '@kernhq/kernel': ^0.10.2
+      '@kernhq/ui': ^0.14.3
       '@tanstack/svelte-query': ^6.1.0
       svelte: ^5.46.0
     peerDependenciesMeta:
@@ -1190,9 +1193,9 @@ packages:
     resolution: {integrity: sha512-7Pi0aJ7g6PfjgUvB6kJ3c+iXBo5vTDhuPGK7W4u/vFs/hPSAcFh3E8z8IsijFkdLH3uHETnyWo+ZzQ73pT8YTA==}
     engines: {node: '>=24'}
     peerDependencies:
-      '@kernhq/contracts': ^0.7.0
-      '@kernhq/kernel': ^0.10.0
-      '@kernhq/ui': ^0.14.0
+      '@kernhq/contracts': ^0.8.0
+      '@kernhq/kernel': ^0.10.2
+      '@kernhq/ui': ^0.14.3
       '@tanstack/svelte-query': ^6.1.0
       fastify: ^5.0.0
       svelte: ^5.46.0
@@ -1210,9 +1213,9 @@ packages:
     resolution: {integrity: sha512-V7Z6pDneXyCwCPOWGeLC7wpabHJpBJJrqM2PBIV4nsTFwdLVPF+k4DlWuSj+S3KYRYu4aJpJKxlqc2M3N5Wqbw==}
     engines: {node: '>=24'}
     peerDependencies:
-      '@kernhq/contracts': ^0.7.0
-      '@kernhq/kernel': ^0.10.0
-      '@kernhq/ui': ^0.14.0
+      '@kernhq/contracts': ^0.8.0
+      '@kernhq/kernel': ^0.10.2
+      '@kernhq/ui': ^0.14.3
       '@tanstack/svelte-query': ^6.1.0
       svelte: ^5.46.0
     peerDependenciesMeta:
@@ -1225,9 +1228,9 @@ packages:
     resolution: {integrity: sha512-p8RX6IhKNVRA6Fh2J0MX6Cvx6mrihWNZ/0+QHr1PX2qdvBHlkQMO6CYTxduxmrTRHSc8j5GvEYg42m/kuY+Hiw==}
     engines: {node: '>=24'}
     peerDependencies:
-      '@kernhq/contracts': ^0.7.0
-      '@kernhq/kernel': ^0.10.0
-      '@kernhq/ui': ^0.14.0
+      '@kernhq/contracts': ^0.8.0
+      '@kernhq/kernel': ^0.10.2
+      '@kernhq/ui': ^0.14.3
       '@tanstack/svelte-query': ^6.1.0
       svelte: ^5.46.0
     peerDependenciesMeta:
@@ -1240,9 +1243,6 @@ packages:
 
   '@kernhq/sdk@0.1.10':
     resolution: {integrity: sha512-dNuvF5r3V9pmoZKAJytJptkhhGGT5scCYoqt06RDQb7oX/wbccN2QTSoMZNWIZfmDYs1ZHdFCtuzVkwqVKVpQA==}
-
-  '@kernhq/sdk@0.1.9':
-    resolution: {integrity: sha512-ATzEaXUbBy5OMqX34tc/JeOXQdR8yAvxTdIatnzpHLjYMdteaxeOyEmADOIZWtXo6uiURq7DWYtHCqWK2+XQSQ==}
 
   '@kernhq/ui@0.14.3':
     resolution: {integrity: sha512-gVd6D19gZ6OUdTQHIfttGOUFTiJLciTWQI9/GJTkuSY1oLLJVxGd+2srkK6sb99J8xeOGuQhbE2K6EMaN76GNg==}
@@ -6204,13 +6204,6 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.6.0
 
-  '@kernhq/contracts@0.7.0':
-    dependencies:
-      '@orpc/contract': 1.15.0
-      zod: 4.5.4
-    transitivePeerDependencies:
-      - '@opentelemetry/api'
-
   '@kernhq/contracts@0.8.0':
     dependencies:
       '@orpc/contract': 1.15.0
@@ -6279,7 +6272,7 @@ snapshots:
     dependencies:
       '@kernhq/contracts': 0.8.0
       '@kernhq/kernel': 0.10.2(kysely@0.29.5)
-      '@kernhq/sdk': 0.1.9
+      '@kernhq/sdk': 0.1.10
       '@orpc/contract': 1.15.0
       '@orpc/server': 1.15.0(fastify@5.12.1)
       drizzle-orm: 0.45.2(kysely@0.29.5)(pg@8.23.0)
@@ -6328,7 +6321,7 @@ snapshots:
     dependencies:
       '@kernhq/contracts': 0.8.0
       '@kernhq/kernel': 0.10.2(kysely@0.29.5)
-      '@kernhq/sdk': 0.1.9
+      '@kernhq/sdk': 0.1.10
       '@orpc/contract': 1.15.0
       '@orpc/server': 1.15.0(fastify@5.12.1)
       '@tanstack/svelte-virtual': 3.13.36(svelte@5.57.0)
@@ -6384,7 +6377,7 @@ snapshots:
     dependencies:
       '@kernhq/contracts': 0.8.0
       '@kernhq/kernel': 0.10.2(kysely@0.29.5)
-      '@kernhq/sdk': 0.1.9
+      '@kernhq/sdk': 0.1.10
       '@orpc/contract': 1.15.0
       '@orpc/server': 1.15.0(fastify@5.12.1)
       drizzle-orm: 0.45.2(kysely@0.29.5)(pg@8.23.0)
@@ -6431,7 +6424,7 @@ snapshots:
     dependencies:
       '@kernhq/contracts': 0.8.0
       '@kernhq/kernel': 0.10.2(kysely@0.29.5)
-      '@kernhq/sdk': 0.1.9
+      '@kernhq/sdk': 0.1.10
       '@orpc/contract': 1.15.0
       '@orpc/server': 1.15.0(fastify@5.12.1)
       drizzle-orm: 0.45.2(kysely@0.29.5)(pg@8.23.0)
@@ -6480,7 +6473,7 @@ snapshots:
       '@aws-sdk/client-sesv2': 3.1124.0
       '@kernhq/contracts': 0.8.0
       '@kernhq/kernel': 0.10.2(kysely@0.29.5)
-      '@kernhq/sdk': 0.1.9
+      '@kernhq/sdk': 0.1.10
       '@orpc/contract': 1.15.0
       '@orpc/server': 1.15.0(fastify@5.12.1)
       drizzle-orm: 0.45.2(kysely@0.29.5)(pg@8.23.0)
@@ -6537,7 +6530,7 @@ snapshots:
     dependencies:
       '@kernhq/contracts': 0.8.0
       '@kernhq/kernel': 0.10.2(kysely@0.29.5)
-      '@kernhq/sdk': 0.1.9
+      '@kernhq/sdk': 0.1.10
       '@kernhq/ui': 0.14.3(@floating-ui/dom@1.8.0)(@internationalized/date@3.12.4)(@sveltejs/kit@2.70.3(@sveltejs/vite-plugin-svelte@7.3.0(svelte@5.57.0)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(svelte@5.57.0)(typescript@5.9.3)(vite@8.2.2(@types/node@24.13.3)(jiti@2.7.0)(terser@5.51.2)))(@tanstack/svelte-query@6.1.48(svelte@5.57.0))(@tiptap/extension-text-style@3.31.0(@tiptap/core@3.31.0(@tiptap/pm@3.31.0)))(kysely@0.29.5)(prosemirror-model@1.25.11)(prosemirror-state@1.4.4)(prosemirror-view@1.42.3)(svelte@5.57.0)
       '@orpc/contract': 1.15.0
       '@orpc/server': 1.15.0(fastify@5.12.1)
@@ -6591,7 +6584,7 @@ snapshots:
     dependencies:
       '@kernhq/contracts': 0.8.0
       '@kernhq/kernel': 0.10.2(kysely@0.29.5)
-      '@kernhq/sdk': 0.1.9
+      '@kernhq/sdk': 0.1.10
       '@kernhq/workflow': 0.1.1
       '@orpc/contract': 1.15.0
       '@orpc/server': 1.15.0(fastify@5.12.1)
@@ -6639,15 +6632,6 @@ snapshots:
   '@kernhq/sdk@0.1.10':
     dependencies:
       '@kernhq/contracts': 0.8.0
-      '@orpc/client': 1.15.0
-      '@orpc/contract': 1.15.0
-      zod: 4.5.4
-    transitivePeerDependencies:
-      - '@opentelemetry/api'
-
-  '@kernhq/sdk@0.1.9':
-    dependencies:
-      '@kernhq/contracts': 0.7.0
       '@orpc/client': 1.15.0
       '@orpc/contract': 1.15.0
       zod: 4.5.4
