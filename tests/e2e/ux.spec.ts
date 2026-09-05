@@ -141,6 +141,14 @@ const ROUTES: { path: string; name: string }[] = [
   // settings page and therefore the one most worth measuring in dark mode.
   { path: `/${WS}/settings/data`, name: 'settings data and privacy' },
   { path: `/${WS}/settings/account`, name: 'settings account' },
+  /*
+   * The second-factor challenge. Every account with 2FA on meets it on every sign-in, and until
+   * 2026-09-05 it was unreachable by construction — the sign-in redirect sat inside `if
+   * (res.error)`, which never fires for a pending factor — so nothing had ever looked at it. It is
+   * the one auth screen made almost entirely of a single six-digit field, which is exactly the
+   * shape that goes wrong in RTL and at a phone width.
+   */
+  { path: '/two-factor', name: 'two-factor challenge' },
 ]
 
 /** The scheduled-erasure record `SWITCHED` seeds, so the branch can be swept without driving the flow. */
@@ -326,13 +334,17 @@ test.describe('phone width', () => {
   // The data-and-privacy and account routes are named for the same reason as the invitations: they
   // sit at the end of the list, and a danger zone is worth checking at a width where the button and
   // its explanation have to stack rather than sit side by side.
+  // `/two-factor` is named too, and it is the one route here somebody is *most* likely to meet on a
+  // phone: the authenticator holding the code is the phone, so the screen asking for it is being
+  // read on the same device it is being copied from.
   const PHONE_ROUTES = [
     ...ROUTES.slice(0, 22),
     ...ROUTES.filter(
       (r) =>
         r.path.startsWith('/invite/') ||
         r.path.endsWith('/settings/data') ||
-        r.path.endsWith('/settings/account'),
+        r.path.endsWith('/settings/account') ||
+        r.path === '/two-factor',
     ),
   ]
   for (const route of PHONE_ROUTES) {
