@@ -528,3 +528,27 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   the phone sweep, with nothing failing — the count is the only thing holding them in. The comment
   in `ux.spec.ts` warns about it and it happened anyway. Grow `n` by however many you insert, and
   name a route at the end of the list rather than counting to it.
+- **A screen the mock renders perfectly can be unreachable in production, and only a real backend
+  says so.** Scheduling a workspace deletion archives the workspace *immediately* (core's
+  `scheduleWorkspaceDeletion`), `users.me()` filters archived workspaces out
+  (`isNull(workspaces.archivedAt)`), and `(app)/[ws]/+layout.svelte` then reads the slug as unknown
+  and forwards to `/onboarding` — so on 2026-09-05 the "Keep this workspace" panel, which is the
+  whole 30-day undo the terms promise, could never be reached, and a sole-workspace owner was shown
+  **"Create your first workspace"** seconds after asking for a deletion they were told they could
+  call off. The mock does not archive on schedule, so `dev:mock` and `ux.spec.ts` both showed a
+  healthy screen. The lesson is not about this one screen: **any flow whose own success changes what
+  `users.me()` returns cannot be verified against the mock**, because the mock's seed list does not
+  move. Run those against a real core — a scratch database, `tsx src/main.ts`, and the shell's dev
+  proxy is enough — before believing the sweep.
+- **The export job is `core-worker`, not `core`.** `dataRights.exports.request` answers 202 and the
+  row sits at `pending` for ever unless `pnpm dev:worker` is also running in `repos/core`; the
+  screen is right to keep polling and there is nothing wrong with it. Worth knowing before
+  diagnosing an export that never finishes.
+- **When Valkey is configured but unreachable, `workspaces.myPermissions` answers 500 and every
+  permission-gated screen in the app renders empty.** ioredis gives up after
+  `maxRetriesPerRequest: 2`, the procedure throws, `session.setPermissions` never runs, and `can()`
+  is then false for everything — so Settings shows only the account group, and any page whose body
+  is behind a permission renders a heading and nothing else. `/api/health` stays green throughout,
+  so it reads as a broken screen rather than as missing infrastructure. Measured both ways: Valkey
+  down → HTTP 500, Valkey up → 200 with `role: owner`. If a whole screen is blank below its title,
+  check `myPermissions` in the network panel before reading any of its source.
