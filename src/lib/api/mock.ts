@@ -17,8 +17,8 @@ import {
 import { mockObjectUrl } from '$lib/files/mock-storage'
 
 /**
- * Three switches the mock reads from `localStorage`, so a test can put the app in a state the seed
- * data cannot express. All three are off unless something sets them, and with them off nothing here
+ * Four switches the mock reads from `localStorage`, so a test can put the app in a state the seed
+ * data cannot express. All four are off unless something sets them, and with them off nothing here
  * changes any answer at all.
  *
  * They exist because the interesting branches are otherwise unreachable in `dev:mock`. The demo
@@ -29,10 +29,16 @@ import { mockObjectUrl } from '$lib/files/mock-storage'
  * `kern.mock.signedout` is the third, and it is the one page in the product that needs it:
  * `/invite/:token` is opened by somebody who very often has no account yet, and mock mode has no
  * auth server to say so. With it set, `users.me` refuses exactly as core does for a stranger.
+ *
+ * `kern.mock.unverified` is the fourth, and it is the state **every self-serve sign-up starts in**.
+ * Kern Cloud sets `KERN_SIGNUP=open`, so signing up signs you in and lands you on `/onboarding` —
+ * where `workspaces.create` refuses an address nobody has confirmed. The demo user is verified, so
+ * the first screen a new customer meets was the one screen that could not be rendered here at all.
  */
 const MOCK_SUSPENDED = 'kern.mock.suspended'
 const MOCK_ROLE = 'kern.mock.role'
 const MOCK_SIGNED_OUT = 'kern.mock.signedout'
+const MOCK_UNVERIFIED = 'kern.mock.unverified'
 
 function mockFlag(key: string): string | null {
   // Read per call rather than once: a test sets these before the app loads, and reading them live
@@ -59,6 +65,9 @@ const mockIsOwner = () => mockFlag(MOCK_ROLE) !== 'member'
 
 /** Whether the mock is pretending nobody is signed in. */
 const mockSignedOut = () => mockFlag(MOCK_SIGNED_OUT) === '1'
+
+/** Whether the mock is pretending the signed-in address has never been confirmed. */
+const mockUnverified = () => mockFlag(MOCK_UNVERIFIED) === '1'
 
 /**
  * The refusal `Entitlements.requireActive` raises, copied exactly.
@@ -1040,7 +1049,13 @@ export function createMockApi() {
         return {
           // `instanceAdmin` short-circuits every `session.can()`, so the mock member has to give it
           // up as well as the owner role — otherwise "member" is a label with no consequences.
-          user: { ...clone(user), instanceAdmin: mockIsOwner() },
+          // An unverified address gives it up too: core lets an instance admin create a workspace
+          // without one, so leaving the flag on would make the refusal unreachable here as well.
+          user: {
+            ...clone(user),
+            instanceAdmin: mockIsOwner() && !mockUnverified(),
+            emailVerified: !mockUnverified(),
+          },
           workspaces: state.workspaces.map(summary),
           permissionVersion: 1,
         }
@@ -1058,6 +1073,20 @@ export function createMockApi() {
     workspaces: {
       list: async () => state.workspaces.map(summary),
       create: async (input: { name: string; slug: string; description?: string }) => {
+        /**
+         * The refusal every self-serve sign-up meets, copied exactly.
+         *
+         * `workspaces.create` in core calls `requireVerifiedEmail`, which throws
+         * `FORBIDDEN` with reason `core.workspace.email_unverified` for anybody whose address has
+         * not been confirmed. Same code and same reason, because a mock that refuses in a shape the
+         * screen does not recognise tests the screen against a fiction — and this is the first
+         * button a new customer ever presses.
+         */
+        if (mockUnverified())
+          throw Object.assign(new Error('Forbidden'), {
+            code: 'FORBIDDEN',
+            data: { reason: 'core.workspace.email_unverified' },
+          })
         const w = {
           ...clone(workspaces[0]!),
           id: id(100 + state.workspaces.length),

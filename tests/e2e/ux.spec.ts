@@ -126,6 +126,29 @@ const ROUTES: { path: string; name: string }[] = [
    */
   { path: '/invite/mock-invite', name: 'invitation' },
   { path: '/invite/mock-invite-expired', name: 'invitation no longer valid' },
+  /*
+   * The first screen of a self-serve sign-up. Kern Cloud runs `KERN_SIGNUP=open`, so this is where
+   * signing up lands you and where the first button press happens — and it is swept in both of its
+   * faces, because they share almost no markup: the workspace form, and the confirm-your-address
+   * card that every unverified account meets instead of it. The second is reached by
+   * `kern.mock.unverified`, below.
+   */
+  { path: '/onboarding', name: 'onboarding' },
+]
+
+/**
+ * Routes that need a mock switch thrown before the app loads.
+ *
+ * `page.addInitScript` is the only moment early enough — these are read live from `localStorage` by
+ * `src/lib/api/mock.ts`, but the first read happens during the first render, so setting them after
+ * `goto` sweeps the screen that was already drawn.
+ */
+const SWITCHED: { path: string; name: string; flags: Record<string, string> }[] = [
+  {
+    path: '/onboarding',
+    name: 'onboarding with an unconfirmed address',
+    flags: { 'kern.mock.unverified': '1' },
+  },
 ]
 
 /**
@@ -193,6 +216,23 @@ for (const rendering of RENDERINGS) {
     for (const route of ROUTES) {
       test(`${route.name} is usable`, async ({ page }) => {
         const errors = watchForErrors(page)
+        await visit(page, route.path)
+        expect(errors, `${route.path} threw while rendering`).toEqual([])
+        const result = await auditPage(page)
+        expect(
+          result.counted.interactive,
+          `${route.path} rendered no interactive elements — it is blank, not clean`,
+        ).toBeGreaterThan(0)
+        expect(result.violations, report(`${route.path} (${rendering.name})`, result.violations)).toEqual([])
+      })
+    }
+
+    for (const route of SWITCHED) {
+      test(`${route.name} is usable`, async ({ page }) => {
+        const errors = watchForErrors(page)
+        await page.addInitScript((flags) => {
+          for (const [k, v] of Object.entries(flags)) localStorage.setItem(k, v)
+        }, route.flags)
         await visit(page, route.path)
         expect(errors, `${route.path} threw while rendering`).toEqual([])
         const result = await auditPage(page)
