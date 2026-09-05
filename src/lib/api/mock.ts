@@ -832,6 +832,33 @@ export function createMockApi() {
     notifications: clone(notifications),
     workspaces: clone(workspaces),
     members: clone(members),
+    /**
+     * The accounts the instance console lists, mutable because it can change them.
+     *
+     * A copy rather than the `people` fixture: `admin.setUserStatus` suspends somebody and promotes
+     * somebody, and a screen where that visibly does nothing cannot be told apart from a broken one.
+     */
+    // `Omit` and not an intersection: the fixtures infer `status: 'active'` as a literal, and
+    // intersecting that with the union narrows straight back to `'active'` rather than widening it.
+    people: clone(people) as Array<
+      Omit<(typeof people)[number], 'status' | 'instanceAdmin'> & {
+        status: 'active' | 'suspended'
+        instanceAdmin: boolean
+      }
+    >,
+    /**
+     * What `admin.updateSettings` has written. Seeded to what a fresh Kern Cloud instance looks like
+     * — sign-up open, anybody may make a workspace — so the admin settings screen has real values.
+     */
+    instanceSettings: {
+      name: 'Kern',
+      baseUrl: 'http://localhost:5173',
+      allowSignup: true,
+      allowWorkspaceCreation: 'everyone' as 'everyone' | 'admins',
+      defaultLocale: 'en' as const,
+      mailFrom: null as string | null,
+      supportEmail: null as string | null,
+    },
     enabled: new Map<string, Set<string>>(),
     /** `<workspaceId>:<moduleId>` → what the switchboard stored; absent means "never touched". */
     capabilities: new Map<string, Record<string, boolean>>(),
@@ -1748,19 +1775,60 @@ export function createMockApi() {
     }),
 
     admin: {
-      settings: async () => ({
-        name: 'Kern',
-        baseUrl: 'http://localhost:5173',
-        allowSignup: true,
-        allowWorkspaceCreation: 'everyone' as const,
-        defaultLocale: 'en' as const,
-        mailFrom: null,
-        supportEmail: null,
+      settings: async () => clone(state.instanceSettings),
+      /**
+       * Merge and keep, rather than echo the patch back.
+       *
+       * This returned `input` — the patch itself — so a save answered with an object missing every
+       * field it had not changed, the next read handed back the untouched seed, and the switch the
+       * administrator had just moved sprang back. Core merges into the stored row and returns the
+       * whole of it (`updateSettings` in its `services/admin.ts`); a mock that does not is a mock
+       * the admin settings screen cannot be demoed or swept against.
+       */
+      updateSettings: async (input: Record<string, unknown>) => {
+        state.instanceSettings = {
+          ...state.instanceSettings,
+          ...input,
+        } as typeof state.instanceSettings
+        return clone(state.instanceSettings)
+      },
+      users: async ({ q }: { q?: string } = {}) => ({
+        items: state.people
+          .filter((p) =>
+            !q
+              ? true
+              : [p.name, p.email, p.username ?? ''].some((f) => f.toLowerCase().includes(q.toLowerCase())),
+          )
+          .map(clone),
+        nextCursor: null,
       }),
-      updateSettings: async (input: Record<string, unknown>) => input as never,
-      users: async () => ({ items: people.map(clone), nextCursor: null }),
-      setUserStatus: async ({ id: uid }: { id: string }) =>
-        clone(people.find((p) => p.id === uid) ?? people[0]!),
+      /**
+       * Actually apply it, for the same reason.
+       *
+       * Suspending somebody and watching the row stay "Active" is indistinguishable from a broken
+       * screen. Core's two refusals are copied exactly, because they are the two the screen hides
+       * the action for — and a mock that allows what the server refuses would let that gate rot.
+       */
+      setUserStatus: async ({
+        id: uid,
+        status,
+        instanceAdmin,
+      }: {
+        id: string
+        status: 'active' | 'suspended'
+        instanceAdmin?: boolean
+      }) => {
+        const person = state.people.find((p) => p.id === uid)
+        if (!person) throw Object.assign(new Error('User'), { code: 'NOT_FOUND' })
+        const selfRefusal = (message: string) =>
+          Object.assign(new Error(message), { code: 'CONFLICT', data: { reason: 'core.admin.self' } })
+        if (status === 'suspended' && uid === user.id) throw selfRefusal('You cannot suspend yourself')
+        if (instanceAdmin === false && uid === user.id)
+          throw selfRefusal('You cannot remove your own instance admin flag')
+        person.status = status
+        if (instanceAdmin !== undefined) person.instanceAdmin = instanceAdmin
+        return clone(person)
+      },
       workspaces: async () => ({
         items: state.workspaces.map((w) => ({ ...clone(w), memberCount: state.members.length })),
         nextCursor: null,

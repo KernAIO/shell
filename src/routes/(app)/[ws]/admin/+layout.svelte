@@ -25,6 +25,10 @@ const isActive = (p: string) => page.url.pathname === href(p)
  * check around this whole layout is the gate that matters.
  */
 const links = $derived([
+  // Settings first: on a self-hosted instance it is the reason the console exists at all. Every
+  // install seeds itself invite-only, and until this row appeared there was no way to open sign-up.
+  { path: '/settings', label: m.admin_settings(), icon: 'settings' },
+  { path: '/users', label: m.admin_users(), icon: 'users' },
   { path: '/updates', label: m.admin_updates_title(), icon: 'refresh-cw' },
   { path: '/modules', label: m.dev_modules_nav(), icon: 'puzzle' },
   ...instanceLinksFor({ can: (permission: string) => session.can(permission) }).map((link) => ({
