@@ -134,7 +134,41 @@ const ROUTES: { path: string; name: string }[] = [
    * `kern.mock.unverified`, below.
    */
   { path: '/onboarding', name: 'onboarding' },
+  // Export and erasure: what the terms and the privacy policy promise, and the two screens that
+  // keep those promises. Both carry a danger-toned section, which is the strongest colour on any
+  // settings page and therefore the one most worth measuring in dark mode.
+  { path: `/${WS}/settings/data`, name: 'settings data and privacy' },
+  { path: `/${WS}/settings/account`, name: 'settings account' },
 ]
+
+/** The scheduled-erasure record `SWITCHED` seeds, so the branch can be swept without driving the flow. */
+const SCHEDULED_DELETIONS = JSON.stringify({
+  workspaces: {
+    // the demo workspace's id in `src/lib/api/mock.ts`
+    '01920000-0000-7000-8000-000000000010': {
+      id: '01920000-0000-7000-8002-000000000900',
+      subjectKind: 'workspace',
+      subjectId: '01920000-0000-7000-8000-000000000010',
+      status: 'scheduled',
+      purgeAfter: '2099-01-01T00:00:00.000Z',
+      followUps: ["tracker: no erase procedure — this module's data is not removed by this request."],
+      error: null,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      completedAt: null,
+    },
+  },
+  account: {
+    id: '01920000-0000-7000-8002-000000000901',
+    subjectKind: 'account',
+    subjectId: 'mock-user',
+    status: 'scheduled',
+    purgeAfter: '2099-01-01T00:00:00.000Z',
+    followUps: [],
+    error: null,
+    createdAt: '2026-01-01T00:00:00.000Z',
+    completedAt: null,
+  },
+})
 
 /**
  * Routes that need a mock switch thrown before the app loads.
@@ -148,6 +182,16 @@ const SWITCHED: { path: string; name: string; flags: Record<string, string> }[] 
     path: '/onboarding',
     name: 'onboarding with an unconfirmed address',
     flags: { 'kern.mock.unverified': '1' },
+  },
+  {
+    path: `/${WS}/settings/data`,
+    name: 'settings data with an erasure scheduled',
+    flags: { 'kern.mock.deletions': SCHEDULED_DELETIONS },
+  },
+  {
+    path: `/${WS}/settings/account`,
+    name: 'settings account with a closure scheduled',
+    flags: { 'kern.mock.deletions': SCHEDULED_DELETIONS },
   },
 ]
 

@@ -45,8 +45,47 @@ interface MockExport extends ExportRecord {
 }
 
 const exportsByWorkspace = new Map<string, MockExport[]>()
-const workspaceDeletions = new Map<string, DeletionRecord>()
-let accountDeletion: DeletionRecord | null = null
+
+/**
+ * A scheduled erasure outlives the page that asked for it, because on a real instance it is a row
+ * in Postgres.
+ *
+ * Module memory does not: scheduling sends the person to the workspace chooser, and the moment
+ * anything reloads the app the record is gone and the screen is back to offering *Delete*. So the
+ * one branch that matters most here — the workspace is going to be destroyed on a date, and this is
+ * how you stop it — was unreachable after a reload, which is also the only way `ux.spec.ts` visits
+ * a route. `localStorage` is where the mock already keeps state a test has to be able to set, and it
+ * makes the branch reachable by seeding the key rather than by driving the whole flow first.
+ *
+ * Wrapped in try/catch throughout: a browser set to block site data throws on both reads and writes.
+ */
+const DELETIONS_KEY = 'kern.mock.deletions'
+
+interface StoredDeletions {
+  workspaces: Record<string, DeletionRecord>
+  account: DeletionRecord | null
+}
+
+function readStore(): StoredDeletions {
+  if (typeof localStorage === 'undefined') return { workspaces: {}, account: null }
+  try {
+    const raw = localStorage.getItem(DELETIONS_KEY)
+    if (!raw) return { workspaces: {}, account: null }
+    const parsed = JSON.parse(raw) as Partial<StoredDeletions>
+    return { workspaces: parsed.workspaces ?? {}, account: parsed.account ?? null }
+  } catch {
+    return { workspaces: {}, account: null }
+  }
+}
+
+function writeStore(store: StoredDeletions) {
+  if (typeof localStorage === 'undefined') return
+  try {
+    localStorage.setItem(DELETIONS_KEY, JSON.stringify(store))
+  } catch {
+    // a browser that refuses site data still gets a working screen, just not a durable one
+  }
+}
 
 /**
  * Age a row on read rather than on a `setTimeout`.
@@ -140,41 +179,49 @@ export const mockDataRights = {
   },
 
   workspaceDeletion: {
-    pending: async (workspaceId: string) => workspaceDeletions.get(workspaceId) ?? null,
+    pending: async (workspaceId: string) => readStore().workspaces[workspaceId] ?? null,
     schedule: async (workspaceId: string) => {
-      const open = workspaceDeletions.get(workspaceId)
+      const store = readStore()
+      const open = store.workspaces[workspaceId]
       if (open) return open
       const record = scheduled('workspace', workspaceId)
-      workspaceDeletions.set(workspaceId, record)
+      store.workspaces[workspaceId] = record
+      writeStore(store)
       return record
     },
     cancel: async (workspaceId: string) => {
-      const open = workspaceDeletions.get(workspaceId)
+      const store = readStore()
+      const open = store.workspaces[workspaceId]
       if (!open)
         throw Object.assign(new Error('Scheduled deletion'), {
           code: 'NOT_FOUND',
           reason: 'core.deletion.not_cancellable',
         })
-      workspaceDeletions.delete(workspaceId)
+      delete store.workspaces[workspaceId]
+      writeStore(store)
       return { ...open, status: 'cancelled' as const, completedAt: iso(0) }
     },
   },
 
   accountDeletion: {
-    pending: async () => accountDeletion,
+    pending: async () => readStore().account,
     schedule: async () => {
-      if (accountDeletion) return accountDeletion
-      accountDeletion = scheduled('account', 'mock-user')
-      return accountDeletion
+      const store = readStore()
+      if (store.account) return store.account
+      store.account = scheduled('account', 'mock-user')
+      writeStore(store)
+      return store.account
     },
     cancel: async () => {
-      if (!accountDeletion)
+      const store = readStore()
+      if (!store.account)
         throw Object.assign(new Error('Scheduled deletion'), {
           code: 'NOT_FOUND',
           reason: 'core.deletion.not_cancellable',
         })
-      const cancelled = { ...accountDeletion, status: 'cancelled' as const, completedAt: iso(0) }
-      accountDeletion = null
+      const cancelled = { ...store.account, status: 'cancelled' as const, completedAt: iso(0) }
+      store.account = null
+      writeStore(store)
       return cancelled
     },
   },

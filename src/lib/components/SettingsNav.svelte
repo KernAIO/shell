@@ -32,6 +32,8 @@ interface NavLink {
   label: string
   icon: string
   permission?: string
+  /** offered when the reader holds *any* of these — for a page whose sections gate separately */
+  anyPermission?: string[]
 }
 
 // Workspace settings are only offered when the member can actually act on them; a member who cannot
@@ -63,8 +65,23 @@ const workspaceLinks = $derived(
         permission: 'core.integrations.manage',
       },
       { path: '/audit', label: m.settings_audit(), icon: 'scroll-text', permission: 'core.audit.view' },
+      /*
+       * Export and erasure. Two permissions rather than one: `core.export.run` opens the archive
+       * half and `core.workspace.delete` the danger zone, and somebody holding either has a reason
+       * to be on the page — so the row is offered for either and each section gates itself.
+       */
+      {
+        path: '/data',
+        label: m.data_title(),
+        icon: 'database',
+        anyPermission: ['core.export.run', 'core.workspace.delete'],
+      },
     ] satisfies NavLink[]
-  ).filter((l) => !l.permission || session.can(l.permission)),
+  ).filter(
+    (l) =>
+      (!l.permission || session.can(l.permission)) &&
+      (!l.anyPermission || l.anyPermission.some((p) => session.can(p))),
+  ),
 )
 
 /**
@@ -189,6 +206,10 @@ const accountLinks: NavLink[] = $derived([
   { path: '/security', label: m.settings_security(), icon: 'key-round' },
   { path: '/notifications', label: m.settings_notifications(), icon: 'bell' },
   { path: '/appearance', label: m.settings_appearance(), icon: 'palette' },
+  // No permission: closing your own account is not something a workspace grants you.
+  // `circle-user` rather than `user-x`: the registry has no `user-x`, and an unregistered name
+  // renders a blank square and throws nothing — `check-icons.mjs` is what catches that.
+  { path: '/account', label: m.account_title(), icon: 'circle-user' },
 ])
 
 /**
