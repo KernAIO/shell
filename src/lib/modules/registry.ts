@@ -1,6 +1,7 @@
 import type {
   SvelteClientModule as ClientModule,
   ClientNavItem,
+  SvelteOverlayContribution,
   SvelteSidebarContribution,
   SvelteWidgetDefinition,
 } from '@kernhq/ui'
@@ -103,6 +104,32 @@ export function sidebarsFor(ctx: NavContext & { segment: string }): SidebarEntry
     .filter((s) => !s.permission || ctx.can(s.permission))
     .filter((s) => hasCapability(ctx.capabilities, s.moduleId, s.capability))
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100) || a.id.localeCompare(b.id))
+}
+
+export interface OverlayEntry extends SvelteOverlayContribution {
+  moduleId: string
+}
+
+/**
+ * Everything mounted once per workspace, outside the routes.
+ *
+ * The same three filters as `sidebarsFor` — an enabled module, a permission held, a capability the
+ * workspace switched on — and no fourth: an overlay claims no path, because outliving the route is
+ * the whole reason it exists. Sorted by module and then by id so the order two overlays are stacked
+ * in is a property of the registry rather than of whichever module happened to register first.
+ *
+ * The filters run continuously, not once at mount: a workspace that switches the capability off
+ * while somebody is looking at it drops out of this list, and the shell unmounts what it was
+ * rendering. That is the same treatment a nav row and a widget get, and it is what makes an overlay
+ * safe to use for something with a live connection behind it.
+ */
+export function overlaysFor(ctx: NavContext): OverlayEntry[] {
+  return modules
+    .filter((mod) => ctx.enabled.has(mod.id))
+    .flatMap((mod) => (mod.overlays ?? []).map((o) => ({ ...o, moduleId: mod.id })))
+    .filter((o) => !o.permission || ctx.can(o.permission))
+    .filter((o) => hasCapability(ctx.capabilities, o.moduleId, o.capability))
+    .sort((a, b) => a.moduleId.localeCompare(b.moduleId) || a.id.localeCompare(b.id))
 }
 
 /**

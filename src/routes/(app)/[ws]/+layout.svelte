@@ -32,8 +32,9 @@ import OfflineBanner from '$lib/components/OfflineBanner.svelte'
 import SettingsNav from '$lib/components/SettingsNav.svelte'
 import WorkspaceTabs from '$lib/components/WorkspaceTabs.svelte'
 import { formatCount } from '$lib/format'
+import ModuleOverlays from '$lib/modules/ModuleOverlays.svelte'
 import ModuleSidebar from '$lib/modules/ModuleSidebar.svelte'
-import { capabilitiesOf, navigationFor, segmentOf, sidebarsFor } from '$lib/modules/registry'
+import { capabilitiesOf, navigationFor, overlaysFor, segmentOf, sidebarsFor } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { realtime, realtimeUrl } from '$lib/realtime.svelte'
 import { prefs } from '$lib/state/prefs.svelte'
@@ -166,6 +167,16 @@ const segment = $derived(segmentOf(page.url.pathname, slug))
  */
 const sidebars = $derived(sidebarsFor({ ...navContext, segment }))
 const sidebarControls = $derived(sidebars.filter((entry) => entry.controls))
+
+/**
+ * What the modules keep across navigation — see `ModuleOverlays`.
+ *
+ * Not filtered by segment, unlike the sidebar: an overlay belongs to the workspace rather than to a
+ * section, which is the point of it. Everything else about the gate is the same, so a module the
+ * workspace switched off, a capability it never turned on and a permission this person does not
+ * hold each leave nothing mounted rather than something inert.
+ */
+const overlays = $derived(overlaysFor(navContext))
 
 /**
  * Settings is a section like any other, so its navigation is the sidebar rather than a second
@@ -460,6 +471,22 @@ const userMenu: MenuItem[] = $derived([
     <DeletionBanner workspaceId={workspace.id} archivedAt={archivedAtOf(workspace)} />
     {@render children()}
   </AppShell>
+
+  <!--
+    Mounted once for as long as this workspace is open, outside `AppShell` so no route owns it.
+
+    `{#key}` is load-bearing. SvelteKit reuses a layout component when only a route parameter
+    changes, so switching from `/acme/tracker` to `/other/tracker` would otherwise leave the
+    overlays of the workspace you just left running in the one you arrived in — and a module holding
+    a connection would be holding it against the wrong workspace. Keying on the id destroys them and
+    mounts the new workspace's, which is also what the module's own state expects.
+
+    Signing out is the other half and needs nothing here: it leaves `(app)/[ws]` entirely, so the
+    layout goes and every overlay with it.
+  -->
+  {#key workspace.id}
+    <ModuleOverlays entries={overlays} workspaceId={workspace.id} workspaceSlug={slug} />
+  {/key}
 
   <CommandPalette bind:open={paletteOpen} workspaceSlug={slug} workspaceId={workspace.id} />
   <InstallPrompt />
