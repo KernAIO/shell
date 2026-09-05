@@ -1,15 +1,21 @@
 @import "tailwindcss";
+@import "@kernhq/ui/styles/index.css";
+@import "@kernhq/ui/styles/theme.css";
+@import "@kernhq/ui/styles/prose.css";
+
 /*
  * The module clients ship as source and are rendered by this app, but Tailwind's automatic
  * source detection skips node_modules — so a utility a module used that nothing in this
  * repository happened to use as well (`p-5`, `content-between`) was never generated, and the
  * module's screen silently lost it. Found on 2026-09-04 when a billing card's inner padding
  * computed to 0px. In CI the packages come from the registry; `./client` is source there too.
+ *
+ * Below the imports, not above them: an `@import` may only follow `@charset` and `@layer`, so a
+ * rule in between makes all three invalid — which is what `pnpm lint` says, and why shell's CI has
+ * been red on `main` since this line arrived. Tailwind reads `@source` wherever it appears, and the
+ * generated stylesheet is byte-identical either way.
  */
 @source "../node_modules/@kernhq/module-*/src/client";
-@import "@kernhq/ui/styles/index.css";
-@import "@kernhq/ui/styles/theme.css";
-@import "@kernhq/ui/styles/prose.css";
 
 html,
 body {

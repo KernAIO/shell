@@ -17,17 +17,22 @@ import {
 import { mockObjectUrl } from '$lib/files/mock-storage'
 
 /**
- * Two switches the mock reads from `localStorage`, so a test can put the app in a state the seed
- * data cannot express. Both are off unless something sets them, and with both off nothing here
+ * Three switches the mock reads from `localStorage`, so a test can put the app in a state the seed
+ * data cannot express. All three are off unless something sets them, and with them off nothing here
  * changes any answer at all.
  *
  * They exist because the interesting branches are otherwise unreachable in `dev:mock`. The demo
  * workspace is healthy and its signed-in user is an owner *and* an instance admin, so the screens
  * for a lapsed subscription and for somebody without a permission had no way to be rendered —
  * which is exactly how a branch stays broken while looking finished.
+ *
+ * `kern.mock.signedout` is the third, and it is the one page in the product that needs it:
+ * `/invite/:token` is opened by somebody who very often has no account yet, and mock mode has no
+ * auth server to say so. With it set, `users.me` refuses exactly as core does for a stranger.
  */
 const MOCK_SUSPENDED = 'kern.mock.suspended'
 const MOCK_ROLE = 'kern.mock.role'
+const MOCK_SIGNED_OUT = 'kern.mock.signedout'
 
 function mockFlag(key: string): string | null {
   // Read per call rather than once: a test sets these before the app loads, and reading them live
@@ -51,6 +56,9 @@ const mockSuspended = () => mockFlag(MOCK_SUSPENDED) === '1'
  * CLAUDE.md.
  */
 const mockIsOwner = () => mockFlag(MOCK_ROLE) !== 'member'
+
+/** Whether the mock is pretending nobody is signed in. */
+const mockSignedOut = () => mockFlag(MOCK_SIGNED_OUT) === '1'
 
 /**
  * The refusal `Entitlements.requireActive` raises, copied exactly.
@@ -259,7 +267,29 @@ const people = [
   },
 ]
 
-const workspaces = [
+/**
+ * Named rather than inferred, because an inferred array literal type is *too* precise: the second
+ * seed's empty `autoJoinDomains` infers as `never[]`, so any workspace built from one of these with
+ * a domain in it — or with an accent colour where the first has none — is assignable to neither
+ * member of the union.
+ */
+type MockWorkspace = {
+  id: string
+  slug: string
+  name: string
+  description: string | null
+  logoUrl: string | null
+  accentColor: string | null
+  autoJoinDomains: string[]
+  defaultRole: 'member'
+  plan: 'self_hosted'
+  archivedAt: string | null
+  createdBy: string
+  createdAt: string
+  updatedAt: string
+}
+
+const workspaces: MockWorkspace[] = [
   {
     id: id(10),
     slug: 'northstar',
@@ -291,6 +321,138 @@ const workspaces = [
     updatedAt: iso(864e5),
   },
 ]
+
+/**
+ * The workspace the demo invitation is for — deliberately one the demo user is *not* already in.
+ *
+ * `/invite/:token` only has anything to do if joining is still possible, and the two seeded
+ * workspaces both already have Maya in them, so an invitation to either would only ever render the
+ * "you are already a member" panel.
+ */
+const invitedWorkspace: MockWorkspace = {
+  ...workspaces[1]!,
+  id: id(12),
+  slug: 'meridian',
+  name: 'Meridian Labs',
+  description: 'Research group',
+  accentColor: '#3A7D6B',
+  autoJoinDomains: [],
+  createdBy: people[1]!.id,
+  createdAt: iso(60 * 864e5),
+  updatedAt: iso(2 * 864e5),
+}
+
+/**
+ * What `/invite/:token` is shown, chosen by the token in the link.
+ *
+ * An invitation is a row somebody else wrote, so the mock cannot seed "the one you were sent" — it
+ * has to answer whatever token the URL happens to carry. Every entry here is a state the screen has
+ * to draw and that nothing else in the demo can reach: an expired link, a link addressed to another
+ * address, a link into a workspace you are already in, and the three refusals that only arrive once
+ * *accept* has been pressed. An unlisted token is the healthy invitation, so a demo link never dead
+ * ends; `missing` is the one that is deliberately not found.
+ */
+type InviteScenario = {
+  workspace: MockWorkspace
+  email: string
+  inviter: string
+  /** `preview.expired` conflates expired, revoked and already-accepted — core cannot tell them apart */
+  expired: boolean
+  /** thrown by `accept`, so the refusals that only exist after submission can be rendered too */
+  acceptError?: () => Error
+}
+
+const INVITE_SCENARIOS: Record<string, InviteScenario> = {
+  'mock-invite-expired': {
+    workspace: invitedWorkspace,
+    email: user.email,
+    inviter: people[1]!.name,
+    expired: true,
+  },
+  'mock-invite-wrong-email': {
+    workspace: invitedWorkspace,
+    email: people[1]!.email,
+    inviter: people[2]!.name,
+    expired: false,
+  },
+  'mock-invite-member': {
+    workspace: workspaces[0]!,
+    email: user.email,
+    inviter: people[1]!.name,
+    expired: true,
+  },
+  'mock-invite-revoked': {
+    workspace: invitedWorkspace,
+    email: user.email,
+    inviter: people[1]!.name,
+    expired: false,
+    acceptError: () =>
+      Object.assign(new Error('Invitation is no longer valid'), {
+        code: 'CONFLICT',
+        data: { reason: 'core.invitation.invalid' },
+      }),
+  },
+  'mock-invite-lapsed': {
+    workspace: invitedWorkspace,
+    email: user.email,
+    inviter: people[1]!.name,
+    expired: false,
+    acceptError: () =>
+      Object.assign(new Error('Invitation has expired'), {
+        code: 'CONFLICT',
+        data: { reason: 'core.invitation.expired' },
+      }),
+  },
+  'mock-invite-archived': {
+    workspace: invitedWorkspace,
+    email: user.email,
+    inviter: people[1]!.name,
+    expired: false,
+    acceptError: () =>
+      Object.assign(new Error('Workspace is archived'), {
+        code: 'CONFLICT',
+        data: { reason: 'core.workspace.archived' },
+      }),
+  },
+  'mock-invite-full': {
+    workspace: invitedWorkspace,
+    email: user.email,
+    inviter: people[1]!.name,
+    expired: false,
+    acceptError: () =>
+      Object.assign(new Error('Seat limit reached'), {
+        code: 'CONFLICT',
+        data: { reason: 'billing.seats.limit_reached', plan: 'Team' },
+      }),
+  },
+  /**
+   * `KernError.forbidden(permission)` puts its argument in `details`, not in `reason`, so an
+   * email mismatch arrives with no reason code at all. Copied exactly, because a mock that refuses
+   * in a shape the client does not recognise tests the client against a fiction.
+   */
+  'mock-invite-forbidden': {
+    workspace: invitedWorkspace,
+    email: user.email,
+    inviter: people[1]!.name,
+    expired: false,
+    acceptError: () =>
+      Object.assign(new Error('Forbidden'), {
+        code: 'FORBIDDEN',
+        data: { permission: 'core.invitation.email_mismatch' },
+      }),
+  },
+}
+
+const DEFAULT_INVITE: InviteScenario = {
+  workspace: invitedWorkspace,
+  email: user.email,
+  inviter: people[1]!.name,
+  expired: false,
+}
+
+/** The invitation a token names, or `null` for the one token that is deliberately unknown. */
+const inviteFor = (token: string) =>
+  token === 'mock-invite-missing' ? null : (INVITE_SCENARIOS[token] ?? DEFAULT_INVITE)
 
 type MockNotification = {
   id: string
@@ -871,13 +1033,18 @@ export function createMockApi() {
     }),
 
     users: {
-      me: async () => ({
-        // `instanceAdmin` short-circuits every `session.can()`, so the mock member has to give it up
-        // as well as the owner role — otherwise "member" is a label with no consequences.
-        user: { ...clone(user), instanceAdmin: mockIsOwner() },
-        workspaces: state.workspaces.map(summary),
-        permissionVersion: 1,
-      }),
+      me: async () => {
+        // The same refusal core gives a request with no session, so a screen that has to draw
+        // something for a stranger can be developed and swept against it.
+        if (mockSignedOut()) throw Object.assign(new Error('Unauthorized'), { code: 'UNAUTHORIZED' })
+        return {
+          // `instanceAdmin` short-circuits every `session.can()`, so the mock member has to give it
+          // up as well as the owner role — otherwise "member" is a label with no consequences.
+          user: { ...clone(user), instanceAdmin: mockIsOwner() },
+          workspaces: state.workspaces.map(summary),
+          permissionVersion: 1,
+        }
+      },
       updateMe: async (input: Record<string, unknown>) => Object.assign(clone(user), input),
       get: async ({ id: userId }: { id: string }) => clone(people.find((p) => p.id === userId) ?? people[0]!),
       directory: async ({ q }: { q?: string } = {}) => ({
@@ -996,8 +1163,31 @@ export function createMockApi() {
           return created
         },
         revoke: async () => ({ ok: true as const }),
-        preview: notImplemented('workspaces.invitations.preview'),
-        accept: async () => clone(state.workspaces[0]!),
+        preview: async ({ token }: { token: string }) => {
+          const found = inviteFor(token)
+          if (!found) throw Object.assign(new Error('Invitation not found'), { code: 'NOT_FOUND' })
+          return {
+            workspace: {
+              id: found.workspace.id,
+              name: found.workspace.name,
+              slug: found.workspace.slug,
+              logoUrl: found.workspace.logoUrl,
+            },
+            email: found.email,
+            inviter: found.inviter,
+            expired: found.expired,
+          }
+        },
+        accept: async ({ token }: { token: string }) => {
+          const found = inviteFor(token)
+          if (!found) throw Object.assign(new Error('Invitation not found'), { code: 'NOT_FOUND' })
+          if (found.acceptError) throw found.acceptError()
+          // Joining is what makes the redirect land somewhere: `users.me` reads this list, and the
+          // workspace layout sends anyone whose slug it cannot find back to their first workspace.
+          if (!state.workspaces.some((w) => w.id === found.workspace.id))
+            state.workspaces.push(clone(found.workspace))
+          return clone(found.workspace)
+        },
       },
 
       roles: {

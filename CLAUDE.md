@@ -446,3 +446,25 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   SvelteKit prefers the static route. A workspace called "workspaces" would then exist and never
   open, with nothing failing anywhere. Adding a directory to `src/routes` therefore means adding its
   name to `RESERVED_SLUGS` in core (`src/modules/core/services/workspaces.ts`) in the same change.
+- **A path core links to and this app has no route for is a silent redirect, not a 404.** `/invite/
+  <token>` had no route until 2026-09-05, so it fell into `(app)/[ws]` with ws="invite", the layout
+  found no such workspace and quietly forwarded the person to their first workspace or to
+  `/onboarding` — so every invitation email Kern has ever sent died with nothing failing anywhere,
+  on both distributions. `RESERVED_SLUGS` in core does not imply a route here; it only stops a
+  workspace claiming the name. Grep core for the URLs it builds (`inviteUrl`, notification `url`,
+  `renderEmail` action links) before believing a link works.
+- **A page a signed-out person is meant to read must not ask core who they are.** `createCoreClient`
+  is built with an `onUnauthorized` that sets `window.location`, so *any* 401 from *any* procedure
+  replaces the page with `/sign-in?next=…` — which on `/invite/:token` means the stranger never sees
+  who invited them. Ask Better Auth instead (`auth.getSession()` answers "nobody" with a 200), and
+  only then ask core. `/authorize` reads `info.error.code === 'UNAUTHORIZED'` for the same reason.
+- **`kern.mock.signedout` is the third mock switch, beside `suspended` and `role`.** Mock mode has
+  no auth server and `authDisabled()` is always true, so "nobody is signed in" was unreachable in
+  `dev:mock` — which is most of the traffic to an invitation link. With the flag set, the mock's
+  `users.me` refuses with `UNAUTHORIZED` exactly as core does; the mock is the backend, so a
+  signed-out state belongs in it rather than in a page's own branch.
+- **`ux.spec.ts` wrote its locale cookie to a hard-coded `http://localhost:4173`.** A cookie belongs
+  to an origin, so a run pointed anywhere else — a preview on another port while :4173 is busy —
+  landed it where the page never looks, `kern_locale` was never read, and the two Persian renderings
+  swept an English left-to-right page while reporting that RTL was clean. It takes `baseURL` now.
+  Any test that sets a cookie by URL has this.

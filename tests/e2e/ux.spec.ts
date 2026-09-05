@@ -115,6 +115,17 @@ const ROUTES: { path: string; name: string }[] = [
   { path: '/sign-in', name: 'sign in' },
   { path: '/sign-up', name: 'sign up' },
   { path: '/forgot', name: 'forgot password' },
+  /*
+   * The invitation link, in both of the shapes a person actually opens.
+   *
+   * Every invitation email in the product points here, and it is read by somebody who has never
+   * seen Kern — so it is worth sweeping twice: the live invitation, which is a mark, a sentence and
+   * a button, and one refusal, which is a tinted seal on a coloured ground and therefore the half
+   * with something to say about contrast in dark mode. The mock reads these tokens; any other one
+   * is the live invitation.
+   */
+  { path: '/invite/mock-invite', name: 'invitation' },
+  { path: '/invite/mock-invite-expired', name: 'invitation no longer valid' },
 ]
 
 /**
@@ -158,8 +169,16 @@ const RENDERINGS = [
   { name: 'dark rtl', theme: 'dark', locale: 'fa' },
 ] as const
 
-async function useRendering(page: Page, r: { theme: string; locale: string }) {
-  await page.context().addCookies([{ name: 'kern_locale', value: r.locale, url: 'http://localhost:4173' }])
+/**
+ * A cookie belongs to an origin, and the origin here is whichever one the run is against.
+ *
+ * It was the literal `http://localhost:4173`, which is right for `pnpm test:e2e` and silently wrong
+ * for a run pointed anywhere else: the cookie lands on a origin the page never visits, `kern_locale`
+ * is never read, and the two Persian renderings sweep an English left-to-right page while reporting
+ * that RTL is clean. `baseURL` is the same value the config already gives `page.goto`.
+ */
+async function useRendering(page: Page, r: { theme: string; locale: string }, baseURL: string) {
+  await page.context().addCookies([{ name: 'kern_locale', value: r.locale, url: baseURL }])
   await page.addInitScript((theme) => {
     localStorage.setItem('kern.theme', theme)
   }, r.theme)
@@ -167,8 +186,8 @@ async function useRendering(page: Page, r: { theme: string; locale: string }) {
 
 for (const rendering of RENDERINGS) {
   test.describe(rendering.name, () => {
-    test.beforeEach(async ({ page }) => {
-      await useRendering(page, rendering)
+    test.beforeEach(async ({ page, baseURL }) => {
+      await useRendering(page, rendering, baseURL!)
     })
 
     for (const route of ROUTES) {
@@ -192,8 +211,8 @@ for (const rendering of RENDERINGS) {
  * shared stylesheet, so a page that loses it loses it everywhere.
  */
 for (const theme of ['light', 'dark'] as const) {
-  test(`every control shows where the keyboard is (${theme})`, async ({ page }) => {
-    await useRendering(page, { theme, locale: 'en' })
+  test(`every control shows where the keyboard is (${theme})`, async ({ page, baseURL }) => {
+    await useRendering(page, { theme, locale: 'en' }, baseURL!)
     await visit(page, `/${WS}/settings/members`)
     const violations: Violation[] = await auditFocusVisibility(page, 30)
     expect(violations, report(`keyboard focus (${theme})`, violations)).toEqual([])
@@ -213,9 +232,12 @@ test.describe('phone width', () => {
   // about a 390px viewport than most of the list above it.
   // 17 → 20 for the three published-site routes, which belong here more than most: a handbook
   // somebody published is read on a phone by people who have never seen the application.
-  for (const route of ROUTES.slice(0, 20)) {
-    test(`${route.name} does not scroll sideways`, async ({ page }) => {
-      await useRendering(page, RENDERINGS[0])
+  // The invitation routes are named rather than counted because they sit at the end of the list:
+  // an invitation arrives by email, and email is read on a phone.
+  const PHONE_ROUTES = [...ROUTES.slice(0, 20), ...ROUTES.filter((r) => r.path.startsWith('/invite/'))]
+  for (const route of PHONE_ROUTES) {
+    test(`${route.name} does not scroll sideways`, async ({ page, baseURL }) => {
+      await useRendering(page, RENDERINGS[0], baseURL!)
       await visit(page, route.path)
       const result = await auditPage(page)
       const overflow = result.violations.filter((v) => v.rule === 'overflow')
