@@ -347,6 +347,18 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   `chat`. The shell renders whoever claims the segment and nothing of its own — the inbox rows are
   core's, the "my work" presets are the tracker's. `segmentOf` lives in its own file with no imports
   precisely so a test can load it; `registry.ts` reaches the module clients, which import `$msg`.
+- **A layout is *reused* when only a route parameter changes, so per-workspace state needs `{#key}`.**
+  `overlays` is the one module contribution a navigation does not destroy — `ModuleOverlays` is
+  mounted by `(app)/[ws]/+layout.svelte` and is what lets a module hold something (a call, an
+  upload) while the person opens an issue. Measured with two probe components either side of the
+  key: navigating `/northstar/tracker → /northstar/chat` remounts neither, and switching workspace
+  through the switcher (`/northstar/chat → /atlas`) remounts the keyed one and **not** the unkeyed
+  one — SvelteKit swaps the params on the layout it already has. So without `{#key workspace.id}`
+  an overlay keeps running against the workspace its owner just left, which for anything holding a
+  connection is the wrong workspace rather than a stale render. Sign-out needs nothing: it leaves
+  `(app)/[ws]` and the layout goes with it. Anything else the shell mounts per workspace has the
+  same trap, and a `$derived` that reads `page.params` will not show it — the state inside a child
+  component is what survives.
 - **Filter a stored dashboard layout, then compact it.** Dropping the widgets of a module that was
   switched off is right, but dropping them *in place* leaves holes where the cards were and the
   board reads as broken rather than tidy. The stored layout is left untouched, so turning the module
