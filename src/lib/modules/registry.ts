@@ -1,12 +1,12 @@
 import type {
   SvelteClientModule as ClientModule,
   ClientNavItem,
-  SvelteOverlayContribution,
   SvelteSidebarContribution,
   SvelteWidgetDefinition,
 } from '@kernhq/ui'
 import { hasCapability } from './capabilities'
 import { loadModuleMessages } from './messages'
+import { type SelectedOverlay, selectOverlays } from './overlays'
 
 export { capabilitiesOf } from './capabilities'
 export { segmentOf } from './segment'
@@ -106,17 +106,15 @@ export function sidebarsFor(ctx: NavContext & { segment: string }): SidebarEntry
     .sort((a, b) => (a.order ?? 100) - (b.order ?? 100) || a.id.localeCompare(b.id))
 }
 
-export interface OverlayEntry extends SvelteOverlayContribution {
-  moduleId: string
-}
+export type OverlayEntry = SelectedOverlay
 
 /**
  * Everything mounted once per workspace, outside the routes.
  *
- * The same three filters as `sidebarsFor` — an enabled module, a permission held, a capability the
- * workspace switched on — and no fourth: an overlay claims no path, because outliving the route is
- * the whole reason it exists. Sorted by module and then by id so the order two overlays are stacked
- * in is a property of the registry rather than of whichever module happened to register first.
+ * The selection is `selectOverlays`, which lives in its own file because nothing can import this
+ * one: `registry.ts` pulls in every module's client, and vitest fails transforming those before a
+ * test can assert anything. The rule it applies is the same three filters as `sidebarsFor` — an
+ * enabled module, a permission held, a capability the workspace switched on — and no fourth.
  *
  * The filters run continuously, not once at mount: a workspace that switches the capability off
  * while somebody is looking at it drops out of this list, and the shell unmounts what it was
@@ -124,12 +122,7 @@ export interface OverlayEntry extends SvelteOverlayContribution {
  * safe to use for something with a live connection behind it.
  */
 export function overlaysFor(ctx: NavContext): OverlayEntry[] {
-  return modules
-    .filter((mod) => ctx.enabled.has(mod.id))
-    .flatMap((mod) => (mod.overlays ?? []).map((o) => ({ ...o, moduleId: mod.id })))
-    .filter((o) => !o.permission || ctx.can(o.permission))
-    .filter((o) => hasCapability(ctx.capabilities, o.moduleId, o.capability))
-    .sort((a, b) => a.moduleId.localeCompare(b.moduleId) || a.id.localeCompare(b.id))
+  return selectOverlays(modules, ctx)
 }
 
 /**
