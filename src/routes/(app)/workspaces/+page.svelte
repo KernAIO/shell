@@ -3,6 +3,7 @@ import type { core } from '@kernhq/contracts'
 import { Avatar, Badge, Button, Icon, SearchBox, Skeleton } from '@kernhq/ui'
 import { goto } from '$app/navigation'
 import { getApi } from '$lib/api/client'
+import { archivedAtOf } from '$lib/api/data-rights'
 import { authDisabled, signOut } from '$lib/auth/client'
 import BrandMark from '$lib/components/auth/BrandMark.svelte'
 import PrefsControls from '$lib/components/auth/PrefsControls.svelte'
@@ -40,9 +41,17 @@ const roleLabels: Record<string, string> = {
   guest: m.members_role_guest(),
 }
 
-/** Size and role on one line. `memberCount` is optional in the contract, so it may simply not be there. */
+/**
+ * Size and role on one line. `memberCount` is optional in the contract, so it may simply not be there.
+ *
+ * A workspace scheduled for erasure says so here first: this list is where somebody picks which
+ * workspace to open, and one of them being on its way out is more important than how many people
+ * are in it. Archived workspaces reach this list at all only because `users.me()` stopped filtering
+ * them — which is what makes the erasure undoable rather than a one-way door.
+ */
 const metaOf = (ws: core.WorkspaceSummary) =>
   [
+    archivedAtOf(ws) ? m.workspace_scheduled_hint() : null,
     ws.memberCount === undefined ? null : m.workspace_members_count({ count: ws.memberCount }),
     roleLabels[ws.role] ?? ws.role,
   ]

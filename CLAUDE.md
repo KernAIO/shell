@@ -528,18 +528,21 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   the phone sweep, with nothing failing — the count is the only thing holding them in. The comment
   in `ux.spec.ts` warns about it and it happened anyway. Grow `n` by however many you insert, and
   name a route at the end of the list rather than counting to it.
-- **A screen the mock renders perfectly can be unreachable in production, and only a real backend
-  says so.** Scheduling a workspace deletion archives the workspace *immediately* (core's
-  `scheduleWorkspaceDeletion`), `users.me()` filters archived workspaces out
-  (`isNull(workspaces.archivedAt)`), and `(app)/[ws]/+layout.svelte` then reads the slug as unknown
-  and forwards to `/onboarding` — so on 2026-09-05 the "Keep this workspace" panel, which is the
-  whole 30-day undo the terms promise, could never be reached, and a sole-workspace owner was shown
-  **"Create your first workspace"** seconds after asking for a deletion they were told they could
-  call off. The mock does not archive on schedule, so `dev:mock` and `ux.spec.ts` both showed a
-  healthy screen. The lesson is not about this one screen: **any flow whose own success changes what
-  `users.me()` returns cannot be verified against the mock**, because the mock's seed list does not
-  move. Run those against a real core — a scratch database, `tsx src/main.ts`, and the shell's dev
-  proxy is enough — before believing the sweep.
+- **A mock that models a state transition must model the transition's side effects, or the sweep
+  certifies a screen nobody can reach.** Scheduling a workspace deletion archives the workspace
+  *immediately* (core's `scheduleWorkspaceDeletion`); `users.me()` filtered archived workspaces out;
+  `(app)/[ws]/+layout.svelte` then read the slug as unknown and forwarded to `/onboarding`. So on
+  2026-09-05 the "Keep this workspace" panel — the whole 30-day undo the terms promise — could never
+  be reached, and a sole-workspace owner was shown **"Create your first workspace"** seconds after
+  asking for a deletion they were told they could call off. The mock wrote the deletion record and
+  performed none of that, so `dev:mock` and `ux.spec.ts` both showed a healthy screen. It is fixed
+  at both ends: `mockWorkspaceArchivedAt` archives the way core does (one fact, derived from the
+  deletions store rather than a second flag), core returns archived workspaces with `archivedAt`
+  since `@kernhq/contracts@0.8.0`, and `tests/e2e/workspace-erasure.spec.ts` asserts *reachability* —
+  where you land after pressing the button, and whether the undo survives a reload on another route.
+  The general rule: **any flow whose own success changes what `users.me()` returns cannot be trusted
+  against a mock whose seed list does not move.** Run it against a real core — a scratch database,
+  `tsx src/main.ts`, and the shell's dev proxy is enough.
 - **The export job is `core-worker`, not `core`.** `dataRights.exports.request` answers 202 and the
   row sits at `pending` for ever unless `pnpm dev:worker` is also running in `repos/core`; the
   screen is right to keep polling and there is nothing wrong with it. Worth knowing before
@@ -548,7 +551,11 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   permission-gated screen in the app renders empty.** ioredis gives up after
   `maxRetriesPerRequest: 2`, the procedure throws, `session.setPermissions` never runs, and `can()`
   is then false for everything — so Settings shows only the account group, and any page whose body
-  is behind a permission renders a heading and nothing else. `/api/health` stays green throughout,
-  so it reads as a broken screen rather than as missing infrastructure. Measured both ways: Valkey
-  down → HTTP 500, Valkey up → 200 with `role: owner`. If a whole screen is blank below its title,
-  check `myPermissions` in the network panel before reading any of its source.
+  is behind a permission renders a heading and nothing else. Measured both ways: Valkey down → HTTP
+  500, Valkey up → 200 with `role: owner`. If a whole screen is blank below its title, check
+  `myPermissions` in the network panel before reading any of its source.
+  **`/api/health` stayed green through all of it, and that is the worse half.** A health check that
+  answers yes while authorization is failing is worse than no health check: it sends you to read the
+  screen's source for a fault that is not in the app at all, and on a deployed instance it means
+  nothing pages anybody while every user sees an empty product. A probe that does not touch what a
+  request actually depends on is measuring the wrong thing.

@@ -23,8 +23,10 @@ import { untrack } from 'svelte'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
+import { archivedAtOf } from '$lib/api/data-rights'
 import { authDisabled, signOut } from '$lib/auth/client'
 import CommandPalette from '$lib/components/CommandPalette.svelte'
+import DeletionBanner from '$lib/components/DeletionBanner.svelte'
 import InstallPrompt from '$lib/components/InstallPrompt.svelte'
 import OfflineBanner from '$lib/components/OfflineBanner.svelte'
 import SettingsNav from '$lib/components/SettingsNav.svelte'
@@ -74,10 +76,21 @@ $effect(() => {
   if (permissions.data) session.setPermissions(permissions.data.role, permissions.data.permissions)
 })
 
-// an unknown slug means the workspace was left, renamed or never existed
+/**
+ * An unknown slug means the workspace was left, renamed or never existed.
+ *
+ * A workspace scheduled for erasure is **not** one of those, and treating it as one is what made
+ * the 30-day undo unreachable: scheduling archives the workspace, so before core returned archived
+ * workspaces the slug stopped resolving here and this effect forwarded the owner to `/onboarding` —
+ * "Create your first workspace", seconds after they were told they could still call it off. The
+ * workspace resolves now and `DeletionBanner` carries the way back.
+ *
+ * The fallback still prefers a live workspace: when the slug genuinely is unknown, dropping somebody
+ * into one that is being destroyed is the worst of the choices available.
+ */
 $effect(() => {
   if (me.isSuccess && !workspace) {
-    const fallback = me.data.workspaces[0]
+    const fallback = me.data.workspaces.find((w) => !archivedAtOf(w)) ?? me.data.workspaces[0]
     void goto(fallback ? `/${fallback.slug}` : '/onboarding', { replaceState: true })
   }
 })
@@ -332,11 +345,14 @@ const userMenu: MenuItem[] = $derived([
         {#snippet header()}
           <DropdownMenu
             items={[
+              // An archived workspace says so instead of its unread count: the count is the least
+              // interesting thing about a workspace that is going to be destroyed, and without this
+              // the switcher lists it as though nothing were wrong.
               ...(me.data?.workspaces ?? []).map((w) => ({
                 id: w.id,
                 label: w.name,
                 icon: w.slug === slug ? 'check' : undefined,
-                hint: countBadge(w.id) ?? undefined,
+                hint: archivedAtOf(w) ? m.workspace_scheduled_hint() : (countBadge(w.id) ?? undefined),
                 onSelect: () => goto(`/${w.slug}`),
               })),
               { type: 'separator' as const },
@@ -441,6 +457,7 @@ const userMenu: MenuItem[] = $derived([
     {/snippet}
 
     <OfflineBanner />
+    <DeletionBanner workspaceId={workspace.id} archivedAt={archivedAtOf(workspace)} />
     {@render children()}
   </AppShell>
 

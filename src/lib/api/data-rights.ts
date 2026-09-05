@@ -20,49 +20,23 @@ import { browser } from '$app/environment'
 import { env } from '$env/dynamic/public'
 import { isMock } from './client'
 import { mockDataRights } from './data-rights-mock'
+import type { DeletionRecord, ExportRecord } from './data-rights-shape'
 
 /**
- * How long a scheduled erasure can still be called off — core's `GRACE_PERIOD_DAYS`.
- *
- * Duplicated here, and there is no way not to: it is a constant in a service this app does not
- * import, and it appears in copy a person reads *before* any record exists ("erased after 30 days"),
- * so it cannot be derived from a `purgeAfter` that has not been written yet. Once a record does
- * exist, every screen quotes **its** `purgeAfter` rather than counting from this — so a core that
- * moved the window would be right on every screen showing a real request, and wrong only in the
- * sentence above the button. Keep the two in step.
+ * The shapes and the grace period live in `./data-rights-shape`, which imports nothing from
+ * SvelteKit, and are re-exported here so every caller keeps one import path. The split exists
+ * because this module's `$app/environment` import makes anything that reaches it untestable under
+ * vitest — see that file's header.
  */
-export const GRACE_PERIOD_DAYS = 30
-
-export type ExportStatus = 'pending' | 'running' | 'ready' | 'failed' | 'expired'
-
-export interface ExportRecord {
-  id: string
-  workspaceId: string
-  status: ExportStatus
-  sizeBytes: number | null
-  /** modules that own data in this workspace and could not contribute it — shown, never hidden */
-  followUps: string[]
-  error: string | null
-  createdAt: string
-  completedAt: string | null
-  expiresAt: string | null
-}
-
-export type DeletionSubject = 'workspace' | 'account'
-export type DeletionStatus = 'scheduled' | 'cancelled' | 'running' | 'done' | 'failed'
-
-export interface DeletionRecord {
-  id: string
-  subjectKind: DeletionSubject
-  subjectId: string
-  status: DeletionStatus
-  /** when the rows actually go; the grace period is the distance between this and `createdAt` */
-  purgeAfter: string
-  followUps: string[]
-  error: string | null
-  createdAt: string
-  completedAt: string | null
-}
+export {
+  archivedAtOf,
+  type DeletionRecord,
+  type DeletionStatus,
+  type DeletionSubject,
+  type ExportRecord,
+  type ExportStatus,
+  GRACE_PERIOD_DAYS,
+} from './data-rights-shape'
 
 /**
  * A refusal from one of these routes, shaped like the ones the SDK throws.

@@ -1119,6 +1119,8 @@
       }
     }
   ],
+  "workspace_scheduled_hint": "Wird gelöscht",
+  "workspace_scheduled_banner": "Dieser Workspace wird am {date} gelöscht.",
   "workspace_switcher_label": "Workspace wechseln",
   "workspaces_choose_hint": "Wähle, wo du arbeiten willst.",
   "workspaces_choose_title": "Workspace wählen",

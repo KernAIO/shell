@@ -17,7 +17,9 @@
  *   would be teaching the screen to hide it too.
  */
 
-import { type DeletionRecord, type ExportRecord, GRACE_PERIOD_DAYS } from './data-rights'
+// the leaf, never './data-rights' — that one imports `$app/environment`, which vitest cannot resolve,
+// so importing it here would make every test that reaches the mock fail at import time
+import { type DeletionRecord, type ExportRecord, GRACE_PERIOD_DAYS } from './data-rights-shape'
 
 /** Matches `EXPORT_TTL_HOURS` in core's `exports.ts`. */
 const EXPORT_TTL_HOURS = 72
@@ -153,6 +155,25 @@ function scheduled(kind: 'workspace' | 'account', subjectId: string): DeletionRe
     createdAt: iso(0),
     completedAt: null,
   }
+}
+
+/**
+ * When a scheduled erasure archived a workspace — the side effect, not just the record.
+ *
+ * Core's `scheduleWorkspaceDeletion` sets `archived_at` on the workspace *in the same call* that
+ * writes the deletion row, and until 2026-09-05 this mock modelled only the row. That single
+ * omission is what let `/settings/data` sweep green while being unreachable in production: with no
+ * archive there was nothing to drop the workspace out of `users.me()`, so the panel rendered here
+ * and could never render against a real core. The rule it cost a session to learn: **a mock that
+ * models a state transition has to model the transition's side effects too**, or the sweep
+ * certifies a screen nobody can reach.
+ *
+ * `mock.ts` derives each summary's `archivedAt` from this rather than keeping its own flag — one
+ * fact, in the store that already survives the reload `ux.spec.ts` does between every route.
+ */
+export function mockWorkspaceArchivedAt(workspaceId: string): string | null {
+  const open = readStore().workspaces[workspaceId]
+  return open?.status === 'scheduled' ? open.createdAt : null
 }
 
 export const mockDataRights = {

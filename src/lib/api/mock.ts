@@ -15,6 +15,7 @@ import {
   inventoryPermissions,
 } from '@kernhq/module-inventory/contract'
 import { mockObjectUrl } from '$lib/files/mock-storage'
+import { mockWorkspaceArchivedAt } from './data-rights-mock'
 
 /**
  * Four switches the mock reads from `localStorage`, so a test can put the app in a state the seed
@@ -1057,6 +1058,16 @@ export function createMockApi() {
         (n) => n.workspaceId === w.id && !n.readAt && !n.archivedAt && n.type.endsWith('mention'),
       ).length,
       memberCount: state.members.length,
+      /*
+       * Archived workspaces stay in this list, and say when they were archived.
+       *
+       * Core filtered them out until 2026-09-05, which is what made a scheduled erasure unreachable:
+       * scheduling archives the workspace, the workspace left `me()`, and `[ws]/+layout.svelte` sent
+       * the owner to `/onboarding` — "Create your first workspace", seconds after they were promised
+       * 30 days to change their mind. The workspace has to stay resolvable for the undo to have
+       * anywhere to live, so the summary carries the fact instead of hiding the row.
+       */
+      archivedAt: mockWorkspaceArchivedAt(w.id) ?? w.archivedAt,
     }
   }
 

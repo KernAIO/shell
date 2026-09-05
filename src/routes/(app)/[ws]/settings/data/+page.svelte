@@ -13,7 +13,6 @@ import {
   toast,
 } from '@kernhq/ui'
 import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
-import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { dataRights, dataRightsKeys, type ExportRecord } from '$lib/api/data-rights'
 import { toastMutationError } from '$lib/api/mutation-errors'
@@ -144,9 +143,18 @@ const scheduleDeletion = createMutation(() => ({
     reason = ''
     toast.success(m.data_delete_scheduled_toast({ date: formatDate(record.purgeAfter) }))
     void queryClient.invalidateQueries({ queryKey: ['core'] })
-    // Scheduling archives the workspace immediately, so staying inside it shows a workspace that is
-    // on its way out. The chooser is where somebody picks what to do next.
-    void goto('/workspaces')
+    /*
+     * Stay on this page, which now renders the scheduled panel at the top of it.
+     *
+     * This used to `goto('/workspaces')` on the reasoning that a workspace on its way out is not
+     * one to keep working in. Two things were wrong with that. The smaller one is that it takes the
+     * undo away from the person the instant they might want it: they pressed a button, and the
+     * screen that would tell them what happens next is one they have to find. The larger one is
+     * that it could not work at all — scheduling archives the workspace, archived workspaces were
+     * absent from `users.me()`, and so the chooser they were sent to offered "Create your first
+     * workspace" instead. Landing back on the page you pressed the button on, with the date and the
+     * way to call it off on it, is both kinder and the thing that actually happens.
+     */
   },
   onError: (err) => toastMutationError(err),
   onSettled: () => {
