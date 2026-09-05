@@ -43,7 +43,11 @@ test('a test message says what the provider said', async ({ page }) => {
 
   await page.getByTestId('mail-test-to').fill('maya@northstar.example')
   await page.getByTestId('mail-test-send').click()
-  await expect(page.getByText(/Test message queued for maya@northstar.example/)).toBeVisible()
+  // "sent to", not "queued for": module-mail's `fix: send the test message before answering the
+  // admin` made the send synchronous, so the message has already gone by the time the admin is
+  // answered — and the string moved with the behaviour. A consumer's assertion on a module's copy
+  // goes stale in the module's repository, where nothing runs this file.
+  await expect(page.getByText(/Test message sent to maya@northstar\.example/)).toBeVisible()
 })
 
 test('the delivery log says why a message did not arrive', async ({ page }) => {
