@@ -14,7 +14,7 @@ import { DEFAULT_PRESET_ID, expandPreset, PRESETS } from '$lib/dashboard/presets
 import WidgetPicker from '$lib/dashboard/WidgetPicker.svelte'
 import WidgetSettingsSheet from '$lib/dashboard/WidgetSettingsSheet.svelte'
 import { today } from '$lib/format'
-import { capabilitiesOf, widgetsFor } from '$lib/modules/registry'
+import { capabilitiesOf, enabledModuleIds, widgetsFor } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
@@ -56,9 +56,7 @@ const settingsQuery = createQuery(() => ({
   enabled: Boolean(workspaceId) && editingWorkspace,
 }))
 
-const enabled = $derived(
-  new Set((modules.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
-)
+const enabled = $derived(enabledModuleIds(modules.data))
 /**
  * A widget behind a capability the workspace switched off leaves the picker *and* any layout that
  * already placed it — `known()` below is what the frame asks, so a card for a capability since

@@ -35,7 +35,14 @@ import { formatCount } from '$lib/format'
 import { isCloudHosted } from '$lib/instance'
 import ModuleOverlays from '$lib/modules/ModuleOverlays.svelte'
 import ModuleSidebar from '$lib/modules/ModuleSidebar.svelte'
-import { capabilitiesOf, navigationFor, overlaysFor, segmentOf, sidebarsFor } from '$lib/modules/registry'
+import {
+  capabilitiesOf,
+  enabledModuleIds,
+  navigationFor,
+  overlaysFor,
+  segmentOf,
+  sidebarsFor,
+} from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { realtime, realtimeUrl } from '$lib/realtime.svelte'
 import { prefs } from '$lib/state/prefs.svelte'
@@ -153,9 +160,7 @@ $effect(() => {
   return () => realtime.disconnect()
 })
 
-const enabledModules = $derived(
-  new Set((modules.data ?? []).filter((entry) => entry.state.enabled).map((entry) => entry.manifest.id)),
-)
+const enabledModules = $derived(enabledModuleIds(modules.data))
 /**
  * Sub-features this workspace has on, inside the modules it has on. A module is all-or-nothing; a
  * capability is the switch below it, and the shell filters on both so a workspace that does not use

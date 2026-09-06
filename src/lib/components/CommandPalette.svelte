@@ -4,7 +4,7 @@ import { Command, type CommandItem, toast } from '@kernhq/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { getApi } from '$lib/api/client'
-import { capabilitiesOf, commandsFor } from '$lib/modules/registry'
+import { capabilitiesOf, commandsFor, enabledModuleIds } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
 import { theme } from '$lib/state/theme.svelte'
@@ -40,9 +40,7 @@ const modules = createQuery(() => ({
   queryFn: () => api.workspaces.modules.list({ workspaceId }),
   enabled: Boolean(workspaceId),
 }))
-const enabledModules = $derived(
-  new Set((modules.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
-)
+const enabledModules = $derived(enabledModuleIds(modules.data))
 /** …and the sub-features inside them, so a command for a capability nobody enabled is not offered. */
 const enabledCapabilities = $derived(capabilitiesOf(modules.data ?? []))
 

@@ -201,6 +201,24 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
 - **A module's screens are only reachable if the module is in the mock too.** `dev:mock` decides the
   nav from `enabledFor()` and `moduleManifests` in `src/lib/api/mock.ts`; a module missing from
   either has a working page and no way to reach it, in exactly the environment used for demos.
+- **`core` cannot list the modules it does not host, and reading its answer as complete hid Chat and
+  Mail from every instance.** `workspaces.modules.list` returns `kernel.manifests()` — the modules
+  the *core process* hosts, which is core, tracker, quire, hr, billing and inventory — plus any
+  module that already has a `workspace_modules` row. `chat`, `mail` and `collab` run in their own
+  services, so core holds no manifest for them, and the only thing that ever writes a row is an
+  administrator toggling the module in **Settings → Modules**, a screen fed by this same list. Every
+  place in the shell built its enabled set as `data.filter(e => e.state.enabled)`, so those three
+  were absent from the list, absent from the rail, and absent from the one screen that could have
+  switched them on. Chat had a live service, 29 API paths and a websocket that upgrades — and no way
+  in, on Kern Cloud included.
+  `selectEnabled` in `$lib/modules/enabled.ts` is the fix and the rule is core's own default applied
+  to the modules core does not host: **an absent row means enabled**, because a module somebody
+  actually switched off *has* a row, which `list()` returns even for a module it cannot see.
+  Two things worth carrying: the expression was duplicated in **eight** places, which is most of why
+  nobody noticed it was wrong; and the mock's `moduleManifests` *does* include `chat`, so `pnpm dev`
+  and `ux.spec.ts` both rendered a Chat rail item that no real instance has ever shown. That is this
+  file's own mock rule pointed the other way — a mock that models something the server **cannot
+  produce** certifies a screen nobody can reach. `enabled.test.ts` pins it.
 - Every user-facing string goes through Paraglide (`messages/*.json`), and the layout must survive
   `dir="rtl"` — use logical properties, never `left`/`right`.
 - **The module clients are not in Tailwind's automatic sources, because they live in

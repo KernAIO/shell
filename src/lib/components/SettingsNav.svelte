@@ -4,7 +4,7 @@ import { createQuery } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
 import { isCloudHosted } from '$lib/instance'
-import { capabilitiesOf, instanceLinksFor, settingsLinksFor } from '$lib/modules/registry'
+import { capabilitiesOf, enabledModuleIds, instanceLinksFor, settingsLinksFor } from '$lib/modules/registry'
 import { getLocale } from '$lib/paraglide/runtime'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
@@ -102,7 +102,7 @@ interface ModuleLink extends NavLink {
 
 const moduleLinks = $derived(
   settingsLinksFor({
-    enabled: new Set((modulesQuery.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
+    enabled: enabledModuleIds(modulesQuery.data),
     capabilities: capabilitiesOf(modulesQuery.data ?? []),
     can: (permission: string) => session.can(permission),
   }).map(

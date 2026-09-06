@@ -9,6 +9,9 @@ import { loadModuleMessages } from './messages'
 import { type SelectedOverlay, selectOverlays } from './overlays'
 
 export { capabilitiesOf } from './capabilities'
+
+import { type ModuleListEntry, selectEnabled } from './enabled'
+
 export { segmentOf } from './segment'
 
 import { billingClientModule } from '@kernhq/module-billing/client'
@@ -55,6 +58,17 @@ export function allModules(): ClientModule[] {
 
 export function getModule(id: string): ClientModule | undefined {
   return modules.find((m) => m.id === id)
+}
+
+/**
+ * Which modules this workspace has on — for every module the shell ships, not only the ones `core`
+ * can see. The rule, and why core's answer alone is not enough, is in `enabled.ts`.
+ */
+export function enabledModuleIds(entries: readonly ModuleListEntry[] | undefined): Set<string> {
+  return selectEnabled(
+    modules.map((m) => m.id),
+    entries,
+  )
 }
 
 export interface NavContext {

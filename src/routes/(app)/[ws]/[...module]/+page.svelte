@@ -6,6 +6,7 @@ import { getApi } from '$lib/api/client'
 import NotFound from '$lib/components/NotFound.svelte'
 import { capabilitiesOf } from '$lib/modules/capabilities'
 import ModuleRoute from '$lib/modules/ModuleRoute.svelte'
+import { enabledModuleIds } from '$lib/modules/registry'
 import { resolveModuleRoute } from '$lib/modules/routing'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
@@ -37,7 +38,7 @@ const modulesQuery = createQuery(() => ({
 
 const resolved = $derived(
   resolveModuleRoute(segments, {
-    enabled: new Set((modulesQuery.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
+    enabled: enabledModuleIds(modulesQuery.data),
     capabilities: capabilitiesOf(modulesQuery.data ?? []),
     can: (permission: string) => session.can(permission),
   }),

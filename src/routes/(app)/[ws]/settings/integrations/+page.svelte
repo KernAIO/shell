@@ -5,6 +5,7 @@ import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
 import SettingsSection from '$lib/components/settings/SettingsSection.svelte'
+import { enabledModuleIds } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
@@ -27,9 +28,7 @@ const modulesQuery = createQuery(() => ({
   queryFn: () => api.workspaces.modules.list({ workspaceId }),
   enabled: workspaceId !== '',
 }))
-const enabled = $derived(
-  new Set((modulesQuery.data ?? []).filter((e) => e.state.enabled).map((e) => e.manifest.id)),
-)
+const enabled = $derived(enabledModuleIds(modulesQuery.data))
 
 interface Integration {
   id: string
