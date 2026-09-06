@@ -103,6 +103,15 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
 - Check a component's actual props before using it — several differ from the obvious guess (`Field`
   takes `id` and passes it to its children snippet; `Tabs` items use `value`, not `id`; `Card` is a
   block, so wrap flex layouts in your own element).
+- **A menu trigger keeps the `id` the primitive gave it, or the menu never closes.** bits-ui decides
+  whether a pointer landed on a trigger by comparing `event.target.id` with the trigger's id, and two
+  empty strings match — so a trigger rendered without an id reads every outside click on an id-less
+  element as a click on itself. The workspace switcher passed `id={workspace.id}` after `{...props}`,
+  `SidebarSwitcher` took that as the avatar's identity, and the button ended up with no id: the
+  switcher's menu stayed open until the page navigated. The seed is `avatarId` since
+  `@kernhq/ui@0.14.4`, and `tests/e2e/menus.spec.ts` asserts every menu in the chrome carries a
+  trigger id and closes on an outside click. Nothing else sees it — it type-checks, builds, and the
+  UX sweep never clicks twice.
 - **Uploads go through `$lib/files/upload.ts` — there is exactly one uploader.** Ask core for a
   ticket, PUT the bytes straight to storage, then tell core the file is `ready`. Skipping the third
   step leaves the file `pending` and invisible for ever. In mock mode the ticket URL is
