@@ -376,7 +376,7 @@ const userMenu: MenuItem[] = $derived([
                 name={workspace.name}
                 subline={m.workspace_members_count({ count: workspace.memberCount ?? 0 })}
                 logoUrl={workspace.logoUrl}
-                id={workspace.id}
+                avatarId={workspace.id}
               />
             {/snippet}
           </DropdownMenu>
