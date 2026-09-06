@@ -157,6 +157,23 @@ const ROUTES: { path: string; name: string }[] = [
    * shape that goes wrong in RTL and at a phone width.
    */
   { path: '/two-factor', name: 'two-factor challenge' },
+  /*
+   * A meeting, in both of its faces, appended at the end of the list rather than inserted — the
+   * warning above `PHONE_ROUTES` is real and inserting here would silently push the last two routes
+   * out of the phone sweep.
+   *
+   * `mock` is the meeting id `@kernhq/module-meet`'s own in-memory API answers; any other id 404s,
+   * there and against core. Without `?join=1` the screen is the pre-join — a camera preview, a
+   * microphone meter and the device pickers — and with it the meeting itself: the stage, the strip,
+   * the control bar and the fixture participants. They share almost no markup, which is why both
+   * are here.
+   *
+   * The demo connects to nothing and asks for no camera; where a picture would be, each tile says
+   * so. That is the point rather than a limitation — a meeting screen swept as a grid of blank
+   * rectangles would be certified as clean while looking broken.
+   */
+  { path: `/${WS}/meet/m/mock`, name: 'meet pre-join' },
+  { path: `/${WS}/meet/m/mock?join=1`, name: 'meet in a meeting' },
 ]
 
 /** The scheduled-erasure record `SWITCHED` seeds, so the branch can be swept without driving the flow. */

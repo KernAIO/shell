@@ -431,12 +431,36 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   switched off is right, but dropping them *in place* leaves holes where the cards were and the
   board reads as broken rather than tidy. The stored layout is left untouched, so turning the module
   back on restores the arrangement it had.
+- **A module that reads `navigation.*` at component init reads nothing.** `setNavigation` is called
+  from an `$effect` in `(app)/[ws]/+layout.svelte`, and a parent's effect runs *after* its children
+  have mounted — so `const x = navigation.search.foo` in a module page is evaluated against an empty
+  object every time. `$derived` is the fix, and the reason it matters is that the failure is silent:
+  `module-meet`'s `?join=1` (skip the pre-join, you have already agreed) simply rendered the
+  pre-join, so the end-to-end sweep passed while auditing the wrong screen under the right name.
+  Measured 2026-09-06 by screenshotting both addresses and finding the two PNGs byte-identical —
+  which is also the cheapest way to catch this class, because nothing about it throws.
+- **A visually hidden `<span>` is still text to the contrast audit.** The usual recipe is 1px square
+  with `clip-path: inset(50%)`, not `display: none`, so `checkVisibility` reports it visible and
+  `ux.spec.ts` measures its colour against whatever it inherits: a "Muted" label inside a
+  danger-toned badge came out at 3.19:1 in dark mode and failed two renderings. Put the words in
+  `role="img"` + `aria-label` on the mark itself — a screen reader gets the same sentence and there
+  is no text node to measure.
+- **Capping a tile that has `aspect-ratio` shrinks its width, not its height.** `aspect-ratio: 16/9`
+  plus `max-block-size` keeps the ratio by narrowing the box, so a stage meant to fill the content
+  area ends two thirds of the way across the page with dead space beside it. State the height and
+  let `object-fit: cover` crop. The reason to cap at all: a 16:9 tile across a full content column
+  is around 500px on a laptop, which pushes whatever is under it — a control bar with **Leave** on
+  it — below the fold.
 - **`tests/e2e/ux.spec.ts` is what stops the interface looking like a prototype.** It sweeps every
   route in light/dark and LTR/RTL against `ux-audit.ts`: contrast, accessible names, WCAG 2.5.8
   target size, pointer affordance, a level-1 heading, sideways scroll, keyboard focus rings, and
   anything the page throws while rendering. It found 408 contrast failures, 146 undersized targets
   and 85 unnamed controls the first time it ran, none of which failed a build. Add a route to
   `ROUTES` when you add a route, and read a failure as a defect rather than as a strict test.
+  **A 500 on every route at once is almost never the routes.** `reuseExistingServer` is on outside
+  CI, so a `vite preview` left over from an earlier run keeps answering after a rebuild has replaced
+  `.svelte-kit/output` underneath it. `kill $(lsof -ti:4173)` and run again before reading a single
+  failure.
 - **`tests/e2e/quire-collab.spec.ts` opens two browsers on one document, and is deliberately not in
   `pnpm test:e2e`.** Multiplayer cannot be tested against the mock — there is no collab service
   behind it — so it needs Postgres, `core` on :4000 and `collab` on :4300, with the shell *not* in

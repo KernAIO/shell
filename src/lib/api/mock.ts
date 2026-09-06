@@ -14,6 +14,7 @@ import {
   inventoryEvents,
   inventoryPermissions,
 } from '@kernhq/module-inventory/contract'
+import { meetCapabilities, meetEvents, meetPermissions } from '@kernhq/module-meet/contract'
 import { mockObjectUrl } from '$lib/files/mock-storage'
 import { mockWorkspaceArchivedAt } from './data-rights-mock'
 
@@ -163,6 +164,16 @@ const MODULE_CAPABILITIES: Record<string, CapabilityDef[]> = {
    * of them and the asset panel shows its five tabs rather than three.
    */
   inventory: inventoryCapabilities as unknown as CapabilityDef[],
+  /**
+   * `calls` and `rooms`, imported for the same reason the two above are — and this module is the
+   * one where an empty list would be invisible rather than merely wrong. **Both default to off and
+   * neither is `required`**, which is the only thing standing between a sixth module in core's
+   * image and a Meetings surface appearing in every workspace on every instance the night it rolls
+   * out. Every contribution `@kernhq/module-meet` declares names one of them, so with this list
+   * absent the meeting route would not be mounted at all and the sweep would audit a not-found page
+   * under the name of a screen.
+   */
+  meet: meetCapabilities as unknown as CapabilityDef[],
 }
 const capabilityDefs = (moduleId: string): CapabilityDef[] => MODULE_CAPABILITIES[moduleId] ?? []
 
@@ -683,6 +694,26 @@ export const moduleManifests = [
     objectTypeCount: 1,
     hasSettings: true,
   },
+  {
+    /**
+     * Hosted by `core` like the six above it, so core really does hold a manifest for it and this
+     * entry is not a claim the server cannot make. Both of its capabilities default to off, which
+     * is why the demo workspace switches `calls` on below: a module whose every contribution names
+     * a capability is invisible until a workspace has one, and an invisible screen is an unswept
+     * screen.
+     */
+    id: 'meet',
+    name: 'Meetings',
+    version: '0.1.0',
+    description: 'Audio and video calls, screen sharing, and who was in each one',
+    icon: 'video',
+    core: false,
+    dependsOn: ['core'],
+    permissionCount: meetPermissions.length,
+    eventCount: Object.keys(meetEvents).length,
+    objectTypeCount: 0,
+    hasSettings: true,
+  },
 ]
 
 /** One release ahead of the mock instance: tracker moves, everything else stands still. */
@@ -1066,6 +1097,20 @@ export function createMockApi() {
     checklists: true,
     payroll_export: true,
   })
+
+  /**
+   * The demo workspace holds meetings, and only `calls`.
+   *
+   * Both of Meetings' capabilities default to off, so without this line the meeting route is not
+   * mounted, the command is not in the palette, and `ux.spec.ts` would sweep a not-found page under
+   * the name of a screen — the exact failure the HR block above records. It is the mock standing in
+   * for an administrator who switched the feature on, which is the only way a real workspace gets it.
+   *
+   * `rooms` stays **off** on purpose, and is the switch this file demonstrates disappearing: there
+   * is no rooms screen in this release, so a demo that had them on would offer a capability with
+   * nothing behind it.
+   */
+  state.capabilities.set(`${workspaces[0]!.id}:meet`, { calls: true })
 
   const summary = (w: (typeof workspaces)[number]) => {
     const unread = state.notifications.filter(

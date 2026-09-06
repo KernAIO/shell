@@ -5,6 +5,7 @@ import {
   inventoryEvents,
   inventoryPermissions,
 } from '@kernhq/module-inventory/contract'
+import { meetCapabilities, meetPermissions } from '@kernhq/module-meet/contract'
 import { describe, expect, it } from 'vitest'
 import { manifestOf, moduleManifests } from './mock'
 
@@ -83,6 +84,33 @@ describe('the mock module manifests', () => {
   describe('hr', () => {
     it('offers the capabilities the module declares', () => {
       expect(manifest('hr').capabilities.map((c) => c.id)).toEqual(hrCapabilities.map((c) => c.id))
+    })
+  })
+
+  describe('meet', () => {
+    it('offers the capabilities the module declares', () => {
+      expect(manifest('meet').capabilities.map((c) => c.id)).toEqual(meetCapabilities.map((c) => c.id))
+    })
+
+    /**
+     * The assertion that matters for this module, and the one a code reading gets wrong.
+     *
+     * `isEnabled` in core answers `row?.enabled ?? true`, so a sixth module in core's image is on in
+     * every workspace on every instance the night it rolls out — workspaces created years before it
+     * existed included. Nothing stands between that and a Meetings surface that fails on click
+     * except these two defaults, and a `defaultEnabled: true` slipped into either of them would be
+     * invisible everywhere else: the demo would look better, and every existing workspace in the
+     * world would get a feature nobody asked for.
+     */
+    it('resolves to nothing in a workspace that has never switched one', () => {
+      const on = manifest('meet')
+        .capabilities.filter((c) => c.required || c.defaultEnabled)
+        .map((c) => c.id)
+      expect(on).toEqual([])
+    })
+
+    it('reports the permissions the module declares', () => {
+      expect(manifest('meet').permissions).toHaveLength(meetPermissions.length)
     })
   })
 })
