@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Avatar, Button, Icon, Skeleton, toast } from '@kernhq/ui'
-import { createMutation, createQuery } from '@tanstack/svelte-query'
+import { createMutation, createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
@@ -8,6 +8,7 @@ import { reasonOf } from '$lib/api/errors'
 import { auth, authDisabled } from '$lib/auth/client'
 import BrandMark from '$lib/components/auth/BrandMark.svelte'
 import PrefsControls from '$lib/components/auth/PrefsControls.svelte'
+import { keys } from '$lib/query'
 import * as m from '$msg'
 
 /**
@@ -25,6 +26,7 @@ import * as m from '$msg'
  * to reach `loadModuleMessages` would drag a module into a page strangers load.
  */
 const api = getApi()
+const queryClient = useQueryClient()
 
 const token = $derived(page.params.token ?? '')
 /** Where sign-in and sign-up bring them back to. Already encoded — it is the URL they are on. */
@@ -106,6 +108,11 @@ const join = createMutation(() => ({
   mutationFn: () => api.workspaces.invitations.accept({ token }),
   onSuccess: async (joined) => {
     toast.success(m.invite_joined({ workspace: joined.name }))
+    // The workspace this person has just joined is not in whatever `users.me()` last answered, and
+    // that list is what `(app)/[ws]` resolves the slug against — a stale one sends them to a
+    // workspace they already had instead of the one they were invited to. Same reason as the
+    // refetch in `/onboarding` after a create.
+    await queryClient.refetchQueries({ queryKey: keys.me() })
     await goto(`/${joined.slug}`, { replaceState: true })
   },
   onSettled: () => {

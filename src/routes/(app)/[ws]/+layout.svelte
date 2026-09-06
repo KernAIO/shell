@@ -89,12 +89,30 @@ $effect(() => {
  *
  * The fallback still prefers a live workspace: when the slug genuinely is unknown, dropping somebody
  * into one that is being destroyed is the worst of the choices available.
+ *
+ * **A cached list is not an answer to "does this workspace exist?"** — it is only an answer to "did
+ * it exist when the list was fetched". Queries stay fresh for 30 seconds, so a workspace created or
+ * joined in this tab arrives here as an unknown slug and this effect used to forward straight out
+ * of it: creating a workspace put you back in your first one, and the switcher (which reads the
+ * same list) did not offer the new one until a reload. The callers refetch before navigating now;
+ * this asks once itself as well, because the redirect is one-way and every other route into a
+ * workspace this session has not seen has the same shape.
  */
+let askedFor = $state<string | null>(null)
+let asking = $state(false)
 $effect(() => {
-  if (me.isSuccess && !workspace) {
-    const fallback = me.data.workspaces.find((w) => !archivedAtOf(w)) ?? me.data.workspaces[0]
-    void goto(fallback ? `/${fallback.slug}` : '/onboarding', { replaceState: true })
+  if (!me.isSuccess || workspace || asking) return
+  const unknown = slug
+  if (untrack(() => askedFor) !== unknown) {
+    askedFor = unknown
+    asking = true
+    void me.refetch().finally(() => {
+      asking = false
+    })
+    return
   }
+  const fallback = me.data.workspaces.find((w) => !archivedAtOf(w)) ?? me.data.workspaces[0]
+  void goto(fallback ? `/${fallback.slug}` : '/onboarding', { replaceState: true })
 })
 
 $effect(() => {

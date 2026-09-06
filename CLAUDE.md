@@ -599,3 +599,15 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   screen's source for a fault that is not in the app at all, and on a deployed instance it means
   nothing pages anybody while every user sees an empty product. A probe that does not touch what a
   request actually depends on is measuring the wrong thing.
+- **Anything that creates or joins a workspace refetches `users.me()` before it navigates.** That
+  one query is the list `(app)/[ws]` resolves a slug against *and* the list the switcher renders,
+  and queries are fresh for 30 seconds — so a workspace created in this tab is an unknown slug to
+  the layout, which forwards to the person's first workspace, while the switcher goes on offering
+  the workspaces that existed a moment ago. Measured 2026-09-06 in `dev:mock`: creating "Aurora
+  Labs" landed on `/northstar` with a two-entry switcher; a reload produced both, which is what
+  makes it read as a server-side caching problem instead of a stale cache in one tab.
+  `refetchQueries`, not `invalidateQueries` — invalidation only awaits queries still mounted, and
+  the page that created the workspace unmounts on `goto`. `(app)/[ws]/+layout.svelte` also re-reads
+  once before it gives up on a slug, because that redirect is one-way and every future route into a
+  workspace this session has not seen has the same shape.
+  `tests/e2e/workspace-create.spec.ts` holds both halves.

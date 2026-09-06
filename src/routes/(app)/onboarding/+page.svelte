@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Button, Card, Checkbox, Field, Icon, Input, Spinner } from '@kernhq/ui'
-import { createQuery } from '@tanstack/svelte-query'
+import { createQuery, useQueryClient } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { getApi } from '$lib/api/client'
 import { reasonOf } from '$lib/api/errors'
@@ -25,6 +25,7 @@ import * as m from '$msg'
  * unconfirmed, this instance only lets administrators create workspaces, and the URL is taken.
  */
 const api = getApi()
+const queryClient = useQueryClient()
 
 const me = createQuery(() => ({ queryKey: keys.me(), queryFn: () => api.users.me() }))
 
@@ -92,6 +93,21 @@ async function submit(e?: Event) {
   try {
     const ws = await api.workspaces.create({ name, slug, seedDemo })
     localStorage.setItem('kern.workspace', ws.slug)
+    /*
+     * Re-read `users.me()` **before** navigating, because the workspace list it answers with is what
+     * the app resolves the new slug against.
+     *
+     * The client defaults hold a query fresh for 30 seconds, so without this the layout at
+     * `/<new-slug>` reads the cached list this page fetched a moment ago — which was taken before
+     * the workspace existed — finds no workspace for the slug, and forwards to the first workspace
+     * in it. The switcher reads the same list, so the workspace that was just created is also
+     * missing from the menu; a reload fixed both, which is what made it look like a caching problem
+     * on the server rather than in this tab. Measured on 2026-09-06 in `dev:mock` and against core.
+     *
+     * `refetchQueries` rather than `invalidateQueries`: invalidation only awaits queries that are
+     * still mounted, and this page unmounts as soon as `goto` resolves.
+     */
+    await queryClient.refetchQueries({ queryKey: keys.me() })
     await goto(`/${ws.slug}`)
   } catch (err) {
     /*
