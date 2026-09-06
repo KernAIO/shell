@@ -35,7 +35,7 @@
     "@kernhq/kernel": "^0.10.2",
     "@kernhq/module-billing": "^0.5.19",
     "@kernhq/module-chat": "^0.6.0",
-    "@kernhq/module-hr": "^0.24.0",
+    "@kernhq/module-hr": "^0.24.1",
     "@kernhq/module-inventory": "^0.6.0",
     "@kernhq/module-mail": "^0.6.5",
     "@kernhq/module-quire": "^0.18.0",
