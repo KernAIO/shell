@@ -54,13 +54,21 @@ const ROUTES: { path: string; name: string }[] = [
     path: `/${WS}/inventory?asset=01920000-0000-7000-8001-000000000001`,
     name: 'inventory asset panel',
   },
-  { path: `/${WS}/admin`, name: 'admin' },
-  { path: `/${WS}/admin/settings`, name: 'admin settings' },
-  { path: `/${WS}/admin/users`, name: 'admin users' },
-  { path: `/${WS}/admin/modules`, name: 'admin modules' },
-  { path: `/${WS}/admin/updates`, name: 'admin updates' },
-  { path: `/${WS}/admin/billing/plans`, name: 'admin billing plans' },
-  { path: `/${WS}/admin/billing/subscriptions`, name: 'admin billing subscriptions' },
+  /*
+   * The instance pages, at the address a **self-hosted** instance serves them from — which is what
+   * this suite runs as, because `PUBLIC_KERN_HOSTING` is unset in `dev:mock`. On Kern Cloud the same
+   * components render under `/admin` and `/settings/instance` forwards there; the sweep judges the
+   * rendered page, and it is the same page either way. `/admin` itself is swept as the redirect it
+   * now is on this hosting — a route that lands somewhere is worth one entry, and it is the address
+   * every notification core has already written points at.
+   */
+  { path: `/${WS}/admin/updates`, name: 'admin updates redirect' },
+  { path: `/${WS}/settings/instance`, name: 'instance settings' },
+  { path: `/${WS}/settings/instance/users`, name: 'instance users' },
+  { path: `/${WS}/settings/instance/modules`, name: 'instance modules' },
+  { path: `/${WS}/settings/instance/updates`, name: 'instance updates' },
+  { path: `/${WS}/settings/instance/billing/plans`, name: 'instance billing plans' },
+  { path: `/${WS}/settings/instance/billing/subscriptions`, name: 'instance billing subscriptions' },
   { path: `/${WS}/settings`, name: 'settings' },
   { path: `/${WS}/settings/profile`, name: 'settings profile' },
   { path: `/${WS}/settings/appearance`, name: 'settings appearance' },
@@ -326,9 +334,11 @@ test.describe('phone width', () => {
   // about a 390px viewport than most of the list above it.
   // 17 → 20 for the three published-site routes, which belong here more than most: a handbook
   // somebody published is read on a phone by people who have never seen the application.
-  // 20 → 22 for admin settings and admin users, inserted above this line — exactly the silent
-  // narrowing the first sentence warns about: without growing it, `admin modules` and
-  // `admin updates` would have dropped out of the phone sweep and nothing would have said so.
+  // 20 → 22 for two more instance routes, inserted above this line — exactly the silent narrowing
+  // the first sentence warns about: without growing it, the last two would have dropped out of the
+  // phone sweep and nothing would have said so. (Moving those seven routes from `/admin/*` to
+  // `/settings/instance/*` kept the count at seven, so this number did not have to move again —
+  // which is luck, not a property of the change. Recount whenever the list above is edited.)
   // The invitation routes are named rather than counted because they sit at the end of the list:
   // an invitation arrives by email, and email is read on a phone.
   // The data-and-privacy and account routes are named for the same reason as the invitations: they

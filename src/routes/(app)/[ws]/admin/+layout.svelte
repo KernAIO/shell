@@ -1,6 +1,8 @@
 <script lang="ts">
 import { Icon, SectionLabel } from '@kernhq/ui'
+import { goto } from '$app/navigation'
 import { page } from '$app/state'
+import { isCloudHosted } from '$lib/instance'
 import { instanceLinksFor } from '$lib/modules/registry'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
@@ -9,10 +11,27 @@ import * as m from '$msg'
  * The instance console: settings that belong to the whole installation rather than to one
  * workspace. Everything here is limited to instance admins, and the entry point in the account
  * menu is only rendered for them — so somebody without the flag never arrives at a locked page.
+ *
+ * **This console is the cloud's.** On Kern Cloud the instance admin is us, so these pages are an
+ * operator's console and belong nowhere near a customer's own settings. On a self-hosted instance
+ * the instance admin *is* the customer, and the same pages live under Settings → Instance — so this
+ * whole subtree forwards there rather than offering a second place to find them. See
+ * `$lib/instance.ts` for which hosting is which.
  */
 let { children } = $props()
 
 const slug = $derived(page.params.ws!)
+
+/**
+ * Forward the whole subtree, keeping whatever page was asked for. Notifications core wrote before
+ * this moved still carry `/admin/updates`, and they are rows in a database on somebody's server —
+ * so this is not a transitional redirect that can be removed once the links are updated.
+ */
+$effect(() => {
+  if (isCloudHosted()) return
+  const rest = page.url.pathname.slice(`/${slug}/admin`.length)
+  void goto(`/${slug}/settings/instance${rest}${page.url.search}`, { replaceState: true })
+})
 const href = (p: string) => `/${slug}/admin${p}`
 const isActive = (p: string) => page.url.pathname === href(p)
 
@@ -39,7 +58,11 @@ const links = $derived([
 ])
 </script>
 
-{#if session.user?.instanceAdmin}
+<!-- Nothing while the redirect above is in flight: half a console painting and vanishing is worse
+     than a blank frame, and the destination renders the same pages. -->
+{#if !isCloudHosted()}
+  <div class="flex-1"></div>
+{:else if session.user?.instanceAdmin}
   <div class="grid min-h-0 flex-1 grid-cols-1 md:grid-cols-[248px_minmax(0,1fr)]">
     <nav
       class="border-b border-[var(--kern-border)] px-3 py-4 md:border-b-0 md:border-e"

@@ -3,7 +3,8 @@ import { SidebarGroup, SidebarItem } from '@kernhq/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { page } from '$app/state'
 import { getApi } from '$lib/api/client'
-import { capabilitiesOf, settingsLinksFor } from '$lib/modules/registry'
+import { isCloudHosted } from '$lib/instance'
+import { capabilitiesOf, instanceLinksFor, settingsLinksFor } from '$lib/modules/registry'
 import { getLocale } from '$lib/paraglide/runtime'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
@@ -201,6 +202,35 @@ const moduleGroups = $derived.by(() => {
   }
 })
 
+/**
+ * Settings for the whole installation, on a self-hosted instance.
+ *
+ * They are here because on a self-hosted instance the instance admin is the customer: instance
+ * settings are their settings, and a second console to remember is one place too many. On Kern
+ * Cloud the instance admin is us and these live at `/admin` instead, so the group is absent — not
+ * merely hidden, which matters because `instanceAdmin` is what gates the pages themselves and a
+ * cloud operator holding it must not be offered a customer-shaped route to them.
+ *
+ * Module-contributed instance pages come along, unfiltered by what this workspace has enabled, for
+ * the same reason the console never filtered them: an admin checking what every workspace is billed
+ * must find the screen while standing in a workspace with billing switched off.
+ */
+const instanceLinks = $derived(
+  isCloudHosted() || !session.user?.instanceAdmin
+    ? []
+    : ([
+        { path: '/instance', label: m.admin_settings(), icon: 'settings' },
+        { path: '/instance/users', label: m.admin_users(), icon: 'users' },
+        { path: '/instance/updates', label: m.admin_updates_title(), icon: 'refresh-cw' },
+        { path: '/instance/modules', label: m.dev_modules_nav(), icon: 'puzzle' },
+        ...instanceLinksFor({ can: (permission: string) => session.can(permission) }).map((link) => ({
+          path: `/instance/${link.moduleId}/${link.id}`,
+          label: link.label,
+          icon: link.icon ?? 'puzzle',
+        })),
+      ] satisfies NavLink[]),
+)
+
 const accountLinks: NavLink[] = $derived([
   { path: '/profile', label: m.settings_profile(), icon: 'user' },
   { path: '/security', label: m.settings_security(), icon: 'key-round' },
@@ -217,7 +247,9 @@ const accountLinks: NavLink[] = $derived([
  * more of them arrive — the module rows land with `modulesQuery`, a tick or two after the account
  * and workspace groups have already painted.
  */
-const rowCount = $derived(accountLinks.length + workspaceLinks.length + moduleLinks.length)
+const rowCount = $derived(
+  accountLinks.length + workspaceLinks.length + moduleLinks.length + instanceLinks.length,
+)
 
 let root = $state<HTMLElement>()
 let revealed = false
@@ -280,6 +312,16 @@ const uid = $props.id()
   {@render group('account', m.settings_account_section(), accountLinks)}
   {#if workspaceLinks.length}
     {@render group('workspace', m.settings_workspace_section(), workspaceLinks)}
+  {/if}
+  <!--
+    Above the module groups, not below them. With People, Issues and Inventory on there are
+    seventeen module rows between here and the bottom of the column, and Updates is the row a
+    self-hoster comes to Settings for on the day a release lands — putting the installation's own
+    settings behind a scroll past every module's "Categories" and "Offices" buries the one thing
+    that is time-sensitive. It reads as scope, too: you, this workspace, this installation.
+  -->
+  {#if instanceLinks.length}
+    {@render group('instance', m.admin_section_instance(), instanceLinks)}
   {/if}
   {#each moduleGroups.named as mod (mod.moduleId)}
     {@render group(mod.moduleId, mod.moduleLabel, mod.links)}

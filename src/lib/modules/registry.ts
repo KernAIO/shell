@@ -245,12 +245,16 @@ export function settingsLinksFor(ctx: NavContext): ModuleSettingsLink[] {
 }
 
 /**
- * Pages a module contributes to the **instance console**.
+ * Pages a module contributes to the **instance**, rather than to a workspace.
  *
- * Not filtered by which modules a workspace has enabled, because the console is not about a
- * workspace: an operator looking at what every workspace is billed must still see the screen when
- * the workspace they happen to be standing in has that module switched off. The console's layout
- * gates the whole area on the instance-admin flag, which is the check that matters here.
+ * Where they are offered is the shell's business and depends on the hosting — Settings → Instance
+ * on a self-hosted install, an operator console at `/admin` on Kern Cloud (`$lib/instance.ts`) — so
+ * a module declares a page id and never a path.
+ *
+ * Not filtered by which modules a workspace has enabled, because these are not about a workspace:
+ * an administrator looking at what every workspace is billed must still see the screen when the
+ * workspace they happen to be standing in has that module switched off. The layout above them gates
+ * the whole area on the instance-admin flag, which is the check that matters here.
  *
  * For the same reason an instance page must not declare a `capability`: capabilities are a
  * workspace's choice, and there is no workspace here to ask. One declared anyway is filtered out,

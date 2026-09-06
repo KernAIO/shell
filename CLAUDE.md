@@ -179,9 +179,19 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   touched. Keep new queries in that shape.
 - **A module settings page's `id` is its URL, and declaring it is the whole wiring.** The shell
   mounts a workspace-scope page at `/<ws>/settings/<moduleId>/<pageId>`, and one whose `id` equals
-  the module id at `/<ws>/settings/<moduleId>`; instance pages mount under `/<ws>/admin/`. There is
+  the module id at `/<ws>/settings/<moduleId>`. There is
   no route file to keep in step — that mismatch used to render a nav entry that 404s, which is what
   `mail` shipped with for months.
+- **An instance page has no fixed URL, so declare an id and never a path.** Settings that belong to
+  the whole installation are offered in two places depending on who the instance admin is:
+  Settings → Instance on a self-hosted install, where the admin is the customer, and an operator
+  console at `/<ws>/admin` on Kern Cloud, where the admin is us. `PUBLIC_KERN_HOSTING=cloud` picks
+  which (`$lib/instance.ts`); the other address forwards to it, permanently, because core writes
+  `/admin/updates` into notification rows and those rows are on other people's servers. The page
+  bodies live once in `$lib/components/instance/` and both route trees are three-line wrappers —
+  and `routing.ts` still resolves a module's instance page against the literal `/admin/<mod>/<id>`,
+  which is now an internal name rather than a URL. This flag decides a sidebar and nothing else:
+  `instanceAdmin` is what gates the pages, in core, on every call.
 - **Settings is a section, so its list is the shell's sidebar — not a column inside the page.**
   `SettingsNav` renders where a module's sidebar would (`(app)/[ws]/+layout.svelte`), and
   `settings/+layout.svelte` is only the scroll container for the page. It used to be a second

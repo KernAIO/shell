@@ -32,6 +32,7 @@ import OfflineBanner from '$lib/components/OfflineBanner.svelte'
 import SettingsNav from '$lib/components/SettingsNav.svelte'
 import WorkspaceTabs from '$lib/components/WorkspaceTabs.svelte'
 import { formatCount } from '$lib/format'
+import { isCloudHosted } from '$lib/instance'
 import ModuleOverlays from '$lib/modules/ModuleOverlays.svelte'
 import ModuleSidebar from '$lib/modules/ModuleSidebar.svelte'
 import { capabilitiesOf, navigationFor, overlaysFor, segmentOf, sidebarsFor } from '$lib/modules/registry'
@@ -273,7 +274,13 @@ const userMenu: MenuItem[] = $derived([
     onSelect: () => theme.set(theme.resolved === 'dark' ? 'light' : 'dark'),
   },
   { type: 'separator' as const },
-  ...(session.user?.instanceAdmin
+  /*
+   * Only on the cloud, where `/admin` is the operator's console and this menu is the only way in.
+   * A self-hosted instance admin finds the same pages as a group in the settings sidebar, so an
+   * entry here would be a second door to one room — and a shortcut that skips the section its
+   * destination lives in makes the section harder to learn, not easier.
+   */
+  ...(isCloudHosted() && session.user?.instanceAdmin
     ? [
         {
           id: 'admin',
