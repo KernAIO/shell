@@ -786,6 +786,8 @@
   "onboarding_verify_still": "Bu adres hâlâ doğrulanmadı. E-postadaki bağlantıyı açın, sonra yeniden deneyin.",
   "onboarding_verify_title": "E-posta adresinizi doğrulayın",
   "onboarding_wrong_address": "Adresiniz değil mi?",
+  "onboarding_seed_demo": "Örnek içerik ekle",
+  "onboarding_seed_demo_hint": "Projeler, belgeler, kişiler, ekipman ve sohbetler; her şeyin nasıl çalıştığını görebilmeniz için. İstediğiniz zaman hepsini silebilirsiniz.",
   "onboarding_ws_name": "Çalışma alanı adı",
   "onboarding_ws_slug": "URL",
   "open": "Aç",

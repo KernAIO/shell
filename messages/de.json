@@ -786,6 +786,8 @@
   "onboarding_verify_still": "Diese Adresse ist weiterhin unbestätigt. Öffne den Link in der E-Mail und versuche es dann erneut.",
   "onboarding_verify_title": "Bestätige deine E-Mail-Adresse",
   "onboarding_wrong_address": "Nicht deine Adresse?",
+  "onboarding_seed_demo": "Beispielinhalte hinzufügen",
+  "onboarding_seed_demo_hint": "Projekte, Dokumente, Personen, Ausstattung und Unterhaltungen – damit Sie sehen, wie alles zusammenspielt. Sie können alles davon jederzeit löschen.",
   "onboarding_ws_name": "Name des Workspace",
   "onboarding_ws_slug": "URL",
   "open": "Öffnen",

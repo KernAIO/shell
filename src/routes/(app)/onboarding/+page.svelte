@@ -1,5 +1,5 @@
 <script lang="ts">
-import { Button, Card, Field, Icon, Input, Spinner } from '@kernhq/ui'
+import { Button, Card, Checkbox, Field, Icon, Input, Spinner } from '@kernhq/ui'
 import { createQuery } from '@tanstack/svelte-query'
 import { goto } from '$app/navigation'
 import { getApi } from '$lib/api/client'
@@ -31,6 +31,19 @@ const me = createQuery(() => ({ queryKey: keys.me(), queryFn: () => api.users.me
 let name = $state('')
 let slug = $state('')
 let slugTouched = $state(false)
+/**
+ * Whether to ask every module to fill the new workspace with example content.
+ *
+ * On by default, and that is the finding rather than a preference: people who landed on an empty
+ * workspace did not know what to do next, and people who were shown a filled one understood the
+ * product in about a minute. Somebody who wants to start clean unticks one box; somebody who does
+ * not know what the product looks like cannot tick a box they have no reason to.
+ *
+ * What it does is a *request*, not part of creating the workspace. Core publishes an event and each
+ * module writes its own content in its own service, so the workspace opens immediately and fills in
+ * over the next few seconds — which is why the copy says "add", not "adding".
+ */
+let seedDemo = $state(true)
 let busy = $state(false)
 let error = $state<string | null>(null)
 let slugError = $state<string | null>(null)
@@ -77,7 +90,7 @@ async function submit(e?: Event) {
   error = null
   slugError = null
   try {
-    const ws = await api.workspaces.create({ name, slug })
+    const ws = await api.workspaces.create({ name, slug, seedDemo })
     localStorage.setItem('kern.workspace', ws.slug)
     await goto(`/${ws.slug}`)
   } catch (err) {
@@ -252,6 +265,12 @@ async function recheck() {
             class="font-[var(--kern-font-mono)]"
           />
         </Field>
+
+        <Checkbox
+          bind:checked={seedDemo}
+          label={m.onboarding_seed_demo()}
+          description={m.onboarding_seed_demo_hint()}
+        />
 
         {#if error}<AuthAlert tone="danger">{error}</AuthAlert>{/if}
 

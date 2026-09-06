@@ -850,6 +850,8 @@
   "onboarding_verify_still": "ما زال هذا العنوان غير مؤكَّد. افتح الرابط في الرسالة ثم حاول مرة أخرى.",
   "onboarding_verify_title": "أكِّد عنوان بريدك الإلكتروني",
   "onboarding_wrong_address": "ليس عنوانك؟",
+  "onboarding_seed_demo": "إضافة محتوى تجريبي",
+  "onboarding_seed_demo_hint": "مشاريع ومستندات وأشخاص ومعدات ومحادثات، لترى كيف يعمل كل شيء. يمكنك حذف أي منها متى شئت.",
   "onboarding_ws_name": "اسم مساحة العمل",
   "onboarding_ws_slug": "الرابط",
   "open": "فتح",

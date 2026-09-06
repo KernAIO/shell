@@ -786,6 +786,8 @@
   "onboarding_verify_still": "That address is still unconfirmed. Open the link in the email, then try again.",
   "onboarding_verify_title": "Confirm your email address",
   "onboarding_wrong_address": "Not your address?",
+  "onboarding_seed_demo": "Add example content",
+  "onboarding_seed_demo_hint": "Projects, documents, people, equipment and conversations, so you can see how everything works. Delete any of it whenever you like.",
   "onboarding_ws_name": "Workspace name",
   "onboarding_ws_slug": "URL",
   "open": "Open",
