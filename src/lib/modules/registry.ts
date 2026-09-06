@@ -19,6 +19,7 @@ import { chatClientModule } from '@kernhq/module-chat/client'
 import { hrClientModule } from '@kernhq/module-hr/client'
 import { inventoryClientModule } from '@kernhq/module-inventory/client'
 import { mailClientModule } from '@kernhq/module-mail/client'
+import { meetClientModule } from '@kernhq/module-meet/client'
 import { quireClientModule } from '@kernhq/module-quire/client'
 import { trackerClientModule } from '@kernhq/module-tracker/client'
 import { coreClientModule } from './core/client'
@@ -222,6 +223,11 @@ registerModule(hrClientModule)
 registerModule(mailClientModule)
 registerModule(billingClientModule)
 registerModule(inventoryClientModule)
+// Meetings. It contributes **nothing** yet — no navigation, no route, no widget, no command — and
+// that is deliberate rather than unfinished: the screens arrive in the next slice, and a nav item
+// added before them is a row that fails on click. Registering it now is what makes the client
+// manifest line up with the module core hosts, so the two halves ship together.
+registerModule(meetClientModule)
 // whatever KERN_EXTRA_MODULES put into this image; see scripts/extra-modules.mjs
 for (const mod of extraModules) registerModule(mod)
 
