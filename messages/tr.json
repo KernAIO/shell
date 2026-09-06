@@ -731,6 +731,7 @@
   ],
   "modules_min_kernel": "Kern {version} gerekir",
   "modules_moves_to": "Kern {release} sürümünde {version}'a geçer",
+  "modules_no_details": "Bu kurulum, bu modül hakkında ayrıntı bildirmiyor.",
   "modules_no_settings": "Bu modülün çalışma alanı ayarı yok.",
   "modules_none_match": "“{query}” ile eşleşen modül yok.",
   "modules_page_hint": "Bu çalışma alanı için özellikleri açın. Bir modülün eklediği her şey — gezinme, yetkiler, arama — yalnızca açık olduğu yerde görünür.",

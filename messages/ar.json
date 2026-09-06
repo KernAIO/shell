@@ -795,6 +795,7 @@
   ],
   "modules_min_kernel": "يتطلب كرن {version}",
   "modules_moves_to": "ينتقل إلى {version} في كرن {release}",
+  "modules_no_details": "لا تُبلّغ هذه المنصة عن أي تفاصيل لهذه الوحدة.",
   "modules_no_settings": "لا توجد إعدادات لهذه الوحدة في مساحة العمل.",
   "modules_none_match": "لا توجد وحدات تطابق «{query}».",
   "modules_page_hint": "فعّل الميزات لمساحة العمل هذه. كل ما تضيفه الوحدة — التنقل والأذونات والبحث — يظهر فقط حيث تكون مفعّلة.",

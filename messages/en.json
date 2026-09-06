@@ -731,6 +731,7 @@
   ],
   "modules_min_kernel": "Needs Kern {version}",
   "modules_moves_to": "Moves to {version} in Kern {release}",
+  "modules_no_details": "This instance reports no details for this module.",
   "modules_no_settings": "This module has no workspace settings.",
   "modules_none_match": "No modules match “{query}”.",
   "modules_page_hint": "Turn features on for this workspace. Everything a module adds — navigation, permissions, search — appears only where it is enabled.",

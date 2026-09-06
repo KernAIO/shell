@@ -569,7 +569,17 @@ let mockPolicy = {
 }
 
 /*
- * One entry per module, and the id is the key.
+ * One entry per module the **core process hosts**, and the id is the key.
+ *
+ * `chat` and `mail` were in here and are not any more, which is the point of the list rather than
+ * an omission. Core answers `workspaces.modules.list` from `kernel.manifests()` — the modules its
+ * own process holds — plus a row for anything an administrator has expressed an opinion about, so a
+ * module served by its own service is simply not in the answer. Measured against a real core on
+ * 2026-09-06: a fresh workspace got
+ * `["core","tracker","quire","hr","billing","inventory","meet"]` and nothing else. Listing chat
+ * here made `pnpm dev` and `ux.spec.ts` render a Chat card and rail item that **no instance has
+ * ever shown**, which is precisely what hid Chat and Mail being unreachable in the product: a mock
+ * that models something the server cannot produce certifies a screen nobody can reach.
  *
  * `hr` was in here twice — the 0.4.0 rewrite left the old 0.1.0 manifest behind — and every list
  * keyed by module id then threw `each_key_duplicate`, which is a *render* error: the admin,
@@ -590,20 +600,6 @@ export const moduleManifests = [
     eventCount: 12,
     objectTypeCount: 2,
     hasSettings: false,
-  },
-  {
-    id: 'chat',
-    name: 'Chat',
-    version: '0.1.0',
-    description:
-      'Channels, direct messages and threads, with reactions, mentions, read state and per-object discussions',
-    icon: 'message-square-text',
-    core: false,
-    dependsOn: ['core'],
-    permissionCount: 9,
-    eventCount: 8,
-    objectTypeCount: 2,
-    hasSettings: true,
   },
   {
     id: 'hr',
@@ -687,22 +683,9 @@ export const moduleManifests = [
     objectTypeCount: 1,
     hasSettings: true,
   },
-  {
-    id: 'mail',
-    name: 'Mail',
-    version: '0.1.0',
-    description: 'Outbound email providers, templates, delivery log and suppression lists',
-    icon: 'mail',
-    core: false,
-    dependsOn: ['core'],
-    permissionCount: 2,
-    eventCount: 3,
-    objectTypeCount: 0,
-    hasSettings: true,
-  },
 ]
 
-/** One release ahead of the mock instance: tracker moves, chat is new, everything else stands still. */
+/** One release ahead of the mock instance: tracker moves, everything else stands still. */
 const mockRelease = {
   version: MOCK_LATEST,
   channel: 'stable' as const,
@@ -792,6 +775,29 @@ export const manifestOf = (m: (typeof moduleManifests)[number]) => ({
   defaultHost: 'core',
 })
 
+/**
+ * A manifest as `workspaces.modules.list` returns it.
+ *
+ * `description` and `icon` are widened to optional, which `ModuleManifest` already has them as:
+ * the entry core invents for a module it does not host carries neither.
+ */
+type ListedManifest = Omit<ReturnType<typeof manifestOf>, 'description' | 'icon' | 'settingsSchema'> & {
+  description?: string
+  icon?: string
+  settingsSchema?: Record<string, unknown>
+}
+
+type ListedModule = {
+  manifest: ListedManifest
+  state: {
+    moduleId: string
+    enabled: boolean
+    settings: Record<string, unknown>
+    installedVersion: string | null
+    capabilities: string[]
+  }
+}
+
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v))
 const wsById = (workspaceId: string) => workspaces.find((w) => w.id === workspaceId)
 const notImplemented = (name: string) => () => {
@@ -860,7 +866,16 @@ export function createMockApi() {
       mailFrom: null as string | null,
       supportEmail: null as string | null,
     },
-    enabled: new Map<string, Set<string>>(),
+    /**
+     * `workspaceId` → the `workspace_modules` rows that workspace has, `moduleId` → enabled.
+     *
+     * A map rather than a set of the modules that are on, because core distinguishes three states
+     * and a set can only hold two: a row saying on, a row saying off, and **no row**, which core
+     * answers `?? true` for. Only a map can express the third, and the third is the whole reason
+     * Chat and Mail were unreachable — an absent row is what a module core does not host always
+     * has.
+     */
+    enabled: new Map<string, Map<string, boolean>>(),
     /** `<workspaceId>:<moduleId>` → what the switchboard stored; absent means "never touched". */
     capabilities: new Map<string, Record<string, boolean>>(),
     /** `<workspaceId>:<moduleId>` → the settings object `updateSettings` last wrote. */
@@ -906,14 +921,24 @@ export function createMockApi() {
       { id: id(501), name: 'Design', handle: 'design', description: null as string | null, memberCount: 2 },
     ],
   }
-  const enabledFor = (workspaceId: string) => {
-    let set = state.enabled.get(workspaceId)
-    if (!set) {
-      set = new Set(['core', 'chat', 'tracker', 'quire', 'hr', 'mail', 'billing', 'inventory'])
-      state.enabled.set(workspaceId, set)
+  /**
+   * The module rows a workspace has, created on first read.
+   *
+   * Seeded with one row rather than none: with every module defaulting to on, the Available group
+   * on Settings → Modules would never be drawn in `dev:mock` or swept by `ux.spec.ts`, and a group
+   * that renders in no environment is a group nobody checks. `docs` is the one switched off.
+   */
+  const moduleRowsFor = (workspaceId: string) => {
+    let rows = state.enabled.get(workspaceId)
+    if (!rows) {
+      rows = new Map<string, boolean>([['docs', false]])
+      state.enabled.set(workspaceId, rows)
     }
-    return set
+    return rows
   }
+  /** Core's own rule: a module with no row has never been switched, and an absent row means on. */
+  const moduleEnabled = (workspaceId: string, moduleId: string, core = false) =>
+    core || (moduleRowsFor(workspaceId).get(moduleId) ?? true)
   /**
    * Capabilities a workspace has switched, by module, and the set that follows from them.
    *
@@ -1344,18 +1369,54 @@ export function createMockApi() {
       },
 
       modules: {
+        /**
+         * What core answers: the manifests this process hosts, plus a row for anything else.
+         *
+         * The second half is the part that matters and it used to be missing. A module served by
+         * another service has no manifest here, so it appears in this list **only** once somebody
+         * has switched it — and until then the shell has to fill the gap itself
+         * (`$lib/modules/cards.ts`). Core reports such a module through `stubManifest`: named by
+         * its id, version `0.0.0`, no description, `defaultHost: 'unknown'`.
+         */
         list: async ({ workspaceId }: { workspaceId: string }) => {
-          const on = enabledFor(workspaceId)
-          return moduleManifests.map((m) => ({
+          const out: ListedModule[] = moduleManifests.map((m) => ({
             manifest: manifestOf(m),
             state: {
               moduleId: m.id,
-              enabled: m.core || on.has(m.id),
+              enabled: moduleEnabled(workspaceId, m.id, m.core),
               settings: clone(state.moduleSettings.get(`${workspaceId}:${m.id}`) ?? {}),
               installedVersion: m.version,
               capabilities: capabilitiesFor(workspaceId, m.id),
             },
           }))
+          const known = new Set(moduleManifests.map((m) => m.id))
+          for (const [moduleId, enabled] of moduleRowsFor(workspaceId)) {
+            if (known.has(moduleId)) continue
+            out.push({
+              // Core's `stubManifest`, field for field: the module is named by its id and the rest
+              // is empty, because core genuinely knows nothing else about it.
+              manifest: {
+                id: moduleId,
+                name: moduleId,
+                version: '0.0.0',
+                core: false,
+                dependsOn: [],
+                permissions: [],
+                capabilities: [],
+                events: [],
+                objectTypes: [],
+                defaultHost: 'unknown',
+              },
+              state: {
+                moduleId,
+                enabled,
+                settings: clone(state.moduleSettings.get(`${workspaceId}:${moduleId}`) ?? {}),
+                installedVersion: null,
+                capabilities: capabilitiesFor(workspaceId, moduleId),
+              },
+            })
+          }
+          return out
         },
         setEnabled: async ({
           workspaceId,
@@ -1366,10 +1427,11 @@ export function createMockApi() {
           moduleId: string
           enabled: boolean
         }) => {
-          const on = enabledFor(workspaceId)
-          if (enabled) on.add(moduleId)
-          else on.delete(moduleId)
-          return { moduleId, enabled, settings: {}, installedVersion: '0.1.0' }
+          // Core writes a row whether or not it hosts the module, which is what lets an
+          // administrator switch off something served by another service.
+          moduleRowsFor(workspaceId).set(moduleId, enabled)
+          const hosted = moduleManifests.find((m) => m.id === moduleId)
+          return { moduleId, enabled, settings: {}, installedVersion: hosted?.version ?? null }
         },
         updateSettings: async ({
           workspaceId,
@@ -1389,9 +1451,9 @@ export function createMockApi() {
             state.capabilities.set(key, clone(stored.$capabilities as Record<string, boolean>))
           return {
             moduleId,
-            enabled: enabledFor(workspaceId).has(moduleId),
+            enabled: moduleEnabled(workspaceId, moduleId),
             settings: clone(stored),
-            installedVersion: '0.1.0',
+            installedVersion: moduleManifests.find((m) => m.id === moduleId)?.version ?? null,
           }
         },
       },
@@ -1854,7 +1916,10 @@ export function createMockApi() {
           name: mod.name,
           version: mod.version,
           hostedHere: mod.id === 'core' || mod.id === 'tracker' || mod.id === 'billing',
-          host: mod.id === 'chat' ? 'chat' : mod.id === 'mail' ? 'mail' : 'core',
+          // Every module left in the list is one the core process hosts, which is also all core's
+          // own `diagnostics` can describe: it walks `kernel.registry.all()`, so a module served by
+          // chat or mail answers this question in its own service and never appears here.
+          host: 'core',
           procedures: [
             { name: `${mod.id}.list`, method: 'GET', path: `/${mod.id}`, middlewares: 2, gated: true },
             { name: `${mod.id}.create`, method: 'POST', path: `/${mod.id}`, middlewares: 2, gated: true },

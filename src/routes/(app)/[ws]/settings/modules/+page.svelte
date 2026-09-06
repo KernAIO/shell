@@ -6,6 +6,8 @@ import { planLimitToast } from '$lib/api/billing-refusal'
 import { getApi } from '$lib/api/client'
 import { toastMutationError } from '$lib/api/mutation-errors'
 import SettingsPage from '$lib/components/settings/SettingsPage.svelte'
+import { type ModuleCard, selectModuleCards } from '$lib/modules/cards'
+import { allModules } from '$lib/modules/registry'
 import { keys } from '$lib/query'
 import { session } from '$lib/state/session.svelte'
 import * as m from '$msg'
@@ -17,6 +19,13 @@ import * as m from '$msg'
  *
  * Turning one off affects everybody in the workspace, so it is confirmed rather than toggled away,
  * and modules that others depend on say so instead of failing after the fact.
+ *
+ * **The cards are not `workspaces.modules.list`.** Core answers that with the manifests of the
+ * modules its own process hosts, so `chat` and `mail` — which run as their own services — were
+ * missing from it, and therefore had no card: they appeared in the rail and an administrator had no
+ * way to switch either of them off, on every instance. `selectModuleCards` covers the same set the
+ * rail is built from; see `$lib/modules/cards.ts` for what it fills in and what core answers once
+ * the switch has been used.
  */
 const api = getApi()
 const queryClient = useQueryClient()
@@ -57,12 +66,12 @@ const pendingVersion = (moduleId: string) => {
   return change && change.kind === 'changed' ? change.to : null
 }
 
-type Entry = NonNullable<typeof modules.data>[number]
+type Entry = ModuleCard
 
 let filter = $state('')
 let pendingDisable = $state<Entry | null>(null)
 
-const entries = $derived(modules.data ?? [])
+const entries = $derived(selectModuleCards(allModules(), modules.data))
 
 const matches = (e: Entry) => {
   const q = filter.trim().toLowerCase()
@@ -153,9 +162,11 @@ const contributions = (e: Entry) =>
           {:else if kind === 'on'}
             <Badge tone="success">{m.enabled()}</Badge>
           {/if}
-          <span class="font-[var(--kern-font-mono)] text-[11.5px] text-[var(--kern-ink-400)]" dir="ltr">
-            {entry.manifest.version}
-          </span>
+          {#if entry.manifest.version}
+            <span class="font-[var(--kern-font-mono)] text-[11.5px] text-[var(--kern-ink-400)]" dir="ltr">
+              {entry.manifest.version}
+            </span>
+          {/if}
           {#if pendingVersion(entry.manifest.id)}
             <span class="font-[var(--kern-font-mono)] text-[11.5px] text-[var(--kern-accent-deep)]" dir="ltr">
               {m.modules_moves_to({
@@ -166,9 +177,18 @@ const contributions = (e: Entry) =>
           {/if}
         </div>
 
-        <p class="mt-1.5 text-[13px] leading-relaxed text-[var(--kern-ink-600)]">
-          {entry.manifest.description}
-        </p>
+        <!-- A module this instance holds no manifest for has no description to show. Saying so is
+             better than an empty gap: the card is otherwise indistinguishable from one that failed
+             to load, and the switch on it works either way. -->
+        {#if entry.manifest.description}
+          <p class="mt-1.5 text-[13px] leading-relaxed text-[var(--kern-ink-600)]">
+            {entry.manifest.description}
+          </p>
+        {:else}
+          <p class="mt-1.5 text-[13px] leading-relaxed text-[var(--kern-ink-450)]">
+            {m.modules_no_details()}
+          </p>
+        {/if}
 
         <div class="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1.5">
           {#each contributions(entry) as item (item)}

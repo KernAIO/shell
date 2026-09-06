@@ -731,6 +731,7 @@
   ],
   "modules_min_kernel": "Benötigt Kern {version}",
   "modules_moves_to": "Wechselt in Kern {release} auf {version}",
+  "modules_no_details": "Diese Instanz meldet keine Angaben zu diesem Modul.",
   "modules_no_settings": "Dieses Modul hat keine Workspace-Einstellungen.",
   "modules_none_match": "Keine Module passen zu „{query}“.",
   "modules_page_hint": "Funktionen für diesen Workspace aktivieren. Was ein Modul mitbringt — Navigation, Berechtigungen, Suche — erscheint nur dort, wo es aktiviert ist.",

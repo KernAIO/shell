@@ -215,10 +215,32 @@ tells you whether this checkout is even reading your copy. See `docs/adr/0008-a-
   to the modules core does not host: **an absent row means enabled**, because a module somebody
   actually switched off *has* a row, which `list()` returns even for a module it cannot see.
   Two things worth carrying: the expression was duplicated in **eight** places, which is most of why
-  nobody noticed it was wrong; and the mock's `moduleManifests` *does* include `chat`, so `pnpm dev`
+  nobody noticed it was wrong; and the mock's `moduleManifests` *did* include `chat`, so `pnpm dev`
   and `ux.spec.ts` both rendered a Chat rail item that no real instance has ever shown. That is this
   file's own mock rule pointed the other way — a mock that models something the server **cannot
   produce** certifies a screen nobody can reach. `enabled.test.ts` pins it.
+- **Fixing the rail without the switchboard leaves a module nobody can turn off, which is the same
+  defect facing the other way.** `settings/modules/+page.svelte` built its cards from that same
+  list, so for a day Chat and Mail were in the rail *and* had no card: an administrator could see a
+  module and had no way to switch it off. `selectModuleCards` in `$lib/modules/cards.ts` is the
+  other half — one card per module the shell registered, plus core's own entries — and it takes the
+  switch position from `selectEnabled`, so the rail and the switchboard cannot disagree about a
+  module. **Whenever a screen and a control over that screen read one query, fix both or neither.**
+  Two things measured against a real core on 2026-09-06 (scratch database, `startCore()`, one fresh
+  workspace), both of which a code reading gets wrong. `setEnabled` **accepts a module core does
+  not host** — no manifest lookup guards it — so the write the synthesised card needs already
+  works, which is what makes the card only ever needed once per module per workspace. And what core
+  answers afterwards is not a normal entry: `stubManifest` names the module **by its id** — `"name":
+  "chat"`, lower case — with `version: '0.0.0'`, no description, no icon and `defaultHost:
+  'unknown'`. Reading that answer straight renames the card from "Chat" to "chat" and empties it the
+  moment somebody uses the switch, so a placeholder is filled from the client module exactly as an
+  absent one is; `defaultHost === 'unknown'` is what identifies one, and it is a value core never
+  reads off a real manifest.
+  The mock now models rows rather than a set of what is on — a set cannot hold the three states core
+  distinguishes (on, off, **no row**), and the third is the one every unhosted module has.
+  `cards.test.ts` drives a core-shaped fake through the whole round trip and `tests/e2e/modules.spec.ts`
+  presses the real switch and checks the rail afterwards, because neither a unit test nor `ux.spec.ts`
+  — which renders every route and clicks nothing — can see whether a control does anything.
 - Every user-facing string goes through Paraglide (`messages/*.json`), and the layout must survive
   `dir="rtl"` — use logical properties, never `left`/`right`.
 - **The module clients are not in Tailwind's automatic sources, because they live in
