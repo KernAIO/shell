@@ -174,6 +174,14 @@ const ROUTES: { path: string; name: string }[] = [
    */
   { path: `/${WS}/meet/m/mock`, name: 'meet pre-join' },
   { path: `/${WS}/meet/m/mock?join=1`, name: 'meet in a meeting' },
+  /*
+   * A meeting that does not exist, which is what a meeting in *another workspace* looks like from
+   * here — 404 and never 403, because 403 would tell whoever guessed the id that it exists
+   * somewhere. Swept rather than merely written, because this is the branch that quietly stopped
+   * working: on 2026-09-06 the auto-join path called the demo directly instead of asking the API,
+   * so a made-up id rendered three fixture faces and a meeting nobody was in.
+   */
+  { path: `/${WS}/meet/m/01920000-0000-7000-8000-000000000999?join=1`, name: 'meet no such meeting' },
 ]
 
 /** The scheduled-erasure record `SWITCHED` seeds, so the branch can be swept without driving the flow. */
