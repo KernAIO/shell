@@ -32,7 +32,7 @@
     "@better-auth/passkey": "^1.7.1",
     "@internationalized/date": "^3.12.0",
     "@kernhq/contracts": "^0.8.1",
-    "@kernhq/kernel": "^0.10.2",
+    "@kernhq/kernel": "^0.10.5",
     "@kernhq/module-billing": "^0.5.19",
     "@kernhq/module-chat": "^0.6.0",
     "@kernhq/module-hr": "^0.24.2",
